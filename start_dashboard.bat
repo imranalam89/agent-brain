@@ -1,0 +1,6 @@
+@echo off
+title Agent Brain - Interactive Web Dashboard
+echo Starting Agent Brain Web Server...
+echo Opening dashboard in your default browser...
+.\.venv\Scripts\python.exe server.py
+pause

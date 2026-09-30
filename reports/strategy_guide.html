@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Brain | Master Strategy Blueprint & $5 Risk Logic</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { background-color: #0a0d14; color: #f1f5f9; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .glass-card { background: rgba(15, 20, 32, 0.90); backdrop-filter: blur(14px); border: 1px solid #1f2a44; }
+    .glow-gold { box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.25); }
+    .glow-emerald { box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.25); }
+    .glow-blue { box-shadow: 0 0 25px -5px rgba(59, 130, 246, 0.25); }
+    .glow-purple { box-shadow: 0 0 25px -5px rgba(168, 85, 247, 0.25); }
+    .glow-orange { box-shadow: 0 0 25px -5px rgba(249, 115, 22, 0.25); }
+    .glow-cyan { box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.25); }
+    .tab-active { background: linear-gradient(135deg, #10b981 0%, #0d9488 100%); color: #000; font-weight: 800; shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39); }
+    @keyframes pulse-slow {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(1.02); }
+    }
+    .badge-pulse { animation: pulse-slow 3s infinite ease-in-out; }
+  </style>
+</head>
+<body class="min-h-screen p-4 sm:p-6 lg:p-8 space-y-6">
+
+  <!-- TOP HEADER -->
+  <header class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 border-b border-slate-800 pb-5">
+    <div class="flex items-center gap-3.5">
+      <div class="h-12 w-12 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-400 to-cyan-500 flex items-center justify-center font-bold text-black text-2xl shadow-lg shadow-emerald-950">
+        🧠
+      </div>
+      <div>
+        <h1 class="text-xl sm:text-2xl font-black flex items-center gap-2.5">
+          <span>Master Strategy Blueprint</span>
+          <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">Strict $5 Risk Architecture</span>
+        </h1>
+        <p class="text-xs text-slate-400">Institutional Strategy Details • Market Microstructure • Order Flow Traps • Delta Exchange Futures Only</p>
+      </div>
+    </div>
+
+    <!-- QUICK ACTION LINKS -->
+    <div class="flex items-center gap-2 font-mono text-xs">
+      <a href="backtest_report.html" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold transition flex items-center gap-1.5">
+        <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-400"></i>
+        <span>Scorecards</span>
+      </a>
+      <a href="agent_journal.html" class="px-3.5 py-2 rounded-xl bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 font-bold transition flex items-center gap-1.5">
+        <i data-lucide="book-open" class="w-4 h-4 text-blue-400"></i>
+        <span>Living Journal</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- MASTER TWO-TIER NAVIGATION BAR -->
+  <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs font-mono bg-slate-900/80 p-3 rounded-2xl border border-slate-800 shadow-inner">
+    <div class="flex items-center gap-1.5 flex-wrap">
+      <span class="text-slate-400 font-bold px-1 flex items-center gap-1">
+        <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-emerald-400"></i> REPORTS:
+      </span>
+      <a href="backtest_report.html" class="px-2.5 py-1 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700">🌐 Master</a>
+      <a href="gold_report.html" class="px-2.5 py-1 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700">🥇 Gold</a>
+      <a href="silver_report.html" class="px-2.5 py-1 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700">🥈 Silver</a>
+      <a href="btc_report.html" class="px-2.5 py-1 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700">₿ BTC</a>
+      <a href="eth_report.html" class="px-2.5 py-1 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700">Ξ ETH</a>
+    </div>
+    <div class="flex items-center gap-1.5 flex-wrap">
+      <span class="text-slate-400 font-bold px-1 flex items-center gap-1">
+        <i data-lucide="book-open" class="w-3.5 h-3.5 text-blue-400"></i> JOURNALS:
+      </span>
+      <a href="agent_journal.html" class="px-2 py-1 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700">🌐 Master</a>
+      <a href="gold_journal.html" class="px-2 py-1 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700">🥇 Gold</a>
+      <a href="silver_journal.html" class="px-2 py-1 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700">🥈 Silver</a>
+      <a href="btc_journal.html" class="px-2 py-1 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700">₿ BTC</a>
+      <a href="eth_journal.html" class="px-2 py-1 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700">Ξ ETH</a>
+      <span class="px-2.5 py-1 rounded-xl bg-emerald-500 text-black font-extrabold shadow ml-1">📖 Strategy Guide</span>
+    </div>
+  </div>
+
+  <!-- EXECUTIVE SUMMARY CARDS: THE $5 RISK PERFORMANCE MATRIX -->
+  <div class="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 font-mono">
+    
+    <!-- 4-ASSET PORTFOLIO -->
+    <div class="glass-card rounded-2xl p-4 border-l-4 border-l-emerald-400 glow-emerald space-y-2">
+      <div class="flex items-center justify-between text-xs text-slate-400 font-bold">
+        <span>👑 4-ASSET APEX</span>
+        <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px]">ALL 4 ASSETS</span>
+      </div>
+      <div class="text-2xl font-black text-emerald-400">+$5,124.75</div>
+      <div class="text-[11px] text-slate-300 space-y-0.5">
+        <div>ROI: <strong class="text-emerald-400">+10,249.5%</strong></div>
+        <div>Win Rate: <strong class="text-white">63.2%</strong> (2,239t)</div>
+        <div>Profit Factor: <strong class="text-purple-400">2.16</strong></div>
+        <div>Max DD: <strong class="text-emerald-300">-$66.55</strong></div>
+      </div>
+    </div>
+
+    <!-- BITCOIN -->
+    <div class="glass-card rounded-2xl p-4 border-l-4 border-l-orange-400 glow-orange space-y-2">
+      <div class="flex items-center justify-between text-xs text-slate-400 font-bold">
+        <span>₿ BTC PROFIT MAX</span>
+        <span class="px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-300 text-[10px]">100x FUTURES</span>
+      </div>
+      <div class="text-2xl font-black text-orange-400">+$2,166.24</div>
+      <div class="text-[11px] text-slate-300 space-y-0.5">
+        <div>ROI: <strong class="text-orange-400">+4,332.5%</strong></div>
+        <div>Win Rate: <strong class="text-white">66.1%</strong> (958t)</div>
+        <div>Profit Factor: <strong class="text-purple-400">2.25</strong></div>
+        <div>Max DD: <strong class="text-emerald-300">-$32.55</strong></div>
+      </div>
+    </div>
+
+    <!-- ETHEREUM -->
+    <div class="glass-card rounded-2xl p-4 border-l-4 border-l-purple-400 glow-purple space-y-2">
+      <div class="flex items-center justify-between text-xs text-slate-400 font-bold">
+        <span>Ξ ETH PROFIT MAX</span>
+        <span class="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 text-[10px]">100x FUTURES</span>
+      </div>
+      <div class="text-2xl font-black text-purple-400">+$2,119.28</div>
+      <div class="text-[11px] text-slate-300 space-y-0.5">
+        <div>ROI: <strong class="text-purple-400">+4,238.6%</strong></div>
+        <div>Win Rate: <strong class="text-white">66.7%</strong> (899t)</div>
+        <div>Profit Factor: <strong class="text-purple-400">2.36</strong></div>
+        <div>Max DD: <strong class="text-emerald-300">-$37.54</strong></div>
+      </div>
+    </div>
+
+    <!-- SILVER -->
+    <div class="glass-card rounded-2xl p-4 border-l-4 border-l-cyan-400 glow-cyan space-y-2">
+      <div class="flex items-center justify-between text-xs text-slate-400 font-bold">
+        <span>🥈 SILVER PROFIT MAX</span>
+        <span class="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 text-[10px]">50x FUTURES</span>
+      </div>
+      <div class="text-2xl font-black text-cyan-400">+$466.43</div>
+      <div class="text-[11px] text-slate-300 space-y-0.5">
+        <div>ROI: <strong class="text-cyan-400">+932.9%</strong></div>
+        <div>Win Rate: <strong class="text-white">46.1%</strong> (128t)</div>
+        <div>Profit Factor: <strong class="text-purple-400">2.30</strong></div>
+        <div>Max DD: <strong class="text-emerald-300">-$25.85</strong></div>
+      </div>
+    </div>
+
+    <!-- GOLD -->
+    <div class="glass-card rounded-2xl p-4 border-l-4 border-l-amber-400 glow-gold space-y-2">
+      <div class="flex items-center justify-between text-xs text-slate-400 font-bold">
+        <span>🥇 GOLD APEX PRO</span>
+        <span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px]">100x FUTURES</span>
+      </div>
+      <div class="text-2xl font-black text-amber-400">+$372.96</div>
+      <div class="text-[11px] text-slate-300 space-y-0.5">
+        <div>ROI: <strong class="text-amber-400">+745.9%</strong></div>
+        <div>Win Rate: <strong class="text-white">48.8%</strong> (254t)</div>
+        <div>Profit Factor: <strong class="text-purple-400">1.50</strong></div>
+        <div>Max DD: <strong class="text-emerald-300">-$48.33</strong></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SECTION 1: CORE ARCHITECTURE & EXACT $5 RISK FORMULATION -->
+  <section class="max-w-7xl mx-auto glass-card rounded-3xl p-6 sm:p-8 space-y-6">
+    <div class="border-b border-slate-800 pb-4">
+      <span class="text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider">FOUNDATIONAL RULE #1</span>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-white mt-1 flex items-center gap-2">
+        <i data-lucide="shield-check" class="w-6 h-6 text-emerald-400"></i>
+        <span>The Strict $5.00 Risk-Per-Trade Mathematical Formula</span>
+      </h2>
+      <p class="text-sm text-slate-400 mt-1">How Agent Brain ensures zero account blowups and caps maximum loss per trade to exactly $5.00 across all 4 instruments.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+      <div class="space-y-4 text-sm leading-relaxed text-slate-300">
+        <p>
+          In quantitative futures trading on <strong>Delta Exchange India</strong>, contracts are denominated in lots with specific contract multipliers ($c_{val}$). Without dynamic lot sizing, volatility differences would destroy risk parity.
+        </p>
+        <div class="p-4 rounded-2xl bg-black/50 border border-slate-800 font-mono space-y-2">
+          <div class="text-xs text-slate-400 font-bold uppercase">Dynamic Lot Sizing Formula:</div>
+          <div class="text-emerald-400 text-base font-extrabold bg-emerald-950/40 p-3 rounded-xl border border-emerald-500/30 text-center">
+            Lots = round( $5.00 / (Stop Distance × Contract Value) )
+          </div>
+          <div class="text-[11px] text-slate-400 pt-1">
+            Where <em>Stop Distance = |Entry Price - Structural Stop Loss|</em>, and <em>Contract Value</em> is the instrument multiplier.
+          </div>
+        </div>
+        <p>
+          When the Stop Loss is touched, the trade is terminated instantly. Total gross loss = <code class="text-rose-400 font-mono font-bold">Lots × Contract Value × Stop Distance = $5.00</code>. Adding Delta's 0.01% taker fee, average audited loss is strictly between <strong class="text-rose-400">-$5.18 and -$5.77</strong>.
+        </p>
+      </div>
+
+      <!-- CONTRACT SPECIFICATION TABLE -->
+      <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/50">
+        <table class="w-full text-xs font-mono text-left">
+          <thead class="bg-slate-950 text-slate-400 border-b border-slate-800">
+            <tr>
+              <th class="p-3">Asset</th>
+              <th class="p-3">Leverage</th>
+              <th class="p-3">1 Lot Value</th>
+              <th class="p-3">Avg Stop Dist</th>
+              <th class="p-3">Exact Lots</th>
+              <th class="p-3 text-right">Max Loss</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60 text-slate-300">
+            <tr class="hover:bg-slate-800/30">
+              <td class="p-3 font-bold text-amber-400 flex items-center gap-1.5">🥇 Gold (XAUTUSD)</td>
+              <td class="p-3">100x Isolated</td>
+              <td class="p-3">0.001 XAUT</td>
+              <td class="p-3">$10.00</td>
+              <td class="p-3 font-bold text-white">500 Lots</td>
+              <td class="p-3 font-bold text-rose-400 text-right">-$5.00</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30">
+              <td class="p-3 font-bold text-cyan-400 flex items-center gap-1.5">🥈 Silver (SLVONUSD)</td>
+              <td class="p-3">50x Isolated</td>
+              <td class="p-3">0.1 SLVON</td>
+              <td class="p-3">$0.30</td>
+              <td class="p-3 font-bold text-white">167 Lots</td>
+              <td class="p-3 font-bold text-rose-400 text-right">-$5.01</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30">
+              <td class="p-3 font-bold text-orange-400 flex items-center gap-1.5">₿ Bitcoin (BTCUSD)</td>
+              <td class="p-3">100x Isolated</td>
+              <td class="p-3">0.001 BTC</td>
+              <td class="p-3">$180.00</td>
+              <td class="p-3 font-bold text-white">28 Lots</td>
+              <td class="p-3 font-bold text-rose-400 text-right">-$5.04</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30">
+              <td class="p-3 font-bold text-purple-400 flex items-center gap-1.5">Ξ Ethereum (ETHUSD)</td>
+              <td class="p-3">100x Isolated</td>
+              <td class="p-3">0.01 ETH</td>
+              <td class="p-3">$8.00</td>
+              <td class="p-3 font-bold text-white">62 Lots</td>
+              <td class="p-3 font-bold text-rose-400 text-right">-$4.96</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2: THE 4-PHASE EXECUTION LIFECYCLE (VISUAL FLOWCHART) -->
+  <section class="max-w-7xl mx-auto glass-card rounded-3xl p-6 sm:p-8 space-y-6">
+    <div class="border-b border-slate-800 pb-4">
+      <span class="text-xs font-mono font-bold text-teal-400 uppercase tracking-wider">TRADE EXECUTION LIFECYCLE</span>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-white mt-1 flex items-center gap-2">
+        <i data-lucide="git-branch" class="w-6 h-6 text-teal-400"></i>
+        <span>How Each Trade is Executed, De-Risked, and Trailed</span>
+      </h2>
+      <p class="text-sm text-slate-400 mt-1">The 4-step institutional process: Signal ➔ Scale-Out (Bank 50%) ➔ Breakeven Stop ➔ Runner Trail.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 font-mono text-xs">
+      
+      <!-- STEP 1 -->
+      <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3 relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-400 font-black text-sm">PHASE 1</span>
+          <i data-lucide="crosshair" class="w-5 h-5 text-blue-400"></i>
+        </div>
+        <h3 class="text-base font-bold text-white">Precision Entry</h3>
+        <p class="text-slate-400 leading-relaxed font-sans text-xs">
+          Price stretches outside <strong>1.5σ - 1.8σ VWAP Bands</strong> or sweeps a structural swing high/low. CVD shows trapped retail orders (absorption).
+        </p>
+        <div class="p-2.5 rounded-xl bg-black/40 border border-slate-800 text-[11px] text-blue-300">
+          • Risk: Exactly $5.00<br>
+          • Initial SL: Beyond structure
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3 relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 font-black text-sm">PHASE 2</span>
+          <i data-lucide="wallet" class="w-5 h-5 text-emerald-400"></i>
+        </div>
+        <h3 class="text-base font-bold text-white">Scale-Out 50% Profit</h3>
+        <p class="text-slate-400 leading-relaxed font-sans text-xs">
+          Price reaches <strong>1:2.0R to 1:2.5R</strong> or touches central VWAP. The engine instantly closes <strong>50% of the lots</strong> to lock in guaranteed dollar profits ($5.00 - $6.25).
+        </p>
+        <div class="p-2.5 rounded-xl bg-black/40 border border-slate-800 text-[11px] text-emerald-300">
+          • Close: 50% Position<br>
+          • Profit Banked: +$5.00 to +$6.25
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3 relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="px-2.5 py-1 rounded-lg bg-teal-500/20 text-teal-400 font-black text-sm">PHASE 3</span>
+          <i data-lucide="lock" class="w-5 h-5 text-teal-400"></i>
+        </div>
+        <h3 class="text-base font-bold text-white">Breakeven Stop Lock</h3>
+        <p class="text-slate-400 leading-relaxed font-sans text-xs">
+          Simultaneously with Phase 2, the Stop Loss on the remaining 50% is automatically moved to <strong>Entry Price + 0.10R</strong> (covering fees).
+        </p>
+        <div class="p-2.5 rounded-xl bg-black/40 border border-slate-800 text-[11px] text-teal-300">
+          • Risk: <strong>$0.00 (Zero Risk)</strong><br>
+          • Trade is 100% Free Ride
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3 relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-400 font-black text-sm">PHASE 4</span>
+          <i data-lucide="trending-up" class="w-5 h-5 text-purple-400"></i>
+        </div>
+        <h3 class="text-base font-bold text-white">Trailing Fat-Tail Runner</h3>
+        <p class="text-slate-400 leading-relaxed font-sans text-xs">
+          The remaining 50% runner is dynamically trailed with a <strong>1.0x - 1.5x ATR trailing stop</strong> to capture macro runaway moves up to <strong>+6.0R ($15 - $20 additional profit)</strong>.
+        </p>
+        <div class="p-2.5 rounded-xl bg-black/40 border border-slate-800 text-[11px] text-purple-300">
+          • Max Win: +$20.00 to +$30.00<br>
+          • Trailing Stop locks in gain
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SECTION 3: DEEP-DIVE STRATEGY TABS (HOW & WHY DETAILS PER ASSET) -->
+  <section class="max-w-7xl mx-auto glass-card rounded-3xl p-6 sm:p-8 space-y-6">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+      <div>
+        <span class="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider">DETAILED STRATEGY SPECIFICATIONS</span>
+        <h2 class="text-xl sm:text-2xl font-extrabold text-white mt-1">How & Why Trades Are Taken on Each Instrument</h2>
+      </div>
+
+      <!-- ASSET SELECTOR BUTTONS -->
+      <div class="flex items-center gap-1.5 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 font-mono text-xs">
+        <button onclick="showStrategyTab('btc')" id="btnTabBtc" class="px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1 cursor-pointer tab-active">
+          <span>₿ Bitcoin</span>
+        </button>
+        <button onclick="showStrategyTab('eth')" id="btnTabEth" class="px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1 cursor-pointer text-slate-400 hover:text-white hover:bg-slate-800">
+          <span>Ξ Ethereum</span>
+        </button>
+        <button onclick="showStrategyTab('gold')" id="btnTabGold" class="px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1 cursor-pointer text-slate-400 hover:text-white hover:bg-slate-800">
+          <span>🥇 Gold</span>
+        </button>
+        <button onclick="showStrategyTab('silver')" id="btnTabSilver" class="px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1 cursor-pointer text-slate-400 hover:text-white hover:bg-slate-800">
+          <span>🥈 Silver</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB 1: BITCOIN (BTCUSD) -->
+    <div id="tabContentBtc" class="space-y-6">
+      <div class="flex flex-col lg:flex-row gap-6">
+        <div class="lg:w-2/3 space-y-4">
+          <div class="flex items-center gap-3">
+            <span class="px-3 py-1 rounded-xl bg-orange-500/20 text-orange-400 border border-orange-500/30 font-mono font-bold text-sm">👑 BTC Apex Profit Maximizer</span>
+            <span class="text-xs font-mono text-slate-400">Strict $5 Risk • 100x Isolated Leverage</span>
+          </div>
+          <h3 class="text-xl font-bold text-white">Why This Strategy Generates 66.1% Win Rate & +$2,166 Net P&L</h3>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            Bitcoin market structure is heavily dictated by institutional order flow during the <strong>London and New York session overlap (12:30 – 23:45 UTC)</strong>. Retail traders frequently chase momentum breakouts when BTC breaks local 15m highs or lows. However, institutions use these breakout liquidity pockets to fill large limit absorption orders, creating sharp mean-reversions back to the <strong>Session VWAP</strong>.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs pt-2">
+            <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
+              <div class="text-emerald-400 font-bold flex items-center gap-1.5">
+                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                <span>ENTRY LOGIC (HOW WE ENTER)</span>
+              </div>
+              <ul class="text-slate-300 space-y-1.5 list-disc list-inside text-[11px] font-sans">
+                <li>Timeframe: <strong>15-Minute Candles</strong> with Delta Volume.</li>
+                <li>Session Filter: Active between 12:30 and 23:45 UTC (peak volume).</li>
+                <li>Upper/Lower Band: <strong>1.5 Standard Deviations</strong> from Session VWAP.</li>
+                <li>Buy Trigger: Candle pierces below lower band, then closes back inside with Orderflow Delta Ratio &ge; -0.10 (absorption).</li>
+                <li>Sell Trigger: Candle pierces above upper band, then closes back inside with Delta Ratio &le; +0.10.</li>
+              </ul>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
+              <div class="text-blue-400 font-bold flex items-center gap-1.5">
+                <i data-lucide="sliders" class="w-4 h-4"></i>
+                <span>RISK & EXIT LOGIC (HOW WE WIN)</span>
+              </div>
+              <ul class="text-slate-300 space-y-1.5 list-disc list-inside text-[11px] font-sans">
+                <li>Stop Distance: Max($180.00, |Entry - Low/High| + $30 padding).</li>
+                <li>Lots: <code class="text-emerald-400">round($5.00 / (dist * 0.001))</code> (~28 lots).</li>
+                <li>Take Profit 1: Hit central Session VWAP or <strong>1:2.0R</strong> ➔ <strong>Close 50% lots (Bank +$5.00)</strong>.</li>
+                <li>Breakeven: Stop moved to <strong>Entry + $18.00</strong> (Zero Risk).</li>
+                <li>Runner Exit: Ride remaining 50% to <strong>2.0R - 3.5R</strong> or opposite band reversal.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:w-1/3 p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4 font-mono text-xs">
+          <div class="text-slate-400 font-bold uppercase text-[11px]">AUDITED BTC METRICS (9 MONTHS)</div>
+          <div class="space-y-3">
+            <div class="flex justify-between border-b border-slate-850 pb-2">
+              <span class="text-slate-400">Total Net P&L</span>
+              <span class="text-emerald-400 font-black text-sm">+$2,166.24</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-850 pb-2">
+              <span class="text-slate-400">Net Return (ROI)</span>
+              <span class="text-emerald-400 font-bold">+4,332.5%</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-850 pb-2">
+              <span class="text-slate-400">Win Rate %</span>
+              <span class="text-white font-bold">66.1% (633 Wins / 325 Losses)</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-850 pb-2">
+              <span class="text-slate-400">Profit Factor</span>
+              <span class="text-purple-400 font-bold">2.25</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-850 pb-2">
+              <span class="text-slate-400">Max Drawdown</span>
+              <span class="text-emerald-300 font-bold">-$32.55 (6.5 R)</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Avg Win / Loss</span>
+              <span class="text-slate-200">+$6.12 / -$5.35</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: ETHEREUM (ETHUSD) -->
+    <div id="tabContentEth" class="space-y-6 hidden">
+      <div class="flex flex-col lg:flex-row gap-6">
+        <div class="lg:w-2/3 space-y-4">
+          <div class="flex items-center gap-3">
+            <span class="px-3 py-1 rounded-xl bg-purple-500/20 text-purple-400 border border-purple-500/30 font-mono font-bold text-sm">👑 ETH Apex Profit Maximizer</span>
+            <span class="text-xs font-mono text-slate-400">Strict $5 Risk • 100x Isolated Leverage</span>
+          </div>
+          <h3 class="text-xl font-bold text-white">Why This Strategy Generates 66.7% Win Rate & +$2,119 Net P&L</h3>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            Ethereum exhibits higher intraday volatility than Bitcoin, with rapid aggressive sweeps above and below fair value. When retail momentum buyers rush in at session highs, passive limit sellers absorb the flow. Our engine waits for the <strong>1.5σ extension</strong> to occur simultaneously with volume exhaustion, capturing high-probability swings back to equilibrium.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs pt-2">
+            <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
+              <div class="text-emerald-400 font-bold flex items-center gap-1.5">
+                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                <span>ENTRY LOGIC (HOW WE ENTER)</span>
+              </div>
+              <ul class="text-slate-300 space-y-1.5 list-disc list-inside text-[11px] font-sans">
+                <li>Timeframe: <strong>15-Minute Candles</strong> with Order Flow Delta.</li>
+                <li>Session Window: 12:30 – 23:45 UTC (US open overlap).</li>
+                <li>Band: <strong>1.5σ standard deviation</strong> from daily cumulative VWAP.</li>
+                <li>Buy Rule: Candle low tags lower band & closes higher with positive absorption.</li>
+                <li>Sell Rule: Candle high tags upper band & closes lower with negative delta absorption.</li>
+              </ul>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
+              <div class="text-blue-400 font-bold flex items-center gap-1.5">
+                <i data-lucide="sliders" class="w-4 h-4"></i>
+                <span>RISK & EXIT LOGIC (HOW WE WIN)</span>
+              </div>
+              <ul class="text-slate-300 space-y-1.5 list-disc list-inside text-[11px] font-sans">
+                <li>Stop Distance: Max($8.00, |Entry - Low/High| + $1.50 padding).</li>
+                <li>Lots: <code class="text-emerald-400">round($5.00 / (dist * 0.01))</code> (~62 lots).</li>
+                <li>Take Profit 1: Hit central VWAP or <strong>1:2.0R</strong> ➔ <strong>Close 50% lots (Bank +$5.00)</strong>.</li>
+                <li>Breakeven: Stop moved to <strong>Entry + $0.80</strong>.</li>
+                <li>Runner Exit: Ride remaining 50% to <strong>2.0R - 3.5R</strong>.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:w-1/3 p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4 font-mono text-xs">
+          <div class="text-slate-400 font-bold uppercase text-[11px]">AUDITED ETH METRICS (9 MONTHS)</div>
+          <div class="space-y-3">
+            <div class="flex justify-between border-b border-slate-850 pb-2">
+              <span class="text-slate-400">Total Net P&L</span>
+              <span class="text-purple-400 font-black text-sm">+$2,119.28</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-850 pb-2">
+              <span class="text-slate-400">Net Return (ROI)</span>
+              <span class="text-purple-400 font-bold">+4,238.6%</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-850 pb-2">
+              <span class="text-slate-400">Win Rate %</span>
+              <span class="text-white font-bold">66.7% (600 Wins / 299 Losses)</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-850 pb-2">
+              <span class="text-slate-400">Profit Factor</span>
+              <span class="text-purple-400 font-bold">2.36</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-850 pb-2">
+              <span class="text-slate-400">Max Drawdown</span>
+              <span class="text-emerald-300 font-bold">-$37.54 (7.5 R)</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Avg Win / Loss</span>
+              <span class="text-slate-200">+$6.10 / -$5.20</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: GOLD (XAUTUSD) -->
+    <div id="tabContentGold" class="space-y-6 hidden">
+      <div class="flex flex-col lg:flex-row gap-6">
+        <div class="lg:w-2/3 space-y-4">
+          <div class="flex items-center gap-3">
+            <span class="px-3 py-1 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 font-mono font-bold text-sm">💎 Gold Apex Pro Institutional</span>
+            <span class="text-xs font-mono text-slate-400">Strict $5 Risk • 100x Isolated Leverage</span>
+          </div>
+          <h3 class="text-xl font-bold text-white">Why This Strategy Produces Steady Gains & Low Drawdown on Gold</h3>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            Gold (XAUTUSD) is heavily driven by macroeconomic catalysts and algorithmic stop-hunting. The biggest mistake retail traders make on Gold is trading during the low-liquidity late New York / early Asian hours (16, 19, 20, 22 UTC) where whipsaws occur. Apex Pro enforces a <strong>Session Chop Filter</strong>, trading only during London and New York peak liquidity (12:30 - 23:45 UTC).
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs pt-2">
+            <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
+              <div class="text-emerald-400 font-bold flex items-center gap-1.5">
+                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                <span>ENTRY LOGIC (HOW WE ENTER)</span>
+              </div>
+              <ul class="text-slate-300 space-y-1.5 list-disc list-inside text-[11px] font-sans">
+                <li>Macro Alignment: Price respect to 200 EMA trend filter.</li>
+                <li>Session Timing: Peak hours only (12:30 - 23:45 UTC). Chop hours excluded.</li>
+                <li>Liquidity Sweep: False breakout of prior 20-bar high/low.</li>
+                <li>Orderflow Confluence: Minimum 3% CVD delta divergence indicating trapped market orders.</li>
+              </ul>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
+              <div class="text-blue-400 font-bold flex items-center gap-1.5">
+                <i data-lucide="sliders" class="w-4 h-4"></i>
+                <span>RISK & EXIT LOGIC (HOW WE WIN)</span>
+              </div>
+              <ul class="text-slate-300 space-y-1.5 list-disc list-inside text-[11px] font-sans">
+                <li>Stop Distance: Min $3.50, technical swing + $0.80 padding.</li>
+                <li>Lots: <code class="text-emerald-400">round($5.00 / (dist * 0.001))</code> (e.g. 500 lots for $10 dist).</li>
+                <li>TP1: <strong>Scale out 50% @ 2.5R (Bank +$6.25)</strong>.</li>
+                <li>Breakeven: Stop moved to <strong>Entry + $0.35</strong>.</li>
+                <li>Trailing Runner: 1.0x ATR trail on remaining 50% runner up to <strong>6.0R (Bank up to +$15.00)</strong>.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:w-1/3 p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4 font-mono text-xs">
+          <div class="text-slate-400 font-bold uppercase text-[11px]">AUDITED GOLD METRICS (6 MONTHS)</div>
+          <div class="space-y-3">
+            <div class="flex justify-between border-b border-slate-850 pb-2">
+              <span class="text-slate-400">Total Net P&L</span>
+              <span class="text-amber-400 font-black text-sm">+$372.96</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-850 pb-2">
+              <span class="text-slate-400">Net Return (ROI)</span>
+              <span class="text-amber-400 font-bold">+745.9%</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-850 pb-2">
+              <span class="text-slate-400">Win Rate %</span>
+              <span class="text-white font-bold">48.8% (124 Wins / 130 Losses)</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-850 pb-2">
+              <span class="text-slate-400">Profit Factor</span>
+              <span class="text-purple-400 font-bold">1.50</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-850 pb-2">
+              <span class="text-slate-400">Max Drawdown</span>
+              <span class="text-emerald-300 font-bold">-$48.33 (9.6 R)</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Avg Win / Loss</span>
+              <span class="text-slate-200">+$9.05 / -$5.77</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: SILVER (SLVONUSD) -->
+    <div id="tabContentSilver" class="space-y-6 hidden">
+      <div class="flex flex-col lg:flex-row gap-6">
+        <div class="lg:w-2/3 space-y-4">
+          <div class="flex items-center gap-3">
+            <span class="px-3 py-1 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 font-mono font-bold text-sm">👑 Silver Apex Profit Maximizer</span>
+            <span class="text-xs font-mono text-slate-400">Strict $5 Risk • 50x Isolated Leverage (Delta Spec)</span>
+          </div>
+          <h3 class="text-xl font-bold text-white">Why This Strategy Delivers 2.30 Profit Factor & +$466 Net P&L</h3>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            Silver (SLVONUSD) has powerful trending momentum and huge fat-tail runner potential. Because Delta Exchange limits Silver leverage to <strong>50x</strong> (1 Lot = 0.1 SLVON), position sizing requires wider structural room to breathe. Silver Profit Maximizer lets winners run to <strong>1:2.4R before banking 50%</strong>, and trails the remainder up to <strong>6.0R</strong> with tight 0.8x ATR.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs pt-2">
+            <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
+              <div class="text-emerald-400 font-bold flex items-center gap-1.5">
+                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                <span>ENTRY LOGIC (HOW WE ENTER)</span>
+              </div>
+              <ul class="text-slate-300 space-y-1.5 list-disc list-inside text-[11px] font-sans">
+                <li>Timeframe: <strong>15-Minute Candles</strong> (February – September 2026).</li>
+                <li>Session Timing: Peak volume window (12:30 - 23:45 UTC).</li>
+                <li>Trigger: Swing high/low sweep + Delta divergence filter.</li>
+                <li>Structural Floor: Minimum stop distance 0.30 pts + 0.06 padding.</li>
+              </ul>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
+              <div class="text-blue-400 font-bold flex items-center gap-1.5">
+                <i data-lucide="sliders" class="w-4 h-4"></i>
+                <span>RISK & EXIT LOGIC (HOW WE WIN)</span>
+              </div>
+              <ul class="text-slate-300 space-y-1.5 list-disc list-inside text-[11px] font-sans">
+                <li>Lots: <code class="text-emerald-400">round($5.00 / (dist * 0.10))</code> (~167 lots for $0.30 dist).</li>
+                <li>TP1 Target: <strong>1:2.4R ➔ Close 50% lots (Bank +$6.00)</strong>.</li>
+                <li>Breakeven: Stop moved to <strong>Entry + $0.05</strong> (+0.15R buffer).</li>
+                <li>Runner Trail: 0.8x ATR dynamic trail up to <strong>6.0R (Bank up to +$15.00)</strong>.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:w-1/3 p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4 font-mono text-xs">
+          <div class="text-slate-400 font-bold uppercase text-[11px]">AUDITED SILVER METRICS (8 MONTHS)</div>
+          <div class="space-y-3">
+            <div class="flex justify-between border-b border-slate-850 pb-2">
+              <span class="text-slate-400">Total Net P&L</span>
+              <span class="text-cyan-400 font-black text-sm">+$466.43</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-850 pb-2">
+              <span class="text-slate-400">Net Return (ROI)</span>
+              <span class="text-cyan-400 font-bold">+932.9%</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-850 pb-2">
+              <span class="text-slate-400">Win Rate %</span>
+              <span class="text-white font-bold">46.1% (59 Wins / 69 Losses)</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-850 pb-2">
+              <span class="text-slate-400">Profit Factor</span>
+              <span class="text-purple-400 font-bold">2.30</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-850 pb-2">
+              <span class="text-slate-400">Max Drawdown</span>
+              <span class="text-emerald-300 font-bold">-$25.85 (5.1 R)</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Avg Win / Loss</span>
+              <span class="text-slate-200">+$13.97 / -$5.18</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- SECTION 4: INTERACTIVE $5 RISK LOT SIZING CALCULATOR -->
+  <section class="max-w-7xl mx-auto glass-card rounded-3xl p-6 sm:p-8 space-y-6">
+    <div class="border-b border-slate-800 pb-4">
+      <span class="text-xs font-mono font-bold text-blue-400 uppercase tracking-wider">LIVE POSITION SIZING TOOL</span>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-white mt-1 flex items-center gap-2">
+        <i data-lucide="calculator" class="w-6 h-6 text-blue-400"></i>
+        <span>Interactive $5 Risk Trade Simulator</span>
+      </h2>
+      <p class="text-sm text-slate-400 mt-1">Select an asset and enter trade parameters to calculate exact contracts, risk, and expected scale-out payoff.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 font-mono text-xs">
+      
+      <!-- INPUTS -->
+      <div class="space-y-4 p-5 rounded-2xl bg-slate-900/80 border border-slate-800">
+        <div>
+          <label class="block text-slate-400 mb-1">Select Instrument</label>
+          <select id="calcAsset" onchange="runCalculator()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+            <option value="BTC">₿ Bitcoin (BTCUSD) - 100x</option>
+            <option value="ETH">Ξ Ethereum (ETHUSD) - 100x</option>
+            <option value="GOLD">🥇 Gold (XAUTUSD) - 100x</option>
+            <option value="SILVER">🥈 Silver (SLVONUSD) - 50x</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1">Entry Price ($)</label>
+          <input type="number" id="calcEntry" value="90000" step="any" oninput="runCalculator()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1">Stop Loss Price ($)</label>
+          <input type="number" id="calcSl" value="89820" step="any" oninput="runCalculator()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1">Fixed Risk Amount</label>
+          <div class="px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 font-extrabold border border-emerald-500/20 text-sm">
+            $5.00 USD (Capped)
+          </div>
+        </div>
+      </div>
+
+      <!-- LOT CALCULATION RESULTS -->
+      <div class="space-y-3 p-5 rounded-2xl bg-slate-900/80 border border-slate-800">
+        <div class="text-slate-400 font-bold uppercase text-[11px]">CALCULATED ORDER SIZING</div>
+        <div class="flex justify-between border-b border-slate-850 pb-2">
+          <span class="text-slate-400">Stop Distance</span>
+          <span id="resDist" class="text-white font-bold">$180.00</span>
+        </div>
+        <div class="flex justify-between border-b border-slate-850 pb-2">
+          <span class="text-slate-400">Position Size (Lots)</span>
+          <span id="resLots" class="text-emerald-400 font-black text-sm">28 Lots</span>
+        </div>
+        <div class="flex justify-between border-b border-slate-850 pb-2">
+          <span class="text-slate-400">Underlying Quantity</span>
+          <span id="resQty" class="text-white">0.028 BTC</span>
+        </div>
+        <div class="flex justify-between border-b border-slate-850 pb-2">
+          <span class="text-slate-400">Notional Trade Value</span>
+          <span id="resNotional" class="text-slate-300">$2,520.00</span>
+        </div>
+        <div class="flex justify-between border-b border-slate-850 pb-2">
+          <span class="text-slate-400">Required Margin (Isolated)</span>
+          <span id="resMargin" class="text-slate-300">$25.20</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-400">Delta Fee (0.01% Round-Trip)</span>
+          <span id="resFee" class="text-amber-400">-$0.50</span>
+        </div>
+      </div>
+
+      <!-- PAYOFF PROFILE -->
+      <div class="space-y-3 p-5 rounded-2xl bg-slate-950 border border-slate-800">
+        <div class="text-slate-400 font-bold uppercase text-[11px]">PROJECTED PAYOFF AT PHASES</div>
+        
+        <div class="p-2.5 rounded-xl bg-rose-950/20 border border-rose-500/20 space-y-1">
+          <div class="flex justify-between text-[11px]">
+            <span class="text-rose-400 font-bold">Stop Loss Hit (Loss)</span>
+            <span id="resLoss" class="text-rose-400 font-bold">-$5.50</span>
+          </div>
+          <p class="text-[10px] text-slate-400 font-sans">Strictly capped at -$5.00 price move + 0.01% fee.</p>
+        </div>
+
+        <div class="p-2.5 rounded-xl bg-emerald-950/20 border border-emerald-500/20 space-y-1">
+          <div class="flex justify-between text-[11px]">
+            <span class="text-emerald-400 font-bold">TP1 (50% Scaled @ 2.0R)</span>
+            <span id="resTp1" class="text-emerald-400 font-bold">+$5.00 Banked</span>
+          </div>
+          <p class="text-[10px] text-slate-400 font-sans">Locked into cash. Stop moved to Breakeven.</p>
+        </div>
+
+        <div class="p-2.5 rounded-xl bg-purple-950/20 border border-purple-500/20 space-y-1">
+          <div class="flex justify-between text-[11px]">
+            <span class="text-purple-400 font-bold">Full Runner Hit (3.5R Target)</span>
+            <span id="resRunner" class="text-purple-400 font-bold">+$13.75 Total Net</span>
+          </div>
+          <p class="text-[10px] text-slate-400 font-sans">Combined 50% TP1 + 50% runner fat-tail gain.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SECTION 5: INSTITUTIONAL CONFLUENCE SUMMARY TABLE -->
+  <section class="max-w-7xl mx-auto glass-card rounded-3xl p-6 sm:p-8 space-y-6">
+    <div class="border-b border-slate-800 pb-4">
+      <span class="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider">STRATEGY COMPARISON</span>
+      <h2 class="text-xl sm:text-2xl font-extrabold text-white mt-1">Institutional Strategy Confluence Matrix</h2>
+      <p class="text-sm text-slate-400 mt-1">Comparison of all four $5 risk strategies operating together in the 4-Asset Apex Portfolio.</p>
+    </div>
+
+    <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/50 font-mono text-xs">
+      <table class="w-full text-left">
+        <thead class="bg-slate-950 text-slate-400 border-b border-slate-800">
+          <tr>
+            <th class="p-3.5">Strategy Name</th>
+            <th class="p-3.5">Asset</th>
+            <th class="p-3.5">Primary Alpha Source</th>
+            <th class="p-3.5">Win Rate</th>
+            <th class="p-3.5">Profit Factor</th>
+            <th class="p-3.5">9-Mo Net P&L</th>
+            <th class="p-3.5">Max DD</th>
+            <th class="p-3.5">Key Edge</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800/60 text-slate-300">
+          <tr class="hover:bg-slate-800/30">
+            <td class="p-3.5 font-bold text-white">👑 BTC Apex Profit Max</td>
+            <td class="p-3.5 text-orange-400 font-bold">BTCUSD</td>
+            <td class="p-3.5 text-slate-300 font-sans">1.5σ Session VWAP Fade + CVD Absorption</td>
+            <td class="p-3.5 font-bold text-emerald-400">66.1%</td>
+            <td class="p-3.5 font-bold text-purple-400">2.25</td>
+            <td class="p-3.5 font-bold text-emerald-400">+$2,166.24</td>
+            <td class="p-3.5 text-emerald-300">-$32.55</td>
+            <td class="p-3.5 text-slate-400 font-sans">High frequency 24/7 mean-reversion</td>
+          </tr>
+          <tr class="hover:bg-slate-800/30">
+            <td class="p-3.5 font-bold text-white">👑 ETH Apex Profit Max</td>
+            <td class="p-3.5 text-purple-400 font-bold">ETHUSD</td>
+            <td class="p-3.5 text-slate-300 font-sans">1.5σ Session VWAP Fade + Delta Exhaustion</td>
+            <td class="p-3.5 font-bold text-emerald-400">66.7%</td>
+            <td class="p-3.5 font-bold text-purple-400">2.36</td>
+            <td class="p-3.5 font-bold text-purple-400">+$2,119.28</td>
+            <td class="p-3.5 text-emerald-300">-$37.54</td>
+            <td class="p-3.5 text-slate-400 font-sans">High beta runners + fast de-risking</td>
+          </tr>
+          <tr class="hover:bg-slate-800/30">
+            <td class="p-3.5 font-bold text-white">👑 Silver Profit Max</td>
+            <td class="p-3.5 text-cyan-400 font-bold">SLVONUSD</td>
+            <td class="p-3.5 text-slate-300 font-sans">Swing Sweep + 1:2.4R Partial + 6.0R Trail</td>
+            <td class="p-3.5 text-white">46.1%</td>
+            <td class="p-3.5 font-bold text-purple-400">2.30</td>
+            <td class="p-3.5 font-bold text-cyan-400">+$466.43</td>
+            <td class="p-3.5 text-emerald-300">-$25.85</td>
+            <td class="p-3.5 text-slate-400 font-sans">Huge 6.0R fat-tail runner payoff</td>
+          </tr>
+          <tr class="hover:bg-slate-800/30">
+            <td class="p-3.5 font-bold text-white">💎 Gold Apex Pro</td>
+            <td class="p-3.5 text-amber-400 font-bold">XAUTUSD</td>
+            <td class="p-3.5 text-slate-300 font-sans">Session Chop Filter + 200 EMA + 2.5R Scale</td>
+            <td class="p-3.5 text-white">48.8%</td>
+            <td class="p-3.5 font-bold text-purple-400">1.50</td>
+            <td class="p-3.5 font-bold text-amber-400">+$372.96</td>
+            <td class="p-3.5 text-emerald-300">-$48.33</td>
+            <td class="p-3.5 text-slate-400 font-sans">Steady institutional capital preservation</td>
+          </tr>
+          <tr class="bg-emerald-950/30 font-bold border-t-2 border-emerald-500/40">
+            <td class="p-3.5 text-emerald-400">👑 4-Asset Apex Portfolio</td>
+            <td class="p-3.5 text-white">ALL 4</td>
+            <td class="p-3.5 text-slate-200 font-sans">Concurrent Uncorrelated Multi-Asset Ensemble</td>
+            <td class="p-3.5 font-bold text-emerald-400">63.2%</td>
+            <td class="p-3.5 font-bold text-purple-400">2.16</td>
+            <td class="p-3.5 font-extrabold text-emerald-400 text-sm">+$5,124.75</td>
+            <td class="p-3.5 text-emerald-300">-$66.55</td>
+            <td class="p-3.5 text-emerald-300 font-sans">+10,249.5% Net ROI from $50 base</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="max-w-7xl mx-auto border-t border-slate-800 pt-6 pb-12 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-slate-500">
+    <div>
+      Agent Brain • Delta Exchange India Futures Quantitative Trading System • Strict $5.00 Risk Rule
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="backtest_report.html" class="hover:text-emerald-400 transition">Backtest Scorecard</a>
+      <span>•</span>
+      <a href="agent_journal.html" class="hover:text-blue-400 transition">Trading Journal</a>
+      <span>•</span>
+      <a href="btc_report.html" class="hover:text-orange-400 transition">BTC Report</a>
+      <span>•</span>
+      <a href="eth_report.html" class="hover:text-purple-400 transition">ETH Report</a>
+    </div>
+  </footer>
+
+  <script>
+    lucide.createIcons();
+
+    // Tab Switching Logic
+    function showStrategyTab(tab) {
+      const tabs = ['btc', 'eth', 'gold', 'silver'];
+      const buttons = {
+        'btc': document.getElementById('btnTabBtc'),
+        'eth': document.getElementById('btnTabEth'),
+        'gold': document.getElementById('btnTabGold'),
+        'silver': document.getElementById('btnTabSilver')
+      };
+      const contents = {
+        'btc': document.getElementById('tabContentBtc'),
+        'eth': document.getElementById('tabContentEth'),
+        'gold': document.getElementById('tabContentGold'),
+        'silver': document.getElementById('tabContentSilver')
+      };
+
+      tabs.forEach(t => {
+        if (t === tab) {
+          buttons[t].className = "px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1 cursor-pointer tab-active";
+          contents[t].classList.remove('hidden');
+        } else {
+          buttons[t].className = "px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1 cursor-pointer text-slate-400 hover:text-white hover:bg-slate-800";
+          contents[t].classList.add('hidden');
+        }
+      });
+      lucide.createIcons();
+    }
+
+    // Interactive Position Sizing Calculator
+    const assetDefaults = {
+      'BTC': { entry: 90000, sl: 89820, cVal: 0.001, unit: 'BTC', lev: 100 },
+      'ETH': { entry: 3100, sl: 3092, cVal: 0.01, unit: 'ETH', lev: 100 },
+      'GOLD': { entry: 4750, sl: 4740, cVal: 0.001, unit: 'XAUT', lev: 100 },
+      'SILVER': { entry: 72.50, sl: 72.20, cVal: 0.10, unit: 'SLVON', lev: 50 }
+    };
+
+    function runCalculator() {
+      const assetKey = document.getElementById('calcAsset').value;
+      const def = assetDefaults[assetKey];
+      
+      const entry = parseFloat(document.getElementById('calcEntry').value) || def.entry;
+      const sl = parseFloat(document.getElementById('calcSl').value) || def.sl;
+      const dist = Math.max(0.01, Math.abs(entry - sl));
+
+      const fixedRisk = 5.00;
+      const lots = Math.max(1, Math.round(fixedRisk / (dist * def.cVal)));
+      const qty = (lots * def.cVal).toFixed(assetKey === 'SILVER' ? 1 : (assetKey === 'ETH' ? 2 : 3));
+      const notional = lots * def.cVal * entry;
+      const margin = notional / def.lev;
+      const fee = notional * 0.0001 * 2; // 0.01% round-trip
+
+      document.getElementById('resDist').innerText = `$${dist.toFixed(assetKey === 'SILVER' ? 2 : (assetKey === 'GOLD' ? 2 : 1))}`;
+      document.getElementById('resLots').innerText = `${lots} Lots`;
+      document.getElementById('resQty').innerText = `${qty} ${def.unit}`;
+      document.getElementById('resNotional').innerText = `$${notional.toFixed(2)}`;
+      document.getElementById('resMargin').innerText = `$${margin.toFixed(2)}`;
+      document.getElementById('resFee').innerText = `-$${fee.toFixed(2)}`;
+
+      const maxLoss = (lots * def.cVal * dist) + fee;
+      document.getElementById('resLoss').innerText = `-$${maxLoss.toFixed(2)}`;
+
+      // TP1: 50% lots closed at 2.0R
+      const halfLots = Math.max(1, Math.floor(lots / 2));
+      const tp1Gain = (halfLots * def.cVal * (dist * 2.0)) - (halfLots * def.cVal * (entry + (dist * 2.0)) * 0.0001 * 2);
+      document.getElementById('resTp1').innerText = `+$${tp1Gain.toFixed(2)} Banked`;
+
+      // Full payoff: 50% at 2.0R + 50% at 3.5R
+      const remLots = lots - halfLots;
+      const remGain = (remLots * def.cVal * (dist * 3.5)) - (remLots * def.cVal * (entry + (dist * 3.5)) * 0.0001 * 2);
+      const totalNet = tp1Gain + remGain;
+      document.getElementById('resRunner').innerText = `+$${totalNet.toFixed(2)} Total Net`;
+    }
+
+    // Update default values when selector changes
+    document.getElementById('calcAsset').addEventListener('change', function() {
+      const def = assetDefaults[this.value];
+      document.getElementById('calcEntry').value = def.entry;
+      document.getElementById('calcSl').value = def.sl;
+      runCalculator();
+    });
+
+    runCalculator();
+  </script>
+</body>
+</html>
