@@ -42,26 +42,31 @@ ACTIVE_SYMBOLS = [
 ]
 
 # Delta Exchange Fee & Contract Specifications:
-# - XAUTUSD (Gold) & SLVONUSD (Silver): Flat $0.01 fixed brokerage fee per trade
+# - XAUTUSD (Gold) & SLVONUSD (Silver): 0.01% Maker (0.0001) & 0.02% Taker (0.0002)
 # - BTCUSD & ETHUSD: 0.02% Maker (0.0002) & 0.05% Taker (0.0005)
+# - Delta India: 18% GST on brokerage fees
+DELTA_GST_RATE = 0.18
 DELTA_BROKERAGE_FEE_PCT = 0.0002  # Default maker reference (0.02%)
 DELTA_FEES = {
-    "XAUTUSD": {"mode": "flat", "fee": 0.01},
-    "SLVONUSD": {"mode": "flat", "fee": 0.01},
+    "XAUTUSD": {"mode": "pct", "maker": 0.0001, "taker": 0.0002},
+    "SLVONUSD": {"mode": "pct", "maker": 0.0001, "taker": 0.0002},
     "BTCUSD": {"mode": "pct", "maker": 0.0002, "taker": 0.0005},
     "ETHUSD": {"mode": "pct", "maker": 0.0002, "taker": 0.0005},
 }
 
-def calculate_brokerage_fee(symbol: str, notional: float, is_sl: bool = False) -> float:
-    """Calculates contract-specific brokerage fee on Delta Exchange India."""
+def calculate_brokerage_fee(symbol: str, notional: float, is_sl: bool = False, include_gst: bool = True) -> float:
+    """Calculates contract-specific brokerage fee + 18% GST on Delta Exchange India."""
     s = symbol.upper()
     if "XAUT" in s or "SLV" in s:
-        return 0.01 # Flat $0.01 per trade
-    else: # BTC or ETH
-        entry_fee = notional * 0.0002
+        entry_rate = 0.0001
+        exit_rate = 0.0002 if is_sl else 0.0001
+    else:  # BTC or ETH
+        entry_rate = 0.0002
         exit_rate = 0.0005 if is_sl else 0.0002
-        exit_fee = notional * exit_rate
-        return round(entry_fee + exit_fee, 4)
+
+    raw_fee = (notional * entry_rate) + (notional * exit_rate)
+    total_fee = raw_fee * (1.0 + DELTA_GST_RATE) if include_gst else raw_fee
+    return round(total_fee, 4)
 
 LEVERAGE_MAP = {
     "XAUTUSD": 100,  # 100x Isolated Leverage on Gold Futures

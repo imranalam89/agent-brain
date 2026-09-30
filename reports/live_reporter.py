@@ -188,7 +188,7 @@ def generate_live_journal_html(
     </div>
     <div class="flex items-center gap-2 flex-wrap">
       <span class="px-3 py-1 rounded-xl bg-slate-900 border border-slate-700 text-slate-300">
-        Brokerage Fee: <strong class="text-amber-400">XAUT/SLV $0.01 Flat • BTC/ETH 0.02% Maker / 0.05% Taker</strong>
+        Brokerage Fee: <strong class="text-amber-400">XAUT/SLV 0.01% Maker • BTC/ETH 0.02% Maker / 0.05% Taker (+18% GST)</strong>
       </span>
       <span class="px-3 py-1 rounded-xl bg-slate-900 border border-slate-700 text-slate-300">
         Leverage: <strong class="text-blue-400">100x BTC/ETH/Gold | 50x Silver</strong>
