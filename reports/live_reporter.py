@@ -200,6 +200,72 @@ def generate_live_journal_html(
     </div>
   </div>
 
+  <!-- OPERATOR LIVE COMMAND & RISK CONTROL COCKPIT -->
+  <div class="max-w-7xl mx-auto glass-card rounded-2xl p-5 border-l-4 border-l-cyan-500 shadow-xl font-mono">
+    <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+      
+      <!-- LEFT: MASTER SLEEP / PAUSE SWITCH -->
+      <div class="flex-1 space-y-2">
+        <div class="flex items-center gap-2">
+          <i data-lucide="power" class="w-5 h-5 text-cyan-400"></i>
+          <h2 class="text-sm font-bold text-white uppercase tracking-wider">Engine Master Switch &amp; News Freeze</h2>
+          <span id="botStatusBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span id="botStatusText">ACTIVE (Scanning A+ Setups)</span>
+          </span>
+        </div>
+        <p id="botStatusSubtext" class="text-xs text-slate-400">
+          Bot is actively scanning BTC, ETH, Gold, and Silver every 3 seconds for high-confluence entries.
+        </p>
+        <div class="flex items-center gap-2 flex-wrap pt-1 text-xs">
+          <button id="btnToggleBot" onclick="toggleBotMasterStatus()" class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold transition flex items-center gap-1.5">
+            <i data-lucide="pause-circle" class="w-4 h-4"></i>
+            <span id="btnToggleBotText">Pause Bot (News Sleep)</span>
+          </button>
+          <button onclick="pauseBotFor(60, 'News Event 1 Hour')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 font-semibold transition flex items-center gap-1">
+            <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-400"></i>
+            <span>Sleep 1 Hour</span>
+          </button>
+          <button onclick="pauseBotFor(120, 'News Event 2 Hours')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 font-semibold transition flex items-center gap-1">
+            <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-400"></i>
+            <span>Sleep 2 Hours</span>
+          </button>
+          <button onclick="resumeBotNow()" class="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-white border border-emerald-500/30 font-semibold transition flex items-center gap-1">
+            <i data-lucide="play" class="w-3.5 h-3.5"></i>
+            <span>Resume Now</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- RIGHT: DYNAMIC RISK PER TRADE SELECTOR -->
+      <div class="lg:border-l lg:border-slate-800 lg:pl-6 space-y-2">
+        <div class="flex items-center gap-2">
+          <i data-lucide="shield-alert" class="w-5 h-5 text-rose-400"></i>
+          <h2 class="text-sm font-bold text-white uppercase tracking-wider">Dynamic Risk Per Trade</h2>
+          <span id="currentRiskBadge" class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 text-xs font-bold border border-rose-500/30">
+            $5.00 / Trade
+          </span>
+        </div>
+        <p class="text-xs text-slate-400">
+          Strict lot sizing applied automatically to all upcoming bracket entries.
+        </p>
+        <div class="flex items-center gap-2 flex-wrap pt-1 text-xs">
+          <button onclick="setRiskAmount(3.0)" class="btn-risk px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold transition" data-risk="3">$3</button>
+          <button onclick="setRiskAmount(5.0)" class="btn-risk px-3 py-1.5 rounded-xl bg-rose-600 text-white border border-rose-500 font-bold transition shadow-lg shadow-rose-600/30" data-risk="5">$5 (Default)</button>
+          <button onclick="setRiskAmount(10.0)" class="btn-risk px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold transition" data-risk="10">$10</button>
+          <button onclick="setRiskAmount(15.0)" class="btn-risk px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold transition" data-risk="15">$15</button>
+          
+          <div class="flex items-center gap-1 ml-1">
+            <span class="text-slate-500 font-bold">$</span>
+            <input id="inputCustomRisk" type="number" min="1" max="100" step="0.5" placeholder="Custom" class="w-20 px-2 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-bold text-center focus:outline-none focus:border-rose-500">
+            <button onclick="applyCustomRisk()" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-500 hover:text-white text-slate-300 border border-slate-700 font-bold transition">Set</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- FINANCIAL COCKPIT STATS -->
   <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 font-mono">
     <div class="glass-card rounded-2xl p-4 border-l-4 border-l-emerald-500">
@@ -224,7 +290,7 @@ def generate_live_journal_html(
     </div>
     <div class="glass-card rounded-2xl p-4 border-l-4 border-l-rose-500">
       <span class="text-slate-400 text-xs block mb-1">Risk Per Trade</span>
-      <span class="text-2xl font-extrabold text-white">$5.00</span>
+      <span id="statTargetRisk" class="text-2xl font-extrabold text-white">$5.00</span>
       <span class="text-[11px] text-slate-500 block mt-1">Max -$25 Circuit Breaker</span>
     </div>
     <div class="glass-card rounded-2xl p-4 border-l-4 border-l-blue-500">
@@ -912,6 +978,118 @@ def generate_live_journal_html(
       renderCalendarGrid();
     }}
 
+    let currentBotStatus = "ACTIVE";
+    let currentTargetRisk = 5.0;
+
+    // Interactive Operator Controls: Risk
+    async function setRiskAmount(riskVal) {{
+      try {{
+        const val = parseFloat(riskVal);
+        if (isNaN(val) || val <= 0) return;
+        const res = await fetch('/api/set-risk', {{
+          method: 'POST',
+          headers: {{ 'Content-Type': 'application/json' }},
+          body: JSON.stringify({{ risk_usd: val }})
+        }});
+        const data = await res.json();
+        if (data.success) {{
+          currentTargetRisk = data.target_risk_usd;
+          updateRiskUI(currentTargetRisk);
+        }} else {{
+          alert("Error setting risk: " + (data.error || "Unknown"));
+        }}
+      }} catch (err) {{
+        console.error("Failed to set risk:", err);
+      }}
+    }}
+
+    function applyCustomRisk() {{
+      const input = document.getElementById("inputCustomRisk");
+      if (input && input.value) {{
+        setRiskAmount(input.value);
+        input.value = "";
+      }}
+    }}
+
+    function updateRiskUI(risk) {{
+      const badge = document.getElementById("currentRiskBadge");
+      const statCard = document.getElementById("statTargetRisk");
+      if (badge) badge.innerText = `$${{risk.toFixed(2)}} / Trade`;
+      if (statCard) statCard.innerText = `$${{risk.toFixed(2)}}`;
+
+      document.querySelectorAll(".btn-risk").forEach(btn => {{
+        const bRisk = parseFloat(btn.getAttribute("data-risk"));
+        if (Math.abs(bRisk - risk) < 0.01) {{
+          btn.className = "btn-risk px-3 py-1.5 rounded-xl bg-rose-600 text-white border border-rose-500 font-bold transition shadow-lg shadow-rose-600/30";
+        }} else {{
+          btn.className = "btn-risk px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold transition";
+        }}
+      }});
+    }}
+
+    // Interactive Operator Controls: Bot Status
+    async function setBotStatus(status, durationMinutes = 0, reason = "") {{
+      try {{
+        const res = await fetch('/api/toggle-bot-status', {{
+          method: 'POST',
+          headers: {{ 'Content-Type': 'application/json' }},
+          body: JSON.stringify({{ status: status, duration_minutes: durationMinutes, reason: reason }})
+        }});
+        const data = await res.json();
+        if (data.success) {{
+          currentBotStatus = data.bot_status;
+          updateBotStatusUI(data.bot_status, data.pause_reason, data.pause_until);
+        }}
+      }} catch (err) {{
+        console.error("Failed to update bot status:", err);
+      }}
+    }}
+
+    function toggleBotMasterStatus() {{
+      if (currentBotStatus === "ACTIVE") {{
+        setBotStatus("PAUSED", 0, "Manual Operator Pause");
+      }} else {{
+        setBotStatus("ACTIVE", 0, "Resumed by Operator");
+      }}
+    }}
+
+    function pauseBotFor(minutes, reason) {{
+      setBotStatus("PAUSED", minutes, reason);
+    }}
+
+    function resumeBotNow() {{
+      setBotStatus("ACTIVE", 0, "Resumed by Operator");
+    }}
+
+    function updateBotStatusUI(status, reason, until) {{
+      currentBotStatus = status;
+      const badge = document.getElementById("botStatusBadge");
+      const text = document.getElementById("botStatusText");
+      const subtext = document.getElementById("botStatusSubtext");
+      const toggleBtn = document.getElementById("btnToggleBot");
+      const toggleBtnText = document.getElementById("btnToggleBotText");
+
+      if (status === "PAUSED") {{
+        if (badge) {{
+          badge.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5";
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400"></span><span>SLEEP / PAUSED</span>`;
+        }}
+        const timeNote = until ? ` until ${{new Date(until).toLocaleTimeString([], {{hour: '2-digit', minute:'2-digit'}})}}` : '';
+        if (subtext) subtext.innerHTML = `<span class="text-amber-400 font-bold">⏸️ NEW ENTRIES FROZEN (${{reason || 'News Freeze'}}${{timeNote}}).</span> Active bracket positions remain protected on Delta.`;
+        if (toggleBtn) toggleBtn.className = "px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 font-bold transition flex items-center gap-1.5";
+        if (toggleBtnText) toggleBtnText.innerText = "Resume Bot (Start Trading)";
+      }} else {{
+        if (badge) {{
+          badge.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5";
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>ACTIVE (Scanning A+ Setups)</span>`;
+        }}
+        if (subtext) subtext.innerText = "Bot is actively scanning BTC, ETH, Gold, and Silver every 3 seconds for high-confluence entries.";
+        if (toggleBtn) toggleBtn.className = "px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold transition flex items-center gap-1.5";
+        if (toggleBtnText) toggleBtnText.innerText = "Pause Bot (News Sleep)";
+      }}
+      lucide.createIcons();
+    }}
+
     // Real-time API Poller
     async function fetchLiveStatus() {{
       try {{
@@ -919,6 +1097,15 @@ def generate_live_journal_html(
         if (!res.ok) return;
         const data = await res.json();
         if (!data.success) return;
+
+        // Update Bot Master Controls
+        if (data.bot_status) {{
+          updateBotStatusUI(data.bot_status, data.pause_reason, data.pause_until);
+        }}
+        if (data.target_risk_usd !== undefined) {{
+          currentTargetRisk = parseFloat(data.target_risk_usd);
+          updateRiskUI(currentTargetRisk);
+        }}
 
         // Update Wallet Balances
         if (data.wallet) {{
