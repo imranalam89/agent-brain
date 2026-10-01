@@ -210,13 +210,33 @@ class DeltaExchangeClient:
             raw_candles = res["result"]
             candles = []
             for c in raw_candles:
+                c_open = float(c.get("open", 0))
+                c_high = float(c.get("high", 0))
+                c_low = float(c.get("low", 0))
+                c_close = float(c.get("close", 0))
+                vol = float(c.get("volume", 0))
+                bar_range = max(1e-5, c_high - c_low)
+
+                # Orderflow delta: use API delta if provided; otherwise compute directional body/wick bias delta
+                if "delta" in c:
+                    bar_delta = float(c["delta"])
+                else:
+                    body = c_close - c_open
+                    lower_wick = min(c_open, c_close) - c_low
+                    upper_wick = c_high - max(c_open, c_close)
+                    directional_bias = body / bar_range
+                    wick_bias = (lower_wick - upper_wick) / bar_range
+                    effective_bias = (0.7 * directional_bias) + (0.3 * wick_bias)
+                    bar_delta = round(effective_bias * vol, 4)
+
                 candles.append({
                     "timestamp": c.get("time"),
-                    "open": float(c.get("open", 0)),
-                    "high": float(c.get("high", 0)),
-                    "low": float(c.get("low", 0)),
-                    "close": float(c.get("close", 0)),
-                    "volume": float(c.get("volume", 0))
+                    "open": c_open,
+                    "high": c_high,
+                    "low": c_low,
+                    "close": c_close,
+                    "volume": vol,
+                    "delta": bar_delta
                 })
             # Sort ascending so candles[-1] is always the latest bar
             candles.sort(key=lambda x: x["timestamp"])

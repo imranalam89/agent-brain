@@ -579,13 +579,23 @@ class MultiPairLiveTrader:
 
         delta = latest.get("delta", 0.0)
         v_latest = max(1.0, latest.get("volume", 1.0))
-        delta_ratio = delta / v_latest
-
         c_open = latest.get("open", current_price)
         c_high = latest.get("high", current_price)
         c_low = latest.get("low", current_price)
         c_close = latest.get("close", current_price)
         candle_range = max(0.01, c_high - c_low)
+
+        if delta == 0.0 and candle_range > 0:
+            body = c_close - c_open
+            lower_wick = min(c_open, c_close) - c_low
+            upper_wick = c_high - max(c_open, c_close)
+            directional_bias = body / candle_range
+            wick_bias = (lower_wick - upper_wick) / candle_range
+            effective_bias = (0.7 * directional_bias) + (0.3 * wick_bias)
+            delta = effective_bias * v_latest
+            delta_ratio = effective_bias
+        else:
+            delta_ratio = delta / v_latest
 
         # -----------------------------------------------------------------
         # CONFIRMATION LOGIC & ANTI-CASCADE (NO FALLING KNIVES / SPIKES)
@@ -640,10 +650,25 @@ class MultiPairLiveTrader:
             macro_bull = True
             macro_bear = True
 
-        buy_score = sum([sweep_buy, vwap_buy, absorb_buy, (macro_bull and sweep_buy)])
-        sell_score = sum([sweep_sell, vwap_sell, absorb_sell, (macro_bear and sweep_sell)])
-
+        buy_score = (1 if sweep_buy else 0) + (1 if vwap_buy else 0) + (1 if absorb_buy else 0) + (1 if (macro_bull and sweep_buy) else 0)
+        sell_score = (1 if sweep_sell else 0) + (1 if vwap_sell else 0) + (1 if absorb_sell else 0) + (1 if (macro_bear and sweep_sell) else 0)
         min_score = 2 if ("BTC" in symbol or "ETH" in symbol) else 1
+
+        # Periodic live transparency log into Brain Thoughts
+        now_ts = time.time()
+        if not hasattr(self, "_last_thought_log"):
+            self._last_thought_log = {}
+        last_t = self._last_thought_log.get(symbol, 0)
+        if (buy_score > 0 or sell_score > 0) and (now_ts - last_t > 90):
+            self._last_thought_log[symbol] = now_ts
+            dir_str = "BUY" if buy_score > sell_score else "SELL"
+            lead_score = max(buy_score, sell_score)
+            self.db.log_thought(
+                symbol=symbol,
+                event_type="SETUP_MONITOR",
+                stars=round(2.5 + (lead_score * 0.7), 1),
+                message=f"Scanning {symbol}: Score {lead_score}/{min_score} ({dir_str}). Price: ${current_price:,.2f}. Delta Ratio: {delta_ratio:+.3f}. VWAP: ${vwap:,.2f}."
+            )
 
         is_buy = (buy_score >= min_score) and (sell_score == 0) and bullish_candle_confirm and not_falling_knife
         is_sell = (sell_score >= min_score) and (buy_score == 0) and bearish_candle_confirm and not_rising_spike

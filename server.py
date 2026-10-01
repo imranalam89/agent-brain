@@ -314,6 +314,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 "success": True,
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "connected": bal_res.get("success", False),
+                "auth_error": bal_res.get("error", ""),
+                "client_ip": bal_res.get("client_ip", ""),
                 "account_id": "74634658",
                 "bot_status": "PAUSED" if is_paused else "ACTIVE",
                 "target_risk_usd": target_risk,

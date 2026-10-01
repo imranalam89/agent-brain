@@ -132,7 +132,7 @@ def generate_live_journal_html(
           </span>
         </div>
         <p class="text-xs text-slate-400 font-mono mt-0.5">
-          Delta Exchange India Account ID: <span class="text-emerald-400 font-bold">{account_id}</span> • Status: <span class="text-emerald-400 font-bold">CONNECTED &amp; ACTIVE</span>
+          Delta Exchange India Account ID: <span class="text-emerald-400 font-bold">{account_id}</span> • Status: <span id="headerConnStatus" class="text-emerald-400 font-bold">CONNECTED &amp; ACTIVE</span>
         </p>
       </div>
     </div>
@@ -1098,7 +1098,18 @@ def generate_live_journal_html(
         const data = await res.json();
         if (!data.success) return;
 
-        // Update Bot Master Controls
+        // Update Delta Connection State
+        const connEl = document.getElementById("headerConnStatus");
+        if (connEl) {{
+          if (data.connected) {{
+            connEl.className = "text-emerald-400 font-bold";
+            connEl.innerText = "CONNECTED & ACTIVE";
+          }} else {{
+            connEl.className = "text-rose-400 font-bold";
+            const errDetail = data.auth_error ? ` (${{data.auth_error}})` : " (API Offline / Check Whitelist)";
+            connEl.innerText = `NOT CONNECTED${{errDetail}}`;
+          }}
+        }}
         if (data.bot_status) {{
           updateBotStatusUI(data.bot_status, data.pause_reason, data.pause_until);
         }}
