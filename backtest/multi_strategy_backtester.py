@@ -804,8 +804,8 @@ class MultiStrategyBacktester:
         USD ($) and INR (₹) accounting.
         """
         raw_trades = self.db.get_trades(limit=25000)
-        # Sort chronologically
-        raw_trades.sort(key=lambda t: (t.get("closed_at") or t.get("opened_at") or ""))
+        # Sort chronologically by entry time (opened_at)
+        raw_trades.sort(key=lambda t: (t.get("opened_at") or t.get("closed_at") or ""))
 
         filtered_trades = []
         for t in raw_trades:

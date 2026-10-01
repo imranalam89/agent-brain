@@ -420,16 +420,26 @@ class DynamicTradeManager:
         # 5. Phase 2: Post-Scale-Out Trailing Management (Remaining 50% Position)
         if tp1_hit:
             # Operator Trailing Logic:
-            # Milestone 1: Stop moved to Break-Even (+0.10R buffer to cover fees)
-            be_sl = round(entry + (0.10 * dist), decimals) if side == "BUY" else round(entry - (0.10 * dist), decimals)
+            # Milestone 1: Stop moved to Break-Even (+0.15R buffer to cover all exchange fees)
+            be_sl = round(entry + (0.15 * dist), decimals) if side == "BUY" else round(entry - (0.15 * dist), decimals)
             new_sl = max(curr_sl, be_sl) if side == "BUY" else min(curr_sl, be_sl)
 
-            # Milestone 2: 2.2R+ Expansion -> Lock in at least +1.0R guaranteed profit!
-            if peak_rr >= 2.2:
-                lock_1r = round(entry + (1.0 * dist), decimals) if side == "BUY" else round(entry - (1.0 * dist), decimals)
-                new_sl = max(new_sl, lock_1r) if side == "BUY" else min(new_sl, lock_1r)
+            # Milestone 2: 3.5R+ Expansion -> Lock in at least +1.5R guaranteed profit!
+            if peak_rr >= 3.5:
+                lock_1_5r = round(entry + (1.5 * dist), decimals) if side == "BUY" else round(entry - (1.5 * dist), decimals)
+                new_sl = max(new_sl, lock_1_5r) if side == "BUY" else min(new_sl, lock_1_5r)
 
-            # Milestone 3: 2.8R+ Expansion -> Dynamic structural trailing behind 15m pivots
+            # Milestone 3: 5.0R+ Expansion -> Lock in at least +3.0R guaranteed profit!
+            if peak_rr >= 5.0:
+                lock_3r = round(entry + (3.0 * dist), decimals) if side == "BUY" else round(entry - (3.0 * dist), decimals)
+                new_sl = max(new_sl, lock_3r) if side == "BUY" else min(new_sl, lock_3r)
+
+            # Milestone 4: 8.0R+ Expansion -> Lock in at least +5.5R guaranteed profit!
+            if peak_rr >= 8.0:
+                lock_5_5r = round(entry + (5.5 * dist), decimals) if side == "BUY" else round(entry - (5.5 * dist), decimals)
+                new_sl = max(new_sl, lock_5_5r) if side == "BUY" else min(new_sl, lock_5_5r)
+
+            # Milestone 5: Dynamic structural trailing behind 15m pivots
             if peak_rr >= 2.8:
                 if side == "BUY":
                     recent_swing = sr_data.get("recent_swing_low", entry)
@@ -440,14 +450,14 @@ class DynamicTradeManager:
                     trail_level = min(recent_swing + (0.10 * dist), lowest + (1.2 * dist))
                     new_sl = min(new_sl, round(trail_level, decimals))
 
-            # Milestone 4: Max R:R Target Expansion (5.0R - 6.0R)
-            max_rr = float(pos.get("max_rr", 5.5))
+            # Milestone 6: High-Velocity Target Exit (1:10R Target)
+            max_rr = float(pos.get("max_rr", 10.0))
             max_target = round(entry + (max_rr * dist), decimals) if side == "BUY" else round(entry - (max_rr * dist), decimals)
             is_max_hit = (current_price >= max_target) if side == "BUY" else (current_price <= max_target)
             if is_max_hit:
                 return {
                     "action": "CLOSE_FULL",
-                    "reason": f"MAX_RR_EXPANSION_{max_rr}R",
+                    "reason": f"MACRO_GRANDMASTER_TARGET (+{max_rr:.0f}R | $5 Risk)",
                     "exit_price": max_target,
                     "book_partial": False,
                     "trail_sl": False,

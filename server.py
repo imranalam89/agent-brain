@@ -63,6 +63,12 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self._handle_set_risk()
         elif self.path == "/api/toggle-bot-status":
             self._handle_toggle_bot_status()
+        elif self.path == "/api/close-position":
+            self._handle_close_position()
+        elif self.path == "/api/close-all-positions":
+            self._handle_close_all_positions()
+        elif self.path == "/api/git-pull":
+            self._handle_git_pull()
         else:
             self.send_error(404, "Endpoint not found")
 
@@ -255,6 +261,135 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 "pause_reason": reason_str,
                 "pause_until": pause_until
             })
+        except Exception as e:
+            self._send_json({"success": False, "error": str(e)})
+
+    def _handle_close_position(self):
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length) if content_length > 0 else b'{}'
+            body = json.loads(post_data.decode("utf-8")) if post_data else {}
+            symbol = str(body.get("symbol", "")).upper()
+            if not symbol:
+                self._send_json({"success": False, "error": "Symbol is required"})
+                return
+
+            db = DatabaseManager()
+            client = DeltaExchangeClient()
+
+            mark_price = 0.0
+            try:
+                t = client.get_ticker(symbol)
+                mark_price = float(t.get("mark_price") or t.get("close") or 0.0)
+            except Exception:
+                pass
+
+            try:
+                client.cancel_all_orders(symbol)
+            except Exception:
+                pass
+
+            trades = db.get_trades()
+            open_trades = [t for t in trades if str(t.get("symbol", "")).upper() == symbol and t.get("status") == "OPEN"]
+            closed_count = 0
+            p = {"BTCUSD": 0.001, "ETHUSD": 0.01, "XAUTUSD": 0.001, "SLVONUSD": 0.1}.get(symbol, 0.001)
+
+            for t in open_trades:
+                entry = float(t.get("entry_price") or mark_price)
+                lots = float(t.get("lots") or 1.0)
+                side = str(t.get("side", "BUY")).upper()
+                try:
+                    close_side = "sell" if side == "BUY" else "buy"
+                    client.place_bracket_order(symbol=symbol, side=close_side, size=lots, order_type="market_order")
+                except Exception as e:
+                    print(f"[DELTA CLOSE NOTICE] {e}")
+
+                diff = (mark_price - entry) if side == "BUY" else (entry - mark_price)
+                pnl = round(diff * lots * p, 2)
+                t["status"] = "CLOSED"
+                t["exit_price"] = mark_price
+                t["closed_at"] = datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S")
+                t["close_reason"] = "OPERATOR_MANUAL_CUT"
+                t["pnl_usd"] = pnl
+                db.log_trade(t)
+                closed_count += 1
+
+            db.log_thought(
+                symbol=symbol,
+                event_type="OPERATOR_MANUAL_CUT",
+                stars=5.0,
+                message=f"Operator Cut/Closed {closed_count} trade(s) on {symbol} @ ${mark_price:,.2f} via Live Journal Dashboard."
+            )
+            self._send_json({"success": True, "symbol": symbol, "closed_count": closed_count, "exit_price": mark_price})
+        except Exception as e:
+            self._send_json({"success": False, "error": str(e)})
+
+    def _handle_close_all_positions(self):
+        try:
+            db = DatabaseManager()
+            client = DeltaExchangeClient()
+
+            trades = db.get_trades()
+            open_trades = [t for t in trades if t.get("status") == "OPEN"]
+            closed_summary = []
+
+            for t in open_trades:
+                symbol = str(t.get("symbol", "")).upper()
+                mark_price = 0.0
+                try:
+                    tick = client.get_ticker(symbol)
+                    mark_price = float(tick.get("mark_price") or tick.get("close") or 0.0)
+                except Exception:
+                    pass
+
+                try:
+                    client.cancel_all_orders(symbol)
+                except Exception:
+                    pass
+
+                entry = float(t.get("entry_price") or mark_price)
+                lots = float(t.get("lots") or 1.0)
+                side = str(t.get("side", "BUY")).upper()
+                p = {"BTCUSD": 0.001, "ETHUSD": 0.01, "XAUTUSD": 0.001, "SLVONUSD": 0.1}.get(symbol, 0.001)
+
+                try:
+                    close_side = "sell" if side == "BUY" else "buy"
+                    client.place_bracket_order(symbol=symbol, side=close_side, size=lots, order_type="market_order")
+                except Exception as e:
+                    print(f"[DELTA CLOSE NOTICE] {e}")
+
+                diff = (mark_price - entry) if side == "BUY" else (entry - mark_price)
+                pnl = round(diff * lots * p, 2)
+                t["status"] = "CLOSED"
+                t["exit_price"] = mark_price
+                t["closed_at"] = datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S")
+                t["close_reason"] = "OPERATOR_MANUAL_CUT"
+                t["pnl_usd"] = pnl
+                db.log_trade(t)
+                closed_summary.append({"symbol": symbol, "exit_price": mark_price, "pnl": pnl})
+
+            db.log_thought(
+                symbol="PORTFOLIO",
+                event_type="OPERATOR_MANUAL_CUT_ALL",
+                stars=5.0,
+                message=f"Operator Cut/Closed ALL active positions ({len(closed_summary)} trades) via Live Journal Dashboard."
+            )
+            self._send_json({"success": True, "closed_trades": closed_summary})
+        except Exception as e:
+            self._send_json({"success": False, "error": str(e)})
+
+    def _handle_git_pull(self):
+        try:
+            import subprocess
+            res = subprocess.run(["git", "pull", "origin", "main"], cwd=str(BASE_DIR), capture_output=True, text=True, timeout=30)
+            db = DatabaseManager()
+            db.log_thought(
+                symbol="SYSTEM",
+                event_type="GIT_PULL_UPDATE",
+                stars=5.0,
+                message=f"Git pull executed on VPS: {res.stdout.strip() if res.stdout else res.stderr.strip()}"
+            )
+            self._send_json({"success": res.returncode == 0, "output": res.stdout, "error": res.stderr})
         except Exception as e:
             self._send_json({"success": False, "error": str(e)})
 

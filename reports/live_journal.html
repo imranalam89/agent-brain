@@ -46,6 +46,10 @@
         <i data-lucide="radio" class="w-3.5 h-3.5"></i>
         <span>Live Journal</span>
       </a>
+      <a href="backtest_v3.html" class="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 hover:text-white border border-emerald-500/40 font-bold transition flex items-center gap-1.5 shadow-lg shadow-emerald-500/10">
+        <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+        <span>Backtest V3 (Default)</span>
+      </a>
       <a href="backtest_v2.html" class="px-3 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-300 hover:text-white border border-cyan-500/40 font-bold transition flex items-center gap-1.5 shadow-lg shadow-cyan-500/10">
         <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
         <span>Backtest V2</span>
@@ -77,15 +81,15 @@
   <div class="max-w-7xl mx-auto glass-card rounded-2xl p-4 border-l-4 border-l-emerald-500 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs font-mono">
     <div class="flex items-center gap-3">
       <div class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
-        <i data-lucide="shield-check" class="w-5 h-5"></i>
+        <i data-lucide="zap" class="w-5 h-5"></i>
       </div>
       <div>
         <div class="font-bold text-white flex items-center gap-2">
-          <span>Active Strategy: 👑 Journal Proven Apex Champion (Model: JOURNAL_APEX_CHAMPION)</span>
+          <span>Active Strategy: ⚡ 4-Asset High-Velocity Suite (+$12,483.48 | ₹11.24L)</span>
           <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px]">Delta Futures Live</span>
         </div>
         <p class="text-slate-400 text-[11px] mt-0.5">
-          Simultaneous Gold + Silver + BTC + ETH • Strict $5.00 Risk per Trade • 4-Phase Scale-Out Discipline
+          Simultaneous Gold + Silver + BTC + ETH • 1:10R Velocity Target • Breakeven (+0.15R Buffer) • S/R Profit Trailing • Strict $5.00 Risk
         </p>
       </div>
     </div>
@@ -237,14 +241,24 @@
 
   <!-- ACTIVE LIVE POSITIONS BOARD -->
   <div class="max-w-7xl mx-auto glass-card rounded-2xl p-6">
-    <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
       <div class="flex items-center gap-2">
         <i data-lucide="layers" class="w-5 h-5 text-purple-400"></i>
         <h2 class="text-lg font-bold text-white tracking-tight">Active Live Positions on Delta Exchange</h2>
+        <span id="activeBadgeCount" class="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono">
+          0 Open
+        </span>
       </div>
-      <span id="activeBadgeCount" class="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono">
-        0 Open
-      </span>
+      <div class="flex items-center gap-2">
+        <button onclick="triggerGitPull()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold transition flex items-center gap-1.5 text-xs font-mono">
+          <i data-lucide="git-pull-request" class="w-3.5 h-3.5 text-blue-400"></i>
+          <span>Pull Git Updates</span>
+        </button>
+        <button onclick="cutAllPositions()" class="px-3 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/40 font-bold transition flex items-center gap-1.5 text-xs font-mono shadow-sm">
+          <i data-lucide="scissors" class="w-3.5 h-3.5 text-rose-400"></i>
+          <span>Cut All Active Trades</span>
+        </button>
+      </div>
     </div>
 
     <div id="openPositionsContainer" class="overflow-x-auto">
@@ -621,13 +635,24 @@
     }
 
     function onCalendarDayClick(dateStr) {
-      selectedDateStr = dateStr;
-      currentFilterMode = 'day_click';
+      if (selectedDateStr === dateStr) {
+        selectedDateStr = null;
+        currentFilterMode = 'all';
+      } else {
+        selectedDateStr = dateStr;
+        currentFilterMode = 'day_click';
+      }
 
-      // Unhighlight preset buttons
+      // Update preset buttons styling
       ['Today', 'Week', 'Month', 'All'].forEach(name => {
         const btn = document.getElementById(`btnFilter${name}`);
-        if (btn) btn.className = "px-3 py-1.5 rounded-lg text-slate-300 hover:text-white transition";
+        if (btn) {
+          if (currentFilterMode === 'all' && name === 'All') {
+            btn.className = "px-3 py-1.5 rounded-lg cal-tab-active transition";
+          } else {
+            btn.className = "px-3 py-1.5 rounded-lg text-slate-300 hover:text-white transition";
+          }
+        }
       });
 
       renderAll();
@@ -648,15 +673,25 @@
       const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
       titleEl.innerText = `${monthNames[month]} ${year}`;
 
-      // Aggregate PnL, fees, and trade count by date
+      // Aggregate PnL, gross profit, gross loss, fees, and trade count by date
       const dailyMap = {};
       allClosedTrades.forEach(t => {
         const dStr = getTradeDateStr(t);
         if (dStr) {
-          if (!dailyMap[dStr]) dailyMap[dStr] = { netPnl: 0, fees: 0, count: 0 };
-          dailyMap[dStr].netPnl += (t.pnl_usd || 0);
-          dailyMap[dStr].fees += computeTradeFee(t);
+          if (!dailyMap[dStr]) dailyMap[dStr] = { netPnl: 0, grossProfit: 0, grossLoss: 0, fees: 0, count: 0, wins: 0, losses: 0 };
+          const pnl = Number(t.pnl_usd || 0);
+          const fee = computeTradeFee(t);
+          const gross = t.gross_pnl_usd !== undefined ? Number(t.gross_pnl_usd) : (pnl + fee);
+          dailyMap[dStr].netPnl += pnl;
+          dailyMap[dStr].fees += fee;
           dailyMap[dStr].count += 1;
+          if (pnl > 0) {
+            dailyMap[dStr].wins += 1;
+            dailyMap[dStr].grossProfit += (gross > 0 ? gross : pnl + fee);
+          } else if (pnl < 0) {
+            dailyMap[dStr].losses += 1;
+            dailyMap[dStr].grossLoss += Math.abs(gross < 0 ? gross : pnl + fee);
+          }
         }
       });
 
@@ -667,7 +702,7 @@
 
       // Blank slots before first day
       for (let i = 0; i < firstDayOfMonth; i++) {
-        html += `<div class="p-2 min-h-[64px] rounded-lg bg-slate-950/40 border border-slate-900/50 opacity-40"></div>`;
+        html += `<div class="p-2 min-h-[76px] rounded-lg bg-slate-950/40 border border-slate-900/50 opacity-40"></div>`;
       }
 
       // Day slots
@@ -682,7 +717,7 @@
         if (dayData) {
           const isProf = dayData.netPnl > 0;
           const isLoss = dayData.netPnl < 0;
-          const netSign = isProf ? "+$" : (isLoss ? "-$" : "$");
+          const pfx = isProf ? "+" : (isLoss ? "-" : "");
           const pnlColor = isProf ? "text-emerald-400" : (isLoss ? "text-rose-400" : "text-slate-400");
           if (isProf) {
             bgClass = "bg-emerald-950/20 border-emerald-500/40 hover:border-emerald-400";
@@ -691,25 +726,30 @@
           }
           const feeInr = Math.round(dayData.fees * 90.0 * 10) / 10;
           badgeHtml = `
-            <div class="mt-1 space-y-0.5">
-              <span class="text-[11px] font-extrabold ${pnlColor} block leading-tight">${netSign}${Math.abs(dayData.netPnl).toFixed(2)}</span>
-              <div class="flex items-center justify-between text-[9px] text-amber-400 font-mono">
-                <span>Fee:</span>
-                <span>-$${dayData.fees.toFixed(2)}</span>
+            <div class="mt-0.5 flex flex-col gap-0.5 font-mono">
+              <div class="text-[11px] font-extrabold ${pnlColor} leading-tight">
+                ${pfx}$${Math.abs(dayData.netPnl).toFixed(2)}
               </div>
-              <div class="flex items-center justify-between text-[8px] text-slate-500 font-mono">
-                <span>${dayData.count} ${dayData.count === 1 ? 'trd' : 'trds'}</span>
-                <span>~₹${feeInr.toFixed(1)}</span>
+              <div class="flex items-center justify-between text-[8px] text-slate-300">
+                <span class="text-emerald-400 font-semibold">+$${dayData.grossProfit.toFixed(2)}</span>
+                <span class="text-rose-400 font-semibold">-$${dayData.grossLoss.toFixed(2)}</span>
+              </div>
+              <div class="flex items-center justify-between text-[8px] pt-0.5 border-t border-slate-800/60">
+                <span class="text-slate-400">${dayData.count}T (${dayData.wins}W/${dayData.losses}L)</span>
+                <span class="text-amber-400 font-semibold">-$${dayData.fees.toFixed(2)}</span>
               </div>
             </div>
           `;
         }
 
-        const selectedClass = isSelected ? "cal-day-active" : "";
+        const selectedClass = isSelected ? "ring-2 ring-emerald-400 border-emerald-400 cal-day-active" : "";
 
         html += `
-          <div onclick="onCalendarDayClick('${dateStr}')" class="p-2 min-h-[64px] rounded-lg border ${bgClass} ${selectedClass} cursor-pointer transition flex flex-col justify-between">
-            <span class="text-xs font-bold ${isSelected ? 'text-blue-400 font-extrabold' : 'text-slate-400'}">${day}</span>
+          <div onclick="onCalendarDayClick('${dateStr}')" class="day-cell p-2 min-h-[76px] rounded-lg border ${bgClass} ${selectedClass} cursor-pointer transition flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold ${isSelected ? 'text-emerald-400 font-extrabold' : 'text-slate-400'}">${day}</span>
+              ${dayData ? `<span class="text-[8px] px-1 py-0.2 rounded bg-slate-800 text-slate-400 font-mono">${dayData.count} Tr</span>` : ''}
+            </div>
             ${badgeHtml}
           </div>
         `;
@@ -753,6 +793,7 @@
               <th>Stop Loss (SL)</th>
               <th>Target (TP)</th>
               <th>Lifecycle Phase</th>
+              <th class="text-right py-2">Action</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-800">
@@ -780,6 +821,12 @@
             <td class="text-rose-400 font-bold">$${pos.stop_loss} ${isBeLocked ? '<span class="text-[9px] text-emerald-400 bg-emerald-500/20 px-1 py-0.2 rounded">BE</span>' : ''}</td>
             <td class="text-teal-400 font-bold">$${pos.take_profit}</td>
             <td>${phaseBadge}</td>
+            <td class="text-right py-2">
+              <button onclick="cutPosition('${pos.symbol}')" class="px-2.5 py-1 rounded-lg bg-rose-600/80 hover:bg-rose-600 text-white font-bold text-[10px] transition shadow flex items-center gap-1 ml-auto">
+                <i data-lucide="scissors" class="w-3 h-3"></i>
+                <span>Cut / Close</span>
+              </button>
+            </td>
           </tr>
         `;
       });
@@ -962,6 +1009,62 @@
 
     function resumeBotNow() {
       setBotStatus("ACTIVE", 0, "Resumed by Operator");
+    }
+
+    async function cutPosition(symbol) {
+      if (!confirm(`Are you sure you want to CUT / CLOSE ${symbol} at market price now?`)) return;
+      try {
+        const res = await fetch('/api/close-position', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ symbol: symbol })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(`Successfully closed ${symbol} @ $${data.exit_price}`);
+          fetchLiveStatus();
+        } else {
+          alert(`Error: ${data.error || 'Failed to close'}`);
+        }
+      } catch (e) {
+        alert(`Request failed: ${e.message}`);
+      }
+    }
+
+    async function cutAllPositions() {
+      if (!confirm("Are you sure you want to CUT / CLOSE ALL active running trades immediately?")) return;
+      try {
+        const res = await fetch('/api/close-all-positions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(`Successfully cut ${data.closed_trades ? data.closed_trades.length : 0} position(s)!`);
+          fetchLiveStatus();
+        } else {
+          alert(`Error: ${data.error || 'Failed'}`);
+        }
+      } catch (e) {
+        alert(`Request failed: ${e.message}`);
+      }
+    }
+
+    async function triggerGitPull() {
+      if (!confirm("Pull latest updates from GitHub onto VPS now?")) return;
+      try {
+        const res = await fetch('/api/git-pull', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const data = await res.json();
+        alert(data.output || data.error || (data.success ? "Updated successfully!" : "Failed to update"));
+        fetchLiveStatus();
+      } catch (e) {
+        alert(`Request failed: ${e.message}`);
+      }
     }
 
     function updateBotStatusUI(status, reason, until) {

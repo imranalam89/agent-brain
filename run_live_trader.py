@@ -20,10 +20,10 @@ def main():
     print("""
 ================================================================================
      🧠 AGENT BRAIN | AUTONOMOUS DELTA LIVE TRADER (CHAMPION STRATEGY) 🧠     
-   Strategy: 👑 Journal Proven Apex Champion (Model: JOURNAL_APEX_CHAMPION)
+   Strategy: ⚡ 4-Asset High-Velocity Suite (1:10R Target | Trail BE SL + S/R Trail)
+   Target R:R: 1:10R Velocity • Breakeven: +0.15R • Strict $5.00 Fixed Risk
    Instruments: BTCUSD, ETHUSD, XAUTUSD (Gold), SLVONUSD (Silver)
-   Risk per Trade: Strict $5.00 | Fee: Gold/Silver $0.01 Flat • BTC/ETH Maker/Taker
-   Execution: Real Bracket Orders on Delta Exchange India (User 74634658)
+   Fee Model: Calibrated Delta Exchange India (0.01062% Commodity / 0.0531% Crypto)
 ================================================================================
     """)
 

@@ -76,8 +76,8 @@ class MultiPairLiveTrader:
                 "min_stop_dist": 160.0,
                 "padding": 45.0,
                 "sigma": 1.8,
-                "tp1_rr": 1.8,
-                "max_rr": 5.0,
+                "tp1_rr": 2.0,
+                "max_rr": 10.0,
                 "is_crypto": True,
                 "decimals": 1
             },
@@ -86,8 +86,8 @@ class MultiPairLiveTrader:
                 "min_stop_dist": 8.0,
                 "padding": 2.2,
                 "sigma": 1.8,
-                "tp1_rr": 1.8,
-                "max_rr": 5.0,
+                "tp1_rr": 2.0,
+                "max_rr": 10.0,
                 "is_crypto": True,
                 "decimals": 2
             },
@@ -97,7 +97,7 @@ class MultiPairLiveTrader:
                 "padding": 1.2,
                 "sigma": 1.8,
                 "tp1_rr": 2.0,
-                "max_rr": 6.0,
+                "max_rr": 10.0,
                 "is_crypto": False,
                 "decimals": 2
             },
@@ -107,7 +107,7 @@ class MultiPairLiveTrader:
                 "padding": 0.08,
                 "sigma": 1.8,
                 "tp1_rr": 2.0,
-                "max_rr": 6.0,
+                "max_rr": 10.0,
                 "is_crypto": False,
                 "decimals": 3
             }
@@ -242,7 +242,7 @@ class MultiPairLiveTrader:
             "booked_pnl": 0.0,
             "leverage": LEVERAGE_MAP.get(symbol, 100),
             "risk_usd": self.fixed_risk_usd,
-            "strategy_name": f"👑 Journal Proven Apex Champion ({symbol} | Strict $5 Risk)"
+            "strategy_name": f"⚡ 4-Asset High-Velocity Suite ({symbol} | 1:10R Velocity)"
         }
         self.active_positions[symbol] = pos_record
         print(f"📥 [ADOPTED DELTA POSITION] {symbol} {side} {lots} Lots @ ${entry_price:,.2f} | SL: ${sl} | TP: ${tp}")
@@ -770,7 +770,7 @@ class MultiPairLiveTrader:
             "booked_pnl": 0.0,
             "leverage": LEVERAGE_MAP.get(symbol, 100),
             "risk_usd": current_risk,
-            "strategy_name": f"👑 Journal Proven Apex Champion ({symbol} | Dynamic ${current_risk:.2f} Risk)"
+            "strategy_name": f"⚡ 4-Asset High-Velocity Suite ({symbol} | 1:10R Velocity)"
         }
 
         self.active_positions[symbol] = pos_record
