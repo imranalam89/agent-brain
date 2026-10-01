@@ -383,6 +383,10 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             import subprocess
             subprocess.run(["git", "fetch", "origin", "main"], cwd=str(BASE_DIR), capture_output=True, text=True, timeout=30)
             res = subprocess.run(["git", "reset", "--hard", "origin/main"], cwd=str(BASE_DIR), capture_output=True, text=True, timeout=30)
+            try:
+                subprocess.run(["systemctl", "restart", "trading-brain"], capture_output=True, text=True, timeout=10)
+            except Exception:
+                pass
             db = DatabaseManager()
             db.log_thought(
                 symbol="SYSTEM",
