@@ -381,13 +381,14 @@ class DashboardHandler(SimpleHTTPRequestHandler):
     def _handle_git_pull(self):
         try:
             import subprocess
-            res = subprocess.run(["git", "pull", "origin", "main"], cwd=str(BASE_DIR), capture_output=True, text=True, timeout=30)
+            subprocess.run(["git", "fetch", "origin", "main"], cwd=str(BASE_DIR), capture_output=True, text=True, timeout=30)
+            res = subprocess.run(["git", "reset", "--hard", "origin/main"], cwd=str(BASE_DIR), capture_output=True, text=True, timeout=30)
             db = DatabaseManager()
             db.log_thought(
                 symbol="SYSTEM",
                 event_type="GIT_PULL_UPDATE",
                 stars=5.0,
-                message=f"Git pull executed on VPS: {res.stdout.strip() if res.stdout else res.stderr.strip()}"
+                message=f"Git sync executed on VPS: {res.stdout.strip() if res.stdout else res.stderr.strip()}"
             )
             self._send_json({"success": res.returncode == 0, "output": res.stdout, "error": res.stderr})
         except Exception as e:
