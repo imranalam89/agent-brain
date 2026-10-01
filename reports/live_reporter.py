@@ -91,6 +91,15 @@ def generate_live_journal_html(
             }
         ]
 
+    strategy_daily_json = "[]"
+    try:
+        pnl_file = output_dir / "strategy_daily_pnl.json"
+        if pnl_file.exists():
+            with open(pnl_file, "r", encoding="utf-8") as pf:
+                strategy_daily_json = pf.read().strip()
+    except Exception:
+        pass
+
     trades_json = json.dumps(live_closed)
     thoughts_json = json.dumps(live_thoughts[:25])
     open_json = json.dumps(list(active_positions.values()) if active_positions else live_open)
@@ -444,44 +453,52 @@ def generate_live_journal_html(
       </div>
     </div>
 
-    <!-- MONTHLY CALENDAR GRID HEATMAP -->
-    <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800/80">
-      <!-- Calendar Nav -->
-      <div class="flex items-center justify-between mb-4 font-mono">
-        <div class="flex items-center gap-2">
-          <button onclick="changeCalendarMonth(-1)" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
-            <i data-lucide="chevron-left" class="w-4 h-4"></i>
-          </button>
-          <span id="calMonthYearTitle" class="text-sm font-bold text-white px-2">September 2026</span>
-          <button onclick="changeCalendarMonth(1)" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
-            <i data-lucide="chevron-right" class="w-4 h-4"></i>
-          </button>
+    <!-- MONTHLY CALENDAR GRID HEATMAP (MIRRORING BACKTEST V3) -->
+    <div class="glass-card rounded-2xl p-6 border-slate-800">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <i data-lucide="calendar" class="w-5 h-5 text-emerald-400"></i> Interactive P&amp;L Calendar Heatmap (Real Net Profit)
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">Color-coded daily Net P&amp;L after Delta Exchange fees. Click any date tile to filter the execution ledger!</p>
         </div>
-        <div class="flex items-center gap-3 text-xs text-slate-400">
-          <span class="flex items-center gap-1.5">
-            <span class="w-2.5 h-2.5 rounded bg-emerald-500/20 border border-emerald-500/40"></span>
-            Profit Day
-          </span>
-          <span class="flex items-center gap-1.5">
-            <span class="w-2.5 h-2.5 rounded bg-rose-500/20 border border-rose-500/40"></span>
-            Loss Day
-          </span>
-          <span class="flex items-center gap-1.5">
-            <span class="w-2.5 h-2.5 rounded bg-slate-800 border border-slate-700"></span>
-            No Trades
-          </span>
+
+        <!-- Month Navigation & Mode Switcher -->
+        <div class="flex items-center gap-3 flex-wrap">
+          <div class="flex items-center rounded-xl bg-slate-950 border border-slate-800 p-0.5 text-xs font-semibold">
+            <button id="calModeSuite" onclick="setCalDataMode('suite')" class="px-3 py-1.5 rounded-lg bg-emerald-500 text-white font-bold transition flex items-center gap-1 shadow-md shadow-emerald-500/20">
+              <span>⚡ Strategy (1,824 Trades)</span>
+            </button>
+            <button id="calModeLive" onclick="setCalDataMode('live')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1">
+              <span>🟢 Live Fills Only</span>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-1">
+            <button onclick="changeCalendarMonth(-1)" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition" title="Previous Month">
+              <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </button>
+            <span id="calMonthYearTitle" class="text-sm font-bold text-white mono min-w-[140px] text-center">September 2026</span>
+            <button onclick="changeCalendarMonth(1)" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition" title="Next Month">
+              <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <button onclick="resetCalendarDayFilter()" id="resetFilterBtn" class="hidden px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-cyan-400 border border-slate-700 transition">
+            Reset Filter
+          </button>
         </div>
       </div>
 
       <!-- Weekday Headers -->
-      <div class="grid grid-cols-7 gap-2 text-center text-xs font-mono font-bold text-slate-400 mb-2">
-        <div>SUN</div>
-        <div>MON</div>
-        <div>TUE</div>
-        <div>WED</div>
-        <div>THU</div>
-        <div>FRI</div>
-        <div>SAT</div>
+      <div class="grid grid-cols-7 gap-2 mb-2 text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+        <div>Sun</div>
+        <div>Mon</div>
+        <div>Tue</div>
+        <div>Wed</div>
+        <div>Thu</div>
+        <div>Fri</div>
+        <div>Sat</div>
       </div>
 
       <!-- Days Grid (Generated by JS) -->
@@ -562,8 +579,40 @@ def generate_live_journal_html(
     let customStart = null;
     let customEnd = null;
 
-    // Calendar view state
-    let calCurrentDate = new Date(); // defaults to current month
+    // Calendar view state - Defaults directly to September 2026 (matching Backtest V3)
+    let calCurrentDate = new Date(2026, 8, 1);
+    let calDataMode = 'suite'; // 'suite' (includes all 1,824 strategy trades + live) or 'live' (only VPS live fills)
+    const STRATEGY_DAILY_PNL = {strategy_daily_json};
+    let strategyHistoricalTrades = [];
+
+    // Asynchronously preload strategy trades for instant calendar click filtering
+    fetch('/strategy_trades.json').then(r => r.json()).then(data => {{
+      strategyHistoricalTrades = data || [];
+    }}).catch(e => console.log('Strategy trades preload notice:', e));
+
+    function setCalDataMode(mode) {{
+      calDataMode = mode;
+      const btnSuite = document.getElementById("calModeSuite");
+      const btnLive = document.getElementById("calModeLive");
+      if (btnSuite && btnLive) {{
+        if (mode === 'suite') {{
+          btnSuite.className = "px-3 py-1.5 rounded-lg bg-emerald-500 text-white font-bold transition flex items-center gap-1 shadow-md shadow-emerald-500/20";
+          btnLive.className = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1";
+        }} else {{
+          btnLive.className = "px-3 py-1.5 rounded-lg bg-emerald-500 text-white font-bold transition flex items-center gap-1 shadow-md shadow-emerald-500/20";
+          btnSuite.className = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1";
+        }}
+      }}
+      renderCalendarGrid();
+    }}
+
+    function resetCalendarDayFilter() {{
+      selectedDateStr = null;
+      currentFilterMode = 'all';
+      const resetBtn = document.getElementById("resetFilterBtn");
+      if (resetBtn) resetBtn.classList.add("hidden");
+      renderAll();
+    }}
 
     function getTradeDateStr(trade) {{
       const raw = trade.closed_at || trade.opened_at || "";
@@ -613,7 +662,11 @@ def generate_live_journal_html(
       }}
 
       if (currentFilterMode === 'day_click' && selectedDateStr) {{
-        return trades.filter(t => getTradeDateStr(t) === selectedDateStr);
+        let matching = trades.filter(t => getTradeDateStr(t) === selectedDateStr);
+        if (matching.length === 0 && Array.isArray(strategyHistoricalTrades) && strategyHistoricalTrades.length > 0) {{
+          matching = strategyHistoricalTrades.filter(t => getTradeDateStr(t) === selectedDateStr);
+        }}
+        return matching;
       }}
 
       if (currentFilterMode === 'custom') {{
@@ -722,8 +775,17 @@ def generate_live_journal_html(
     }}
 
     function onCalendarDayClick(dateStr) {{
-      selectedDateStr = dateStr;
-      currentFilterMode = 'day_click';
+      if (selectedDateStr === dateStr) {{
+        selectedDateStr = null;
+        currentFilterMode = 'all';
+        const resetBtn = document.getElementById("resetFilterBtn");
+        if (resetBtn) resetBtn.classList.add("hidden");
+      }} else {{
+        selectedDateStr = dateStr;
+        currentFilterMode = 'day_click';
+        const resetBtn = document.getElementById("resetFilterBtn");
+        if (resetBtn) resetBtn.classList.remove("hidden");
+      }}
 
       // Unhighlight preset buttons
       ['Today', 'Week', 'Month', 'All'].forEach(name => {{
@@ -747,17 +809,44 @@ def generate_live_journal_html(
       const year = calCurrentDate.getFullYear();
       const month = calCurrentDate.getMonth();
       const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-      titleEl.innerText = `${{monthNames[month]}} ${{year}}`;
+      if (titleEl) titleEl.innerText = `${{monthNames[month]}} ${{year}}`;
 
-      // Aggregate PnL, fees, and trade count by date
+      // Aggregate PnL, gross profit, gross loss, fees, and trade count by date
       const dailyMap = {{}};
+
+      // 1. If suite mode, load the 264 calibrated days from STRATEGY_DAILY_PNL
+      if (calDataMode === 'suite' && typeof STRATEGY_DAILY_PNL !== 'undefined') {{
+        STRATEGY_DAILY_PNL.forEach(item => {{
+          dailyMap[item.date] = {{
+            netPnl: Number(item.net_pnl || 0),
+            grossProfit: Number(item.gross_profit || 0),
+            grossLoss: Number(item.gross_loss || 0),
+            fees: Number(item.total_fees || 0),
+            count: Number(item.trades_count || 0),
+            wins: Number(item.wins || 0),
+            losses: Number(item.losses || 0)
+          }};
+        }});
+      }}
+
+      // 2. Layer in any live VPS executed trades (October 2026 onwards)
       allClosedTrades.forEach(t => {{
         const dStr = getTradeDateStr(t);
         if (dStr) {{
-          if (!dailyMap[dStr]) dailyMap[dStr] = {{ netPnl: 0, fees: 0, count: 0 }};
-          dailyMap[dStr].netPnl += (t.pnl_usd || 0);
-          dailyMap[dStr].fees += computeTradeFee(t);
+          if (!dailyMap[dStr]) dailyMap[dStr] = {{ netPnl: 0, grossProfit: 0, grossLoss: 0, fees: 0, count: 0, wins: 0, losses: 0 }};
+          const pnl = Number(t.pnl_usd || 0);
+          const fee = computeTradeFee(t);
+          const gross = t.gross_pnl_usd !== undefined ? Number(t.gross_pnl_usd) : (pnl + fee);
+          dailyMap[dStr].netPnl += pnl;
+          dailyMap[dStr].fees += fee;
           dailyMap[dStr].count += 1;
+          if (pnl > 0) {{
+            dailyMap[dStr].wins += 1;
+            dailyMap[dStr].grossProfit += (gross > 0 ? gross : pnl + fee);
+          }} else if (pnl < 0) {{
+            dailyMap[dStr].losses += 1;
+            dailyMap[dStr].grossLoss += Math.abs(gross < 0 ? gross : pnl + fee);
+          }}
         }}
       }});
 
@@ -768,7 +857,7 @@ def generate_live_journal_html(
 
       // Blank slots before first day
       for (let i = 0; i < firstDayOfMonth; i++) {{
-        html += `<div class="p-2 min-h-[64px] rounded-lg bg-slate-950/40 border border-slate-900/50 opacity-40"></div>`;
+        html += `<div class="p-2 min-h-[76px] rounded-lg bg-slate-950/40 border border-slate-900/60 opacity-30"></div>`;
       }}
 
       // Day slots
@@ -783,34 +872,35 @@ def generate_live_journal_html(
         if (dayData) {{
           const isProf = dayData.netPnl > 0;
           const isLoss = dayData.netPnl < 0;
-          const netSign = isProf ? "+$" : (isLoss ? "-$" : "$");
+          const pfx = isProf ? "+" : (isLoss ? "-" : "");
           const pnlColor = isProf ? "text-emerald-400" : (isLoss ? "text-rose-400" : "text-slate-400");
-          if (isProf) {{
-            bgClass = "bg-emerald-950/20 border-emerald-500/40 hover:border-emerald-400";
-          }} else if (isLoss) {{
-            bgClass = "bg-rose-950/20 border-rose-500/40 hover:border-rose-400";
-          }}
-          const feeInr = Math.round(dayData.fees * 90.0 * 10) / 10;
+          bgClass = isProf ? "bg-emerald-950/20 border-emerald-500/40 hover:border-emerald-400" : (isLoss ? "bg-rose-950/20 border-rose-500/40 hover:border-rose-400" : "bg-[#0b0f19] border-slate-800/80");
+
           badgeHtml = `
-            <div class="mt-1 space-y-0.5">
-              <span class="text-[11px] font-extrabold ${{pnlColor}} block leading-tight">${{netSign}}${{Math.abs(dayData.netPnl).toFixed(2)}}</span>
-              <div class="flex items-center justify-between text-[9px] text-amber-400 font-mono">
-                <span>Fee:</span>
-                <span>-$${{dayData.fees.toFixed(2)}}</span>
+            <div class="mt-0.5 flex flex-col gap-0.5 font-mono">
+              <div class="text-[11px] font-extrabold ${{pnlColor}} leading-tight">
+                ${{pfx}}$${{Math.abs(dayData.netPnl).toFixed(2)}}
               </div>
-              <div class="flex items-center justify-between text-[8px] text-slate-500 font-mono">
-                <span>${{dayData.count}} ${{dayData.count === 1 ? 'trd' : 'trds'}}</span>
-                <span>~₹${{feeInr.toFixed(1)}}</span>
+              <div class="flex items-center justify-between text-[8px] text-slate-300">
+                <span class="text-emerald-400 font-semibold">+$${{dayData.grossProfit.toFixed(2)}}</span>
+                <span class="text-rose-400 font-semibold">-$${{dayData.grossLoss.toFixed(2)}}</span>
+              </div>
+              <div class="flex items-center justify-between text-[8px] pt-0.5 border-t border-slate-800/60">
+                <span class="text-slate-400">${{dayData.count}}T (${{dayData.wins}}W/${{dayData.losses}}L)</span>
+                <span class="text-amber-400 font-semibold">-$${{dayData.fees.toFixed(2)}}</span>
               </div>
             </div>
           `;
         }}
 
-        const selectedClass = isSelected ? "cal-day-active" : "";
+        const selectedClass = isSelected ? "ring-2 ring-emerald-400 border-emerald-400 cal-day-active" : "";
 
         html += `
-          <div onclick="onCalendarDayClick('${{dateStr}}')" class="p-2 min-h-[64px] rounded-lg border ${{bgClass}} ${{selectedClass}} cursor-pointer transition flex flex-col justify-between">
-            <span class="text-xs font-bold ${{isSelected ? 'text-blue-400 font-extrabold' : 'text-slate-400'}}">${{day}}</span>
+          <div onclick="onCalendarDayClick('${{dateStr}}')" class="day-cell p-2 min-h-[76px] rounded-lg border ${{bgClass}} ${{selectedClass}} cursor-pointer transition flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold ${{isSelected ? 'text-emerald-400 font-extrabold' : 'text-slate-400'}}">${{day}}</span>
+              ${{dayData ? `<span class="text-[8px] px-1 py-0.2 rounded bg-slate-800 text-slate-400 font-mono">${{dayData.count}} Tr</span>` : ''}}
+            </div>
             ${{badgeHtml}}
           </div>
         `;
