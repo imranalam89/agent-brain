@@ -1,8 +1,10 @@
 import sqlite3
 import json
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
+
+IST = timezone(timedelta(hours=5, minutes=30))
 
 from config.settings import DATABASE_PATH
 
@@ -209,7 +211,7 @@ class DatabaseManager:
                 INSERT INTO brain_thoughts (timestamp, symbol, event_type, conviction_stars, message, metrics_json)
                 VALUES (?, ?, ?, ?, ?, ?)
             """, (
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S"),
                 symbol, event_type, stars, message,
                 json.dumps(metrics or {})
             ))
@@ -226,7 +228,7 @@ class DatabaseManager:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             val_str = json.dumps(value) if not isinstance(value, str) else value
-            now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            now_str = datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S")
             cursor.execute("""
                 INSERT INTO system_state (key, value, updated_at)
                 VALUES (?, ?, ?)
@@ -270,7 +272,8 @@ class DatabaseManager:
             if pause_until:
                 try:
                     target_dt = datetime.fromisoformat(pause_until)
-                    if datetime.now() >= target_dt:
+                    now_check = datetime.now(IST) if target_dt.tzinfo else datetime.now()
+                    if now_check >= target_dt:
                         # Auto-expire pause!
                         self.set_system_state("bot_status", "ACTIVE")
                         self.set_system_state("pause_until", None)
@@ -284,13 +287,12 @@ class DatabaseManager:
         return False, "Active", None
 
     def set_bot_status(self, status: str, duration_minutes: int = 0, reason: str = ""):
-        from datetime import timedelta
         status_clean = "PAUSED" if status.upper() == "PAUSED" else "ACTIVE"
         self.set_system_state("bot_status", status_clean)
 
         if status_clean == "PAUSED":
             if duration_minutes > 0:
-                until_dt = datetime.now() + timedelta(minutes=duration_minutes)
+                until_dt = datetime.now(IST) + timedelta(minutes=duration_minutes)
                 self.set_system_state("pause_until", until_dt.isoformat())
             else:
                 self.set_system_state("pause_until", None)

@@ -1,9 +1,11 @@
 import sys
 import time
 import math
-from datetime import datetime, date
+from datetime import datetime, date, timezone, timedelta
 from typing import Dict, Any, List, Optional
 from pathlib import Path
+
+IST = timezone(timedelta(hours=5, minutes=30))
 
 if hasattr(sys.stdout, 'reconfigure'):
     try:
@@ -233,7 +235,7 @@ class MultiPairLiveTrader:
             "remaining_lots": lots,
             "notional_usd": round(lots * param["c_val"] * entry_price, 2),
             "margin_usd": float(p.get("margin", 0.0)),
-            "opened_at": p.get("created_at") or datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "opened_at": p.get("created_at") or datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S"),
             "highest_price": entry_price,
             "lowest_price": entry_price,
             "tp1_hit": False,
@@ -305,7 +307,7 @@ class MultiPairLiveTrader:
         4. Scans for new high-probability entries on pairs that are FLAT and past 10-min cooldown (Rule 1).
         """
         status_report = {
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "timestamp": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S"),
             "active_positions_count": len(self.active_positions),
             "positions": {},
             "signals": {}
@@ -540,19 +542,23 @@ class MultiPairLiveTrader:
                 if len(candles) < 20:
                     return None
 
-        # Session Filter: 12:30 – 23:45 IST (London Open to NY Close, matching backtest)
-        now_local = datetime.now()
-        hm = now_local.strftime("%H:%M")
-        if not ("12:30" <= hm <= "23:45"):
-            return None
+        # Session Filter:
+        # - BTC and ETH: 24/7 global crypto market with high-conviction 2-edge confluence
+        # - Gold (XAUT) & Silver (SLVON): London & NY Session (12:30 to 23:45 IST)
+        now_ist = datetime.now(IST)
+        hm = now_ist.strftime("%H:%M")
 
-        # Exclude Gold chop hours (16, 19, 20, 22 IST)
-        if symbol == "XAUTUSD" and now_local.hour in (16, 19, 20, 22):
-            return None
+        is_crypto = ("BTC" in symbol or "ETH" in symbol)
+        if not is_crypto:
+            if not ("12:30" <= hm <= "23:45"):
+                return None
+            # Exclude Gold chop hours (16, 19, 20, 22 IST)
+            if symbol == "XAUTUSD" and now_ist.hour in (16, 19, 20, 22):
+                return None
 
-        # Calculate Session VWAP and Standard Deviation Bands
-        today_str = now_local.strftime("%Y-%m-%d")
-        today_candles = [c for c in candles if datetime.fromtimestamp(c["timestamp"]).strftime("%Y-%m-%d") == today_str]
+        # Calculate Session VWAP and Standard Deviation Bands in IST
+        today_str = now_ist.strftime("%Y-%m-%d")
+        today_candles = [c for c in candles if datetime.fromtimestamp(c["timestamp"], tz=IST).strftime("%Y-%m-%d") == today_str]
         if len(today_candles) < 6:
             today_candles = candles[-24:]
 
@@ -659,15 +665,17 @@ class MultiPairLiveTrader:
         if not hasattr(self, "_last_thought_log"):
             self._last_thought_log = {}
         last_t = self._last_thought_log.get(symbol, 0)
-        if (buy_score > 0 or sell_score > 0) and (now_ts - last_t > 90):
+        log_interval = 90 if (buy_score > 0 or sell_score > 0) else 180
+        if now_ts - last_t > log_interval:
             self._last_thought_log[symbol] = now_ts
-            dir_str = "BUY" if buy_score > sell_score else "SELL"
+            dir_str = "BUY" if buy_score >= sell_score else "SELL"
             lead_score = max(buy_score, sell_score)
+            status_desc = f"Score {lead_score}/{min_score} ({dir_str})" if lead_score > 0 else "Hunting A+ Setup"
             self.db.log_thought(
                 symbol=symbol,
                 event_type="SETUP_MONITOR",
-                stars=round(2.5 + (lead_score * 0.7), 1),
-                message=f"Scanning {symbol}: Score {lead_score}/{min_score} ({dir_str}). Price: ${current_price:,.2f}. Delta Ratio: {delta_ratio:+.3f}. VWAP: ${vwap:,.2f}."
+                stars=round(2.5 + (lead_score * 0.7), 1) if lead_score > 0 else 2.5,
+                message=f"Scanning {symbol}: {status_desc}. Price: ${current_price:,.2f}. Delta Ratio: {delta_ratio:+.3f}. VWAP: ${vwap:,.2f}."
             )
 
         is_buy = (buy_score >= min_score) and (sell_score == 0) and bullish_candle_confirm and not_falling_knife
@@ -755,7 +763,7 @@ class MultiPairLiveTrader:
             "remaining_lots": lots,
             "notional_usd": notional,
             "margin_usd": margin,
-            "opened_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "opened_at": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S"),
             "highest_price": current_price,
             "lowest_price": current_price,
             "tp1_hit": False,
@@ -871,7 +879,7 @@ class MultiPairLiveTrader:
         total_fee = round(pos.get("booked_fees", 0.0) + fee_rem, 4)
         rr_achieved = round(total_pnl / self.fixed_risk_usd, 1)
 
-        closed_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        closed_at = datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S")
         trade_log = {
             "id": pos["id"],
             "symbol": symbol,

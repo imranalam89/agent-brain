@@ -2,10 +2,12 @@ import os
 import sys
 import json
 import webbrowser
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, Optional
 from pathlib import Path
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
+
+IST = timezone(timedelta(hours=5, minutes=30))
 
 if sys.platform == "win32":
     try:
@@ -136,7 +138,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 eth_trades=best_eth_trades,
                 db_thoughts=[
                     {
-                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "timestamp": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S"),
                         "symbol": target_symbol,
                         "event_type": "1_CLICK_WEB_BACKTEST",
                         "conviction_stars": 5.0,
@@ -312,7 +314,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
 
             self._send_json({
                 "success": True,
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "timestamp": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S"),
                 "connected": bal_res.get("success", False),
                 "auth_error": bal_res.get("error", ""),
                 "client_ip": bal_res.get("client_ip", ""),
