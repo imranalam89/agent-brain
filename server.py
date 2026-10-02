@@ -384,6 +384,10 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             subprocess.run(["git", "fetch", "origin", "main"], cwd=str(BASE_DIR), capture_output=True, text=True, timeout=30)
             res = subprocess.run(["git", "reset", "--hard", "origin/main"], cwd=str(BASE_DIR), capture_output=True, text=True, timeout=30)
             try:
+                subprocess.run([sys.executable, str(BASE_DIR / "calibrate_live_trade.py")], cwd=str(BASE_DIR), capture_output=True, text=True, timeout=10)
+            except Exception:
+                pass
+            try:
                 subprocess.run(["systemctl", "restart", "trading-brain"], capture_output=True, text=True, timeout=10)
             except Exception:
                 pass
