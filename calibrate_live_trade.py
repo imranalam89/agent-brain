@@ -1,7 +1,7 @@
 import sqlite3
 from pathlib import Path
 
-db_path = Path("trading_data.db")
+db_path = Path(__file__).resolve().parent / "data" / "trading_data.db"
 if db_path.exists():
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
