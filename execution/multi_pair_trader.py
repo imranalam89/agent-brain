@@ -242,6 +242,7 @@ class MultiPairLiveTrader:
             "booked_pnl": 0.0,
             "leverage": LEVERAGE_MAP.get(symbol, 100),
             "risk_usd": self.fixed_risk_usd,
+            "max_rr": param.get("max_rr", 10.0),
             "strategy_name": f"⚡ 4-Asset High-Velocity Suite ({symbol} | 1:10R Velocity)"
         }
         self.active_positions[symbol] = pos_record
@@ -528,6 +529,30 @@ class MultiPairLiveTrader:
         if time.time() < self.cooldown_until.get(symbol, 0.0):
             return None
 
+        # ⚡ 4-Asset High-Velocity Suite Session Filter:
+        # Strictly trades London & NY liquidity sessions (12:30 to 23:45 IST) across ALL 4 assets (BTC, ETH, XAUT, SLVON).
+        # Avoids Asian low-liquidity chop (00:00 to 12:30 IST) where backtest v3 took 0 trades out of 1,824.
+        now_ist = datetime.now(IST)
+        hm = now_ist.strftime("%H:%M")
+
+        if not ("12:30" <= hm <= "23:45"):
+            now_ts = time.time()
+            if not hasattr(self, "_last_session_log"):
+                self._last_session_log = {}
+            if now_ts - self._last_session_log.get(symbol, 0) > 900:
+                self._last_session_log[symbol] = now_ts
+                self.db.log_thought(
+                    symbol=symbol,
+                    event_type="SESSION_WAIT",
+                    stars=3.0,
+                    message=f"⚡ 4-Asset High-Velocity Suite: Session paused (Asian Chop 00:00-12:30 IST). Trading window opens at 12:30 PM IST (London/NY Session)."
+                )
+            return None
+
+        # Exclude Gold chop hours (16, 19, 20, 22 IST)
+        if symbol == "XAUTUSD" and now_ist.hour in (16, 19, 20, 22):
+            return None
+
         p = self.params[symbol]
         # In live trading, fetch live candles from Delta Exchange (with 15s cache to protect API limits during 1-5s fast scans)
         now_ts = time.time()
@@ -542,20 +567,6 @@ class MultiPairLiveTrader:
                 candles = self.db.get_latest_candles(symbol, "15m", limit=60)
                 if len(candles) < 20:
                     return None
-
-        # Session Filter:
-        # - BTC and ETH: 24/7 global crypto market with high-conviction 2-edge confluence
-        # - Gold (XAUT) & Silver (SLVON): London & NY Session (12:30 to 23:45 IST)
-        now_ist = datetime.now(IST)
-        hm = now_ist.strftime("%H:%M")
-
-        is_crypto = ("BTC" in symbol or "ETH" in symbol)
-        if not is_crypto:
-            if not ("12:30" <= hm <= "23:45"):
-                return None
-            # Exclude Gold chop hours (16, 19, 20, 22 IST)
-            if symbol == "XAUTUSD" and now_ist.hour in (16, 19, 20, 22):
-                return None
 
         # Calculate Session VWAP and Standard Deviation Bands in IST
         today_str = now_ist.strftime("%Y-%m-%d")
@@ -771,6 +782,7 @@ class MultiPairLiveTrader:
             "booked_pnl": 0.0,
             "leverage": LEVERAGE_MAP.get(symbol, 100),
             "risk_usd": current_risk,
+            "max_rr": p.get("max_rr", 10.0),
             "strategy_name": f"⚡ 4-Asset High-Velocity Suite ({symbol} | 1:10R Velocity)"
         }
 
