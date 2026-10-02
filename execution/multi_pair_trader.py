@@ -452,7 +452,8 @@ class MultiPairLiveTrader:
 
         # A. Stop Loss or Runner Max Target Hit
         if action == "CLOSE_FULL":
-            self._close_position(symbol, decision.get("exit_price", current_price), reason=decision.get("reason", "STOP_LOSS"))
+            actual_exit = current_price if self.is_live_authenticated else decision.get("exit_price", current_price)
+            self._close_position(symbol, actual_exit, reason=decision.get("reason", "STOP_LOSS"))
             return
 
         # B. Entry Retracement Exception (SL Rule)

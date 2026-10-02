@@ -319,6 +319,18 @@ class DynamicTradeManager:
             peak_rr = (entry - lowest) / dist
             target_3r = round(entry - (3.0 * dist), decimals)
 
+        # Sanity check: Ignore zero or wildly anomalous price ticks (protect against API hiccups)
+        if current_price <= 0 or current_price < (0.4 * entry) or current_price > (2.5 * entry):
+            return {
+                "action": "HOLD_POSITION",
+                "reason": "Anomalous or zero mark price detected. Position held securely on exchange.",
+                "book_partial": False,
+                "trail_sl": False,
+                "new_sl": curr_sl,
+                "gain_rr": 0.0,
+                "peak_rr": 0.0
+            }
+
         # 1. Stop Loss Check
         is_sl_hit = (current_price <= curr_sl) if side == "BUY" else (current_price >= curr_sl)
         if is_sl_hit:
