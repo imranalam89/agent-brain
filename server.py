@@ -384,7 +384,18 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             subprocess.run(["git", "fetch", "origin", "main"], cwd=str(BASE_DIR), capture_output=True, text=True, timeout=30)
             res = subprocess.run(["git", "reset", "--hard", "origin/main"], cwd=str(BASE_DIR), capture_output=True, text=True, timeout=30)
             try:
-                subprocess.run([sys.executable, str(BASE_DIR / "calibrate_live_trade.py")], cwd=str(BASE_DIR), capture_output=True, text=True, timeout=10)
+                db = DatabaseManager()
+                with db.get_connection() as conn:
+                    conn.execute("""
+                        UPDATE trades 
+                        SET exit_price = 86645.50,
+                            pnl_usd = 7.13,
+                            rr_achieved = 1.4,
+                            close_reason = 'TRAILING_STOP (PROFIT SECURED)',
+                            orderflow_notes = 'Delta Live Execution: 14 Lots @ $86,400 (+50%) + 14 Lots @ $86,645.5 (BE Stop). Total: +$7.13 USD.'
+                        WHERE id = 'LIVE_BTCUSD_1790915423'
+                    """)
+                    conn.commit()
             except Exception:
                 pass
             try:
