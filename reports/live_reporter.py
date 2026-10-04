@@ -152,6 +152,10 @@ def generate_live_journal_html(
         <i data-lucide="radio" class="w-3.5 h-3.5"></i>
         <span>Live Journal</span>
       </a>
+      <a href="backtest_v4.html" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300 hover:text-white border border-emerald-500/40 font-bold transition flex items-center gap-1.5 shadow-lg shadow-emerald-500/10">
+        <i data-lucide="zap" class="w-3.5 h-3.5 text-emerald-400"></i>
+        <span>Backtest V4 (Active)</span>
+      </a>
       <a href="backtest_v3.html" class="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 hover:text-white border border-amber-500/40 font-bold transition flex items-center gap-1.5 shadow-lg shadow-amber-500/10">
         <i data-lucide="crown" class="w-3.5 h-3.5 text-amber-400"></i>
         <span>Backtest V3</span>
@@ -191,11 +195,11 @@ def generate_live_journal_html(
       </div>
       <div>
         <div class="font-bold text-white flex items-center gap-2">
-          <span>Active Strategy: ⚡ 4-Asset High-Velocity Suite (+$12,483.48 | ₹11.24L)</span>
+          <span>Active Strategy: ⚡ 4-Asset Apex Grandmaster Sniper (+$13,764.45 | ₹12.39L)</span>
           <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px]">Delta Futures Live</span>
         </div>
         <p class="text-slate-400 text-[11px] mt-0.5">
-          Simultaneous Gold + Silver + BTC + ETH • 1:10R Velocity Target • Breakeven (+0.15R Buffer) • S/R Profit Trailing • Strict $5.00 Risk
+          Simultaneous Gold + Silver + BTC + ETH • 1:10R to 1:40R Dynamic Trailing • Zero 50% Cut • Breakeven (+0.15R Buffer) • Strict $5.00 Risk
         </p>
       </div>
     </div>
