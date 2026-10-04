@@ -69,15 +69,15 @@ class MultiPairLiveTrader:
         # Concurrent active positions dictionary: {symbol: trade_dict}
         self.active_positions: Dict[str, Dict[str, Any]] = {}
 
-        # Instrument technical parameters (Operator Smart Money Calibration)
+        # Instrument technical parameters (Apex Grandmaster Sniper 40R Calibration)
         self.params = {
             "BTCUSD": {
                 "c_val": 0.001,
                 "min_stop_dist": 160.0,
                 "padding": 45.0,
                 "sigma": 1.8,
-                "tp1_rr": 2.0,
-                "max_rr": 10.0,
+                "tp1_rr": 10.0,
+                "max_rr": 40.0,
                 "is_crypto": True,
                 "decimals": 1
             },
@@ -86,8 +86,8 @@ class MultiPairLiveTrader:
                 "min_stop_dist": 8.0,
                 "padding": 2.2,
                 "sigma": 1.8,
-                "tp1_rr": 2.0,
-                "max_rr": 10.0,
+                "tp1_rr": 10.0,
+                "max_rr": 40.0,
                 "is_crypto": True,
                 "decimals": 2
             },
@@ -96,8 +96,8 @@ class MultiPairLiveTrader:
                 "min_stop_dist": 3.0,
                 "padding": 1.2,
                 "sigma": 1.8,
-                "tp1_rr": 2.0,
-                "max_rr": 10.0,
+                "tp1_rr": 10.0,
+                "max_rr": 40.0,
                 "is_crypto": False,
                 "decimals": 2
             },
@@ -106,8 +106,8 @@ class MultiPairLiveTrader:
                 "min_stop_dist": 0.25,
                 "padding": 0.08,
                 "sigma": 1.8,
-                "tp1_rr": 2.0,
-                "max_rr": 10.0,
+                "tp1_rr": 10.0,
+                "max_rr": 40.0,
                 "is_crypto": False,
                 "decimals": 3
             }
@@ -242,8 +242,8 @@ class MultiPairLiveTrader:
             "booked_pnl": 0.0,
             "leverage": LEVERAGE_MAP.get(symbol, 100),
             "risk_usd": self.fixed_risk_usd,
-            "max_rr": param.get("max_rr", 10.0),
-            "strategy_name": f"⚡ 4-Asset High-Velocity Suite ({symbol} | 1:10R Velocity)"
+            "max_rr": param.get("max_rr", 40.0),
+            "strategy_name": f"⚡ 4-Asset Apex Grandmaster Sniper ({symbol} | 1:10R to 1:40R Dynamic Trailing)"
         }
         self.active_positions[symbol] = pos_record
         print(f"📥 [ADOPTED DELTA POSITION] {symbol} {side} {lots} Lots @ ${entry_price:,.2f} | SL: ${sl} | TP: ${tp}")
@@ -457,70 +457,35 @@ class MultiPairLiveTrader:
             self._close_position(symbol, actual_exit, reason=decision.get("reason", "STOP_LOSS"))
             return
 
-        # B. Entry Retracement Exception (SL Rule)
-        if action == "HOLD_ORIGINAL_SL":
-            # Retesting entry S/R zone: Keep original Stop-Loss intact
-            pass
-
-        # C. 1:1 Full Hold Rule Active
-        if action == "HOLD_FULL_RUNNER":
-            # Holding 100% position size through 1:1 aiming for 1:2 / 1:3 run-up
-            pass
-
-        # D. Partial Scale-Out (50%) Triggered
-        if decision.get("book_partial") and not pos["tp1_hit"]:
-            pos["tp1_hit"] = True
-            diff = (current_price - entry) if side == "BUY" else (entry - current_price)
-            if "XAUT" in symbol or "SLV" in symbol:
-                fee_partial = 0.005 # half of flat $0.01 fee
-            else:
-                fee_partial = (half_lots * c_val * (entry + current_price)) * 0.0002 # 0.02% Maker
-            booked_gain = (half_lots * c_val * diff) - fee_partial
-            pos["booked_pnl"] += booked_gain
-            pos["booked_fees"] = pos.get("booked_fees", 0.0) + fee_partial
-
-            # Trail remaining SL to BE (+0.10R to cover all fees)
-            be_sl = round(entry + (0.10 * dist), p["decimals"]) if side == "BUY" else round(entry - (0.10 * dist), p["decimals"])
-            pos["stop_loss"] = be_sl
-            pos["remaining_lots"] = total_lots - half_lots
-
-            # Execute partial exit on Delta Exchange if live
-            if self.is_live_authenticated and half_lots > 0:
-                try:
-                    close_side = "sell" if side == "BUY" else "buy"
-                    self.client.place_bracket_order(
-                        symbol=symbol,
-                        side=close_side,
-                        size=half_lots,
-                        order_type="market_order"
-                    )
-                    print(f"🎯 [DELTA LIVE SCALE-OUT] {symbol} {close_side.upper()} {half_lots} Lots filled on Delta.")
-                except Exception as e:
-                    print(f"[DELTA SCALE-OUT NOTICE] {e}")
-
-            trigger_label = decision.get("trigger", "DYNAMIC_SCALE_OUT")
-            print(f"🎯 [DYNAMIC SCALE-OUT 50%] {symbol} {side} ({trigger_label})! Banked +${booked_gain:.2f}. Stop moved to BE (${pos['stop_loss']}).")
-            notifier.send_scale_out_alert(symbol, side, current_price, booked_gain, pos["stop_loss"])
+        # B. Breakeven Stop Loss Lock (100% position held, zero 50% cut)
+        if action == "LOCK_BREAKEVEN":
+            new_sl = decision.get("new_sl", sl)
+            pos["stop_loss"] = new_sl
+            pos["be_locked"] = True
+            print(f"🛡️ [BREAKEVEN STOP LOCKED] {symbol} {side} SL locked at ${new_sl:,.2f} (+0.15R fees covered). Position is 100% risk-free.")
             self.db.log_thought(
                 symbol=symbol,
-                event_type="DYNAMIC_SCALE_OUT_50",
+                event_type="BREAKEVEN_LOCKED",
                 stars=5.0,
-                message=f"🎯 Scale-out 50% on {symbol} {side} @ ${current_price} ({trigger_label}): {decision.get('reason')}. Banked +${booked_gain:.2f}. Stop locked at BE ${pos['stop_loss']}."
+                message=f"🛡️ Breakeven locked on {symbol} {side} @ ${current_price:,.2f}. SL moved to ${new_sl:,.2f} (+0.15R buffer). 100% position size running risk-free."
             )
 
-        # E. Trailing Stop Adjustment (Remaining 50% Runner)
-        if decision.get("trail_sl") and pos["tp1_hit"]:
+        # C. Trailing Stop Adjustment (100% Full Position Runner)
+        if decision.get("trail_sl"):
             new_sl = decision.get("new_sl")
             if new_sl:
                 if side == "BUY" and new_sl > pos["stop_loss"]:
                     pos["stop_loss"] = new_sl
+                    print(f"⚡ [DYNAMIC SL TRAIL] {symbol} {side} trailing SL ratcheted to ${new_sl:,.2f} (+{decision.get('gain_rr', 0.0):.1f}R expansion)")
                 elif side == "SELL" and new_sl < pos["stop_loss"]:
                     pos["stop_loss"] = new_sl
+                    print(f"⚡ [DYNAMIC SL TRAIL] {symbol} {side} trailing SL ratcheted to ${new_sl:,.2f} (+{decision.get('gain_rr', 0.0):.1f}R expansion)")
 
-        # F. Direct intra-bar Stop Loss check
+        # D. Direct intra-bar Stop Loss check
         sl_hit = (current_price <= pos["stop_loss"]) if side == "BUY" else (current_price >= pos["stop_loss"])
         if sl_hit:
-            self._close_position(symbol, current_price, reason="TRAILING_STOP" if pos["tp1_hit"] else "STOP_LOSS")
+            reason = "BREAKEVEN_STOP" if pos.get("be_locked") else "STOP_LOSS"
+            self._close_position(symbol, current_price, reason=reason)
             return
 
     def _evaluate_entry_signal(self, symbol: str, current_price: float) -> Optional[Dict[str, Any]]:
@@ -782,8 +747,8 @@ class MultiPairLiveTrader:
             "booked_pnl": 0.0,
             "leverage": LEVERAGE_MAP.get(symbol, 100),
             "risk_usd": current_risk,
-            "max_rr": p.get("max_rr", 10.0),
-            "strategy_name": f"⚡ 4-Asset High-Velocity Suite ({symbol} | 1:10R Velocity)"
+            "max_rr": p.get("max_rr", 40.0),
+            "strategy_name": f"⚡ 4-Asset Apex Grandmaster Sniper ({symbol} | 1:10R to 1:40R Dynamic Trailing)"
         }
 
         self.active_positions[symbol] = pos_record

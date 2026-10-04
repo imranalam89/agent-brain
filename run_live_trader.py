@@ -20,8 +20,8 @@ def main():
     print("""
 ================================================================================
      🧠 AGENT BRAIN | AUTONOMOUS DELTA LIVE TRADER (CHAMPION STRATEGY) 🧠     
-   Strategy: ⚡ 4-Asset High-Velocity Suite (1:10R Target | Trail BE SL + S/R Trail)
-   Target R:R: 1:10R Velocity • Breakeven: +0.15R • Strict $5.00 Fixed Risk
+   Strategy: ⚡ 4-Asset Apex Grandmaster Sniper (1:10R to 1:40R Dynamic Trailing)
+   Target R:R: 1:10R to 1:40R Trailing • Zero 50% Cut • Breakeven: +0.15R
    Instruments: BTCUSD, ETHUSD, XAUTUSD (Gold), SLVONUSD (Silver)
    Fee Model: Calibrated Delta Exchange India (0.01062% Commodity / 0.0531% Crypto)
 ================================================================================

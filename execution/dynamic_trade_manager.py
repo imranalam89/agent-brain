@@ -362,127 +362,84 @@ class DynamicTradeManager:
                 "peak_rr": peak_rr
             }
 
-        # 4. Phase 1: Dynamic Decisions between 1:1 and 1:3 R:R (Before 50% Scale-Out)
-        if not tp1_hit:
-            # Check 1:1 R:R milestone reached
-            if peak_rr >= 1.0:
-                # Trigger A: S/R Rejection Trigger (Reached ~1.1 to 1.3R, rejected by S/R, pulling back)
-                is_rejection, rej_reason = self.check_sr_rejection(side, peak_rr, gain_rr, current_price, current_bar, sr_data, dist)
-                if is_rejection:
-                    return {
-                        "action": "BOOK_50_PERCENT",
-                        "trigger": "SR_REJECTION",
-                        "reason": rej_reason,
-                        "book_partial": True,
-                        "trail_sl": True,
-                        "gain_rr": gain_rr,
-                        "peak_rr": peak_rr
-                    }
+        # 4. Phase 1 & 2: Apex Grandmaster Continuous Trailing (1:10R to 1:40R) - Zero 50% Cut
+        # Step 1: Breakeven Stop Loss Lock (+0.15R buffer to cover all exchange fees)
+        # Gold/Silver Fast Breakeven Edge: lock BE at +1.0R MFE to protect wicks
+        is_metal = ("XAUT" in str(pos.get("symbol", "")).upper() or "SLV" in str(pos.get("symbol", "")).upper())
+        be_trigger = 1.0 if is_metal else 1.5
 
-                # Trigger B: Order Flow Reversal Trigger at or past 1:1
-                is_of_rev, of_rev_reason = self.check_orderflow_reversal(side, current_bar, recent_candles, dom_data)
-                if is_of_rev:
-                    return {
-                        "action": "BOOK_50_PERCENT",
-                        "trigger": "ORDERFLOW_REVERSAL",
-                        "reason": of_rev_reason,
-                        "book_partial": True,
-                        "trail_sl": True,
-                        "gain_rr": gain_rr,
-                        "peak_rr": peak_rr
-                    }
-
-                # Trigger C: Major Upcoming S/R Barrier directly ahead
-                has_barrier, b_lvl, barrier_reason = self.check_upcoming_sr_barrier(side, current_price, dist, target_3r, sr_data)
-                if has_barrier:
-                    return {
-                        "action": "BOOK_50_PERCENT",
-                        "trigger": "UPCOMING_SR_BARRIER",
-                        "reason": barrier_reason,
-                        "book_partial": True,
-                        "trail_sl": True,
-                        "gain_rr": gain_rr,
-                        "peak_rr": peak_rr
-                    }
-
-                # Trigger D: Reached 1:2.0 to 1:3.0 Target Zones
-                if peak_rr >= 2.0:
-                    return {
-                        "action": "BOOK_50_PERCENT",
-                        "trigger": "TARGET_2R_REACHED",
-                        "reason": f"Target milestone reached: {peak_rr:.1f}R attained. Bank 50% profit and trail runner.",
-                        "book_partial": True,
-                        "trail_sl": True,
-                        "gain_rr": gain_rr,
-                        "peak_rr": peak_rr
-                    }
-
-                # DEFAULT ACTION: Full Hold Rule!
-                # If Order Flow is strongly aligned and no major S/R barriers exist, hold 100% position!
-                return {
-                    "action": "HOLD_FULL_RUNNER",
-                    "reason": f"Full Hold Rule active: Order Flow aligned, no major S/R barriers ahead. Holding 100% size at {gain_rr:.1f}R (Peak: {peak_rr:.1f}R) aiming for 1:2 - 1:3 run-up.",
-                    "book_partial": False,
-                    "trail_sl": False,
-                    "new_sl": curr_sl,
-                    "gain_rr": gain_rr,
-                    "peak_rr": peak_rr
-                }
-
-        # 5. Phase 2: Post-Scale-Out Trailing Management (Remaining 50% Position)
-        if tp1_hit:
-            # Operator Trailing Logic:
-            # Milestone 1: Stop moved to Break-Even (+0.15R buffer to cover all exchange fees)
+        if peak_rr >= be_trigger and not pos.get("be_locked"):
+            pos["be_locked"] = True
             be_sl = round(entry + (0.15 * dist), decimals) if side == "BUY" else round(entry - (0.15 * dist), decimals)
             new_sl = max(curr_sl, be_sl) if side == "BUY" else min(curr_sl, be_sl)
+            pos["stop_loss"] = new_sl
+            return {
+                "action": "LOCK_BREAKEVEN",
+                "trigger": "BREAKEVEN_LOCKED",
+                "reason": f"Breakeven locked (+0.15R buffer covering fees at {peak_rr:.1f}R MFE). Position is 100% risk-free.",
+                "book_partial": False,
+                "trail_sl": True,
+                "new_sl": new_sl,
+                "gain_rr": gain_rr,
+                "peak_rr": peak_rr
+            }
 
-            # Milestone 2: 3.5R+ Expansion -> Lock in at least +1.5R guaranteed profit!
+        # Step 2: Progressive Milestone Trailing (100% position maintained)
+        new_sl = curr_sl
+        if pos.get("be_locked"):
+            # Milestone locks
             if peak_rr >= 3.5:
-                lock_1_5r = round(entry + (1.5 * dist), decimals) if side == "BUY" else round(entry - (1.5 * dist), decimals)
-                new_sl = max(new_sl, lock_1_5r) if side == "BUY" else min(new_sl, lock_1_5r)
-
-            # Milestone 3: 5.0R+ Expansion -> Lock in at least +3.0R guaranteed profit!
+                lock_r = round(entry + 1.5 * dist, decimals) if side == "BUY" else round(entry - 1.5 * dist, decimals)
+                new_sl = max(new_sl, lock_r) if side == "BUY" else min(new_sl, lock_r)
             if peak_rr >= 5.0:
-                lock_3r = round(entry + (3.0 * dist), decimals) if side == "BUY" else round(entry - (3.0 * dist), decimals)
-                new_sl = max(new_sl, lock_3r) if side == "BUY" else min(new_sl, lock_3r)
-
-            # Milestone 4: 8.0R+ Expansion -> Lock in at least +5.5R guaranteed profit!
+                lock_r = round(entry + 3.0 * dist, decimals) if side == "BUY" else round(entry - 3.0 * dist, decimals)
+                new_sl = max(new_sl, lock_r) if side == "BUY" else min(new_sl, lock_r)
             if peak_rr >= 8.0:
-                lock_5_5r = round(entry + (5.5 * dist), decimals) if side == "BUY" else round(entry - (5.5 * dist), decimals)
-                new_sl = max(new_sl, lock_5_5r) if side == "BUY" else min(new_sl, lock_5_5r)
+                lock_r = round(entry + 5.5 * dist, decimals) if side == "BUY" else round(entry - 5.5 * dist, decimals)
+                new_sl = max(new_sl, lock_r) if side == "BUY" else min(new_sl, lock_r)
+            if peak_rr >= 10.0:
+                lock_r = round(entry + 7.5 * dist, decimals) if side == "BUY" else round(entry - 7.5 * dist, decimals)
+                new_sl = max(new_sl, lock_r) if side == "BUY" else min(new_sl, lock_r)
+            if peak_rr >= 15.0:
+                lock_r = round(entry + 11.5 * dist, decimals) if side == "BUY" else round(entry - 11.5 * dist, decimals)
+                new_sl = max(new_sl, lock_r) if side == "BUY" else min(new_sl, lock_r)
+            if peak_rr >= 20.0:
+                lock_r = round(entry + 15.5 * dist, decimals) if side == "BUY" else round(entry - 15.5 * dist, decimals)
+                new_sl = max(new_sl, lock_r) if side == "BUY" else min(new_sl, lock_r)
+            if peak_rr >= 25.0:
+                lock_r = round(entry + 20.0 * dist, decimals) if side == "BUY" else round(entry - 20.0 * dist, decimals)
+                new_sl = max(new_sl, lock_r) if side == "BUY" else min(new_sl, lock_r)
+            if peak_rr >= 30.0:
+                lock_r = round(entry + 24.5 * dist, decimals) if side == "BUY" else round(entry - 24.5 * dist, decimals)
+                new_sl = max(new_sl, lock_r) if side == "BUY" else min(new_sl, lock_r)
+            if peak_rr >= 35.0:
+                lock_r = round(entry + 29.0 * dist, decimals) if side == "BUY" else round(entry - 29.0 * dist, decimals)
+                new_sl = max(new_sl, lock_r) if side == "BUY" else min(new_sl, lock_r)
 
-            # Milestone 5: Dynamic structural trailing behind 15m pivots
+            # S/R Swing Pivot Trailing (15m structural trail)
             if peak_rr >= 2.8:
                 if side == "BUY":
                     recent_swing = sr_data.get("recent_swing_low", entry)
-                    trail_level = max(recent_swing - (0.10 * dist), highest - (1.2 * dist))
+                    trail_level = max(recent_swing - (0.05 * dist), highest - (1.2 * dist))
                     new_sl = max(new_sl, round(trail_level, decimals))
                 else: # SELL
                     recent_swing = sr_data.get("recent_swing_high", entry)
-                    trail_level = min(recent_swing + (0.10 * dist), lowest + (1.2 * dist))
+                    trail_level = min(recent_swing + (0.05 * dist), lowest + (1.2 * dist))
                     new_sl = min(new_sl, round(trail_level, decimals))
 
-            # Milestone 6: High-Velocity Target Exit (1:10R Target)
-            max_rr = float(pos.get("max_rr", 10.0))
-            max_target = round(entry + (max_rr * dist), decimals) if side == "BUY" else round(entry - (max_rr * dist), decimals)
-            is_max_hit = (current_price >= max_target) if side == "BUY" else (current_price <= max_target)
-            if is_max_hit:
-                return {
-                    "action": "CLOSE_FULL",
-                    "reason": f"MACRO_GRANDMASTER_TARGET (+{max_rr:.0f}R | $5 Risk)",
-                    "exit_price": max_target,
-                    "book_partial": False,
-                    "trail_sl": False,
-                    "new_sl": new_sl,
-                    "gain_rr": gain_rr,
-                    "peak_rr": peak_rr
-                }
+            pos["stop_loss"] = new_sl
 
+        # Step 3: Maximum 40.0R Apex Expansion Target Exit
+        max_rr = float(pos.get("max_rr", 40.0))
+        max_target = round(entry + (max_rr * dist), decimals) if side == "BUY" else round(entry - (max_rr * dist), decimals)
+        is_max_hit = (current_price >= max_target) if side == "BUY" else (current_price <= max_target)
+        if is_max_hit:
             return {
-                "action": "TRAIL_SL",
-                "reason": f"Trailing runner at {gain_rr:.1f}R. Stop protected at ${new_sl:,.2f} behind market structure.",
+                "action": "CLOSE_FULL",
+                "reason": f"APEX_GRANDMASTER_40R_TARGET (+{max_rr:.0f}R | $5 Risk)",
+                "exit_price": max_target,
                 "book_partial": False,
-                "trail_sl": (new_sl != curr_sl),
+                "trail_sl": False,
                 "new_sl": new_sl,
                 "gain_rr": gain_rr,
                 "peak_rr": peak_rr
@@ -490,10 +447,10 @@ class DynamicTradeManager:
 
         return {
             "action": "HOLD_POSITION",
-            "reason": f"Position healthy at {gain_rr:.1f}R",
+            "reason": f"⚡ Apex Runner Trailing Active: Gain {gain_rr:.1f}R (Peak: {peak_rr:.1f}R). SL @ ${new_sl:,.2f}.",
             "book_partial": False,
-            "trail_sl": False,
-            "new_sl": curr_sl,
+            "trail_sl": (new_sl != curr_sl),
+            "new_sl": new_sl,
             "gain_rr": gain_rr,
             "peak_rr": peak_rr
         }
