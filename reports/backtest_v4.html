@@ -238,20 +238,44 @@
         <span class="text-[11px] font-mono text-slate-400">Automatically Updates on Strategy Selection</span>
       </div>
 
-      <div class="grid grid-cols-2 md:grid-cols-5 gap-3 font-mono">
-        <!-- Tier 1: Under $10 -->
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 font-mono">
+        <!-- Tier 1: Under $2 -->
         <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between hover:border-slate-700 transition">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold text-slate-400">&lt; $10 Profit</span>
-            <span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 font-bold">BE &amp; Scalps</span>
+            <span class="text-[11px] font-bold text-slate-400">&lt; $2 Profit</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 font-bold">BE Lock</span>
           </div>
           <div class="mt-2">
-            <div class="text-xl font-extrabold text-white" id="tierUnder10Count">0</div>
-            <div class="text-[11px] text-slate-400 mt-0.5" id="tierUnder10Pct">0.0% of wins</div>
+            <div class="text-xl font-extrabold text-white" id="tierUnder2Count">0</div>
+            <div class="text-[11px] text-slate-400 mt-0.5" id="tierUnder2Pct">0.0% of wins</div>
           </div>
         </div>
 
-        <!-- Tier 2: $10 to $50 -->
+        <!-- Tier 2: $2 to $5 -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between hover:border-slate-600 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold text-slate-300">$2 – $5 Profit</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-800/80 text-slate-200 font-bold">0.4R – 1R</span>
+          </div>
+          <div class="mt-2">
+            <div class="text-xl font-extrabold text-slate-200" id="tier2To5Count">0</div>
+            <div class="text-[11px] text-slate-400 mt-0.5" id="tier2To5Pct">0.0% of wins</div>
+          </div>
+        </div>
+
+        <!-- Tier 3: $5 to $10 -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between hover:border-emerald-500/30 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold text-emerald-300">$5 – $10 Profit</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-950/40 text-emerald-300 border border-emerald-500/20 font-bold">1R – 2R</span>
+          </div>
+          <div class="mt-2">
+            <div class="text-xl font-extrabold text-emerald-300" id="tier5To10Count">0</div>
+            <div class="text-[11px] text-slate-400 mt-0.5" id="tier5To10Pct">0.0% of wins</div>
+          </div>
+        </div>
+
+        <!-- Tier 4: $10 to $50 -->
         <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between hover:border-emerald-500/40 transition">
           <div class="flex items-center justify-between">
             <span class="text-[11px] font-bold text-emerald-400">$10 – $50 Profit</span>
@@ -263,7 +287,7 @@
           </div>
         </div>
 
-        <!-- Tier 3: $50 to $100 -->
+        <!-- Tier 5: $50 to $100 -->
         <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between hover:border-teal-500/40 transition">
           <div class="flex items-center justify-between">
             <span class="text-[11px] font-bold text-teal-300">$50 – $100 Profit</span>
@@ -275,23 +299,11 @@
           </div>
         </div>
 
-        <!-- Tier 4: $100 to $150 -->
-        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between hover:border-cyan-500/40 transition">
-          <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold text-cyan-300">$100 – $150 Profit</span>
-            <span class="px-1.5 py-0.5 rounded text-[10px] bg-cyan-950/60 text-cyan-300 border border-cyan-500/30 font-bold">20R – 30R</span>
-          </div>
-          <div class="mt-2">
-            <div class="text-xl font-extrabold text-cyan-300" id="tier100To150Count">0</div>
-            <div class="text-[11px] text-slate-400 mt-0.5" id="tier100To150Pct">0.0% of wins</div>
-          </div>
-        </div>
-
-        <!-- Tier 5: > $150 -->
+        <!-- Tier 6: > $100 -->
         <div class="bg-slate-900/90 border border-amber-500/30 rounded-xl p-3.5 flex flex-col justify-between hover:border-amber-400 transition bg-gradient-to-b from-amber-950/20 to-slate-900/90">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold text-amber-300">&gt; $150 Profit</span>
-            <span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold">30R – 40R+</span>
+            <span class="text-[11px] font-bold text-amber-300">&gt; $100 Profit</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold">20R – 40R+</span>
           </div>
           <div class="mt-2">
             <div class="text-xl font-extrabold text-amber-300" id="tierAbove150Count">0</div>
@@ -954,7 +966,9 @@
               <th class="py-3 px-3 text-right">PF</th>
               <th class="py-3 px-3 text-right text-emerald-400 font-bold">Net P&amp;L ($ USD)</th>
               <th class="py-3 px-3 text-right text-emerald-400 font-bold">Net P&amp;L (₹ INR)</th>
-              <th class="py-3 px-2 text-right text-slate-300 font-bold">&lt;$10</th>
+              <th class="py-3 px-2 text-right text-slate-400 font-bold">&lt;$2</th>
+              <th class="py-3 px-2 text-right text-slate-300 font-bold">$2-$5</th>
+              <th class="py-3 px-2 text-right text-slate-200 font-bold">$5-$10</th>
               <th class="py-3 px-2 text-right text-emerald-400 font-bold">$10-$50</th>
               <th class="py-3 px-2 text-right text-teal-300 font-bold">$50-$100</th>
               <th class="py-3 px-2 text-right text-cyan-300 font-bold">$100-$150</th>
@@ -983,7 +997,9 @@
               <td class="py-3 px-3 text-right text-cyan-400 font-bold font-mono">4.84</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+$13,789.45</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+₹12.41L</td>
-              <td class="py-3 px-2 text-right font-mono text-slate-300">691</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-400">64</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-300">295</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-200">332</td>
               <td class="py-3 px-2 text-right font-mono text-emerald-400 font-semibold">451</td>
               <td class="py-3 px-2 text-right font-mono text-teal-300 font-semibold">43</td>
               <td class="py-3 px-2 text-right font-mono text-cyan-300 font-semibold">13</td>
@@ -1009,7 +1025,9 @@
               <td class="py-3 px-3 text-right text-cyan-400 font-bold font-mono">4.84</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+$13,764.45</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+₹12.39L</td>
-              <td class="py-3 px-2 text-right font-mono text-slate-300">691</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-400">64</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-300">295</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-200">332</td>
               <td class="py-3 px-2 text-right font-mono text-emerald-400 font-semibold">451</td>
               <td class="py-3 px-2 text-right font-mono text-teal-300 font-semibold">53</td>
               <td class="py-3 px-2 text-right font-mono text-cyan-300 font-semibold">0</td>
@@ -1035,7 +1053,9 @@
               <td class="py-3 px-3 text-right text-cyan-400 font-bold font-mono">4.77</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+$13,723.73</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+₹12.35L</td>
-              <td class="py-3 px-2 text-right font-mono text-slate-300">692</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-400">65</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-300">295</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-200">332</td>
               <td class="py-3 px-2 text-right font-mono text-emerald-400 font-semibold">452</td>
               <td class="py-3 px-2 text-right font-mono text-teal-300 font-semibold">53</td>
               <td class="py-3 px-2 text-right font-mono text-cyan-300 font-semibold">0</td>
@@ -1061,7 +1081,9 @@
               <td class="py-3 px-3 text-right text-cyan-400 font-bold font-mono">4.81</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+$13,671.95</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+₹12.30L</td>
-              <td class="py-3 px-2 text-right font-mono text-slate-300">691</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-400">64</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-300">295</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-200">332</td>
               <td class="py-3 px-2 text-right font-mono text-emerald-400 font-semibold">451</td>
               <td class="py-3 px-2 text-right font-mono text-teal-300 font-semibold">56</td>
               <td class="py-3 px-2 text-right font-mono text-cyan-300 font-semibold">0</td>
@@ -1087,7 +1109,9 @@
               <td class="py-3 px-3 text-right text-cyan-400 font-bold font-mono">4.75</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+$13,671.23</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+₹12.30L</td>
-              <td class="py-3 px-2 text-right font-mono text-slate-300">692</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-400">65</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-300">295</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-200">332</td>
               <td class="py-3 px-2 text-right font-mono text-emerald-400 font-semibold">452</td>
               <td class="py-3 px-2 text-right font-mono text-teal-300 font-semibold">56</td>
               <td class="py-3 px-2 text-right font-mono text-cyan-300 font-semibold">0</td>
@@ -1113,7 +1137,9 @@
               <td class="py-3 px-3 text-right text-cyan-400 font-bold font-mono">4.74</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+$13,631.23</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+₹12.27L</td>
-              <td class="py-3 px-2 text-right font-mono text-slate-300">692</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-400">65</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-300">295</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-200">332</td>
               <td class="py-3 px-2 text-right font-mono text-emerald-400 font-semibold">452</td>
               <td class="py-3 px-2 text-right font-mono text-teal-300 font-semibold">56</td>
               <td class="py-3 px-2 text-right font-mono text-cyan-300 font-semibold">0</td>
@@ -1139,7 +1165,9 @@
               <td class="py-3 px-3 text-right text-cyan-400 font-bold font-mono">4.70</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+$13,493.73</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+₹12.14L</td>
-              <td class="py-3 px-2 text-right font-mono text-slate-300">692</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-400">65</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-300">295</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-200">332</td>
               <td class="py-3 px-2 text-right font-mono text-emerald-400 font-semibold">508</td>
               <td class="py-3 px-2 text-right font-mono text-teal-300 font-semibold">0</td>
               <td class="py-3 px-2 text-right font-mono text-cyan-300 font-semibold">0</td>
@@ -1165,7 +1193,9 @@
               <td class="py-3 px-3 text-right text-cyan-400 font-bold font-mono">3.94</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+$12,483.48</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+₹11.24L</td>
-              <td class="py-3 px-2 text-right font-mono text-slate-300">628</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-400">1</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-300">312</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-200">315</td>
               <td class="py-3 px-2 text-right font-mono text-emerald-400 font-semibold">508</td>
               <td class="py-3 px-2 text-right font-mono text-teal-300 font-semibold">0</td>
               <td class="py-3 px-2 text-right font-mono text-cyan-300 font-semibold">0</td>
@@ -1191,7 +1221,9 @@
               <td class="py-3 px-3 text-right text-cyan-400 font-bold font-mono">4.70</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+$6,312.06</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+₹5.68L</td>
-              <td class="py-3 px-2 text-right font-mono text-slate-300">314</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-400">0</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-300">158</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-200">156</td>
               <td class="py-3 px-2 text-right font-mono text-emerald-400 font-semibold">211</td>
               <td class="py-3 px-2 text-right font-mono text-teal-300 font-semibold">0</td>
               <td class="py-3 px-2 text-right font-mono text-cyan-300 font-semibold">0</td>
@@ -1217,7 +1249,9 @@
               <td class="py-3 px-3 text-right text-cyan-400 font-bold font-mono">4.57</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+$5,050.26</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+₹4.55L</td>
-              <td class="py-3 px-2 text-right font-mono text-slate-300">247</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-400">1</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-300">126</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-200">120</td>
               <td class="py-3 px-2 text-right font-mono text-emerald-400 font-semibold">181</td>
               <td class="py-3 px-2 text-right font-mono text-teal-300 font-semibold">0</td>
               <td class="py-3 px-2 text-right font-mono text-cyan-300 font-semibold">0</td>
@@ -1243,7 +1277,9 @@
               <td class="py-3 px-3 text-right text-cyan-400 font-bold font-mono">5.99</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+$1,502.50</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+₹1.35L</td>
-              <td class="py-3 px-2 text-right font-mono text-slate-300">97</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-400">37</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-300">11</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-200">49</td>
               <td class="py-3 px-2 text-right font-mono text-emerald-400 font-semibold">64</td>
               <td class="py-3 px-2 text-right font-mono text-teal-300 font-semibold">0</td>
               <td class="py-3 px-2 text-right font-mono text-cyan-300 font-semibold">0</td>
@@ -1269,7 +1305,9 @@
               <td class="py-3 px-3 text-right text-cyan-400 font-bold font-mono">3.89</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+$628.91</td>
               <td class="py-3 px-3 text-right font-extrabold text-emerald-400 font-mono">+₹56,602</td>
-              <td class="py-3 px-2 text-right font-mono text-slate-300">34</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-400">27</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-300">0</td>
+              <td class="py-3 px-2 text-right font-mono text-slate-200">7</td>
               <td class="py-3 px-2 text-right font-mono text-emerald-400 font-semibold">52</td>
               <td class="py-3 px-2 text-right font-mono text-teal-300 font-semibold">0</td>
               <td class="py-3 px-2 text-right font-mono text-cyan-300 font-semibold">0</td>
@@ -1668,38 +1706,43 @@
       document.getElementById("topMaxDd").innerText = `Max DD: -$${maxDd.toFixed(2)}`;
 
       // Update Profit Tier Breakdown Cards
-      let cUnder10 = 0, c10To50 = 0, c50To100 = 0, c100To150 = 0, cAbove150 = 0;
+      let cUnder2 = 0, c2To5 = 0, c5To10 = 0, c10To50 = 0, c50To100 = 0, cAbove100 = 0;
       ALL_TRADES.forEach(t => {
         const p = t.pnl_usd || 0.0;
-        if (p > 0 && p < 10.0) cUnder10++;
+        if (p > 0 && p < 2.0) cUnder2++;
+        else if (p >= 2.0 && p < 5.0) c2To5++;
+        else if (p >= 5.0 && p < 10.0) c5To10++;
         else if (p >= 10.0 && p < 50.0) c10To50++;
         else if (p >= 50.0 && p < 100.0) c50To100++;
-        else if (p >= 100.0 && p < 150.0) c100To150++;
-        else if (p >= 150.0) cAbove150++;
+        else if (p >= 100.0) cAbove100++;
       });
 
-      const totalWinTrades = (cUnder10 + c10To50 + c50To100 + c100To150 + cAbove150) || 1;
-      const elU10 = document.getElementById("tierUnder10Count");
-      const elU10P = document.getElementById("tierUnder10Pct");
+      const totalWinTrades = (cUnder2 + c2To5 + c5To10 + c10To50 + c50To100 + cAbove100) || 1;
+      const elU2 = document.getElementById("tierUnder2Count");
+      const elU2P = document.getElementById("tierUnder2Pct");
+      const el2_5 = document.getElementById("tier2To5Count");
+      const el2_5P = document.getElementById("tier2To5Pct");
+      const el5_10 = document.getElementById("tier5To10Count");
+      const el5_10P = document.getElementById("tier5To10Pct");
       const el10_50 = document.getElementById("tier10To50Count");
       const el10_50P = document.getElementById("tier10To50Pct");
       const el50_100 = document.getElementById("tier50To100Count");
       const el50_100P = document.getElementById("tier50To100Pct");
-      const el100_150 = document.getElementById("tier100To150Count");
-      const el100_150P = document.getElementById("tier100To150Pct");
-      const elAbove150 = document.getElementById("tierAbove150Count");
-      const elAbove150P = document.getElementById("tierAbove150Pct");
+      const elAbove100 = document.getElementById("tierAbove150Count");
+      const elAbove100P = document.getElementById("tierAbove150Pct");
 
-      if (elU10) elU10.innerText = `${cUnder10} Trades`;
-      if (elU10P) elU10P.innerText = `${((cUnder10 / totalWinTrades) * 100).toFixed(1)}% of wins`;
+      if (elU2) elU2.innerText = `${cUnder2} Trades`;
+      if (elU2P) elU2P.innerText = `${((cUnder2 / totalWinTrades) * 100).toFixed(1)}% of wins`;
+      if (el2_5) el2_5.innerText = `${c2To5} Trades`;
+      if (el2_5P) el2_5P.innerText = `${((c2To5 / totalWinTrades) * 100).toFixed(1)}% of wins`;
+      if (el5_10) el5_10.innerText = `${c5To10} Trades`;
+      if (el5_10P) el5_10P.innerText = `${((c5To10 / totalWinTrades) * 100).toFixed(1)}% of wins`;
       if (el10_50) el10_50.innerText = `${c10To50} Trades`;
       if (el10_50P) el10_50P.innerText = `${((c10To50 / totalWinTrades) * 100).toFixed(1)}% of wins`;
       if (el50_100) el50_100.innerText = `${c50To100} Trades`;
       if (el50_100P) el50_100P.innerText = `${((c50To100 / totalWinTrades) * 100).toFixed(1)}% of wins`;
-      if (el100_150) el100_150.innerText = `${c100To150} Trades`;
-      if (el100_150P) el100_150P.innerText = `${((c100To150 / totalWinTrades) * 100).toFixed(1)}% of wins`;
-      if (elAbove150) elAbove150.innerText = `${cAbove150} Trades`;
-      if (elAbove150P) elAbove150P.innerText = `${((cAbove150 / totalWinTrades) * 100).toFixed(1)}% of wins`;
+      if (elAbove100) elAbove100.innerText = `${cAbove100} Trades`;
+      if (elAbove100P) elAbove100P.innerText = `${((cAbove100 / totalWinTrades) * 100).toFixed(1)}% of wins`;
 
       // Calculate Winning and Losing Streaks
       let maxWStreak = 0, maxLStreak = 0, curW = 0, curL = 0;

@@ -362,21 +362,18 @@ class DynamicTradeManager:
                 "peak_rr": peak_rr
             }
 
-        # 4. Phase 1 & 2: Apex Grandmaster Continuous Trailing (1:10R to 1:40R) - Zero 50% Cut
-        # Step 1: Breakeven Stop Loss Lock (+0.15R buffer to cover all exchange fees)
-        # Gold/Silver Fast Breakeven Edge: lock BE at +1.0R MFE to protect wicks
-        is_metal = ("XAUT" in str(pos.get("symbol", "")).upper() or "SLV" in str(pos.get("symbol", "")).upper())
-        be_trigger = 1.0 if is_metal else 1.5
-
+        # 4. V5 3-Layer Apex Hybrid Trailing Engine (Continuous 1:1R to 40R) - Zero 50% Cut
+        # LAYER 1: Elastic Mathematical Floor (Eliminates dead zones)
+        be_trigger = 1.2
         if peak_rr >= be_trigger and not pos.get("be_locked"):
             pos["be_locked"] = True
-            be_sl = round(entry + (0.15 * dist), decimals) if side == "BUY" else round(entry - (0.15 * dist), decimals)
+            be_sl = round(entry + (0.20 * dist), decimals) if side == "BUY" else round(entry - (0.20 * dist), decimals)
             new_sl = max(curr_sl, be_sl) if side == "BUY" else min(curr_sl, be_sl)
             pos["stop_loss"] = new_sl
             return {
                 "action": "LOCK_BREAKEVEN",
                 "trigger": "BREAKEVEN_LOCKED",
-                "reason": f"Breakeven locked (+0.15R buffer covering fees at {peak_rr:.1f}R MFE). Position is 100% risk-free.",
+                "reason": f"V5 Breakeven locked (+0.20R buffer covering all fees at {peak_rr:.1f}R MFE). Position is 100% risk-free.",
                 "book_partial": False,
                 "trail_sl": True,
                 "new_sl": new_sl,
@@ -384,48 +381,73 @@ class DynamicTradeManager:
                 "peak_rr": peak_rr
             }
 
-        # Step 2: Progressive Milestone Trailing (100% position maintained)
         new_sl = curr_sl
         if pos.get("be_locked"):
-            # Milestone locks
+            # Layer 1: Smooth Continuous Floor
+            floor_r = 0.20
+            if peak_rr >= 2.0:
+                floor_r = 1.00
             if peak_rr >= 3.5:
-                lock_r = round(entry + 1.5 * dist, decimals) if side == "BUY" else round(entry - 1.5 * dist, decimals)
-                new_sl = max(new_sl, lock_r) if side == "BUY" else min(new_sl, lock_r)
-            if peak_rr >= 5.0:
-                lock_r = round(entry + 3.0 * dist, decimals) if side == "BUY" else round(entry - 3.0 * dist, decimals)
-                new_sl = max(new_sl, lock_r) if side == "BUY" else min(new_sl, lock_r)
-            if peak_rr >= 8.0:
-                lock_r = round(entry + 5.5 * dist, decimals) if side == "BUY" else round(entry - 5.5 * dist, decimals)
-                new_sl = max(new_sl, lock_r) if side == "BUY" else min(new_sl, lock_r)
+                floor_r = 2.00
+            if peak_rr >= 6.0:
+                floor_r = 4.00
             if peak_rr >= 10.0:
-                lock_r = round(entry + 7.5 * dist, decimals) if side == "BUY" else round(entry - 7.5 * dist, decimals)
-                new_sl = max(new_sl, lock_r) if side == "BUY" else min(new_sl, lock_r)
+                floor_r = 7.50
             if peak_rr >= 15.0:
-                lock_r = round(entry + 11.5 * dist, decimals) if side == "BUY" else round(entry - 11.5 * dist, decimals)
-                new_sl = max(new_sl, lock_r) if side == "BUY" else min(new_sl, lock_r)
+                floor_r = 11.50
             if peak_rr >= 20.0:
-                lock_r = round(entry + 15.5 * dist, decimals) if side == "BUY" else round(entry - 15.5 * dist, decimals)
-                new_sl = max(new_sl, lock_r) if side == "BUY" else min(new_sl, lock_r)
+                floor_r = 15.50
             if peak_rr >= 25.0:
-                lock_r = round(entry + 20.0 * dist, decimals) if side == "BUY" else round(entry - 20.0 * dist, decimals)
-                new_sl = max(new_sl, lock_r) if side == "BUY" else min(new_sl, lock_r)
+                floor_r = 20.00
             if peak_rr >= 30.0:
-                lock_r = round(entry + 24.5 * dist, decimals) if side == "BUY" else round(entry - 24.5 * dist, decimals)
-                new_sl = max(new_sl, lock_r) if side == "BUY" else min(new_sl, lock_r)
+                floor_r = 24.50
             if peak_rr >= 35.0:
-                lock_r = round(entry + 29.0 * dist, decimals) if side == "BUY" else round(entry - 29.0 * dist, decimals)
-                new_sl = max(new_sl, lock_r) if side == "BUY" else min(new_sl, lock_r)
+                floor_r = 30.00
 
-            # S/R Swing Pivot Trailing (15m structural trail)
-            if peak_rr >= 2.8:
+            floor_price = round(entry + (floor_r * dist), decimals) if side == "BUY" else round(entry - (floor_r * dist), decimals)
+            new_sl = max(new_sl, floor_price) if side == "BUY" else min(new_sl, floor_price)
+
+            # LAYER 2: Structural Candle Buffer Trailing (Never Stop Out in Empty Space)
+            if peak_rr >= 2.0:
                 if side == "BUY":
                     recent_swing = sr_data.get("recent_swing_low", entry)
-                    trail_level = max(recent_swing - (0.05 * dist), highest - (1.2 * dist))
-                    new_sl = max(new_sl, round(trail_level, decimals))
+                    trail_structural = max(recent_swing - (0.10 * dist), highest - (1.20 * dist))
+                    new_sl = max(new_sl, round(trail_structural, decimals))
                 else: # SELL
                     recent_swing = sr_data.get("recent_swing_high", entry)
-                    trail_level = min(recent_swing + (0.05 * dist), lowest + (1.2 * dist))
-                    new_sl = min(new_sl, round(trail_level, decimals))
+                    trail_structural = min(recent_swing + (0.10 * dist), lowest + (1.20 * dist))
+                    new_sl = min(new_sl, round(trail_structural, decimals))
+
+            # LAYER 3: Apex Reversal Pinch Sensor (0.5R - 0.8R Buffer)
+            # Detects institutional delta exhaustion / opposing absorption at substantial gain
+            if peak_rr >= 5.0:
+                c_delta = float(current_bar.get("delta", 0.0))
+                c_open = float(current_bar.get("open", current_price))
+                c_high = float(current_bar.get("high", current_price))
+                c_low = float(current_bar.get("low", current_price))
+                c_range = max(0.01, c_high - c_low)
+
+                # Exhaustion rejection patterns
+                if side == "BUY":
+                    upper_wick = c_high - max(c_open, current_price)
+                    wick_ratio = upper_wick / c_range
+                    delta_exhaustion = (c_delta < 0.0) or (wick_ratio >= 0.35)
+                    if delta_exhaustion:
+                        # Pinch stop loss to 0.60R below current price / candle tip
+                        pinch_sl = round(current_price - (0.60 * dist), decimals)
+                        if pinch_sl > new_sl:
+                            new_sl = pinch_sl
+                            pos["pinch_active"] = True
+                else: # SELL
+                    lower_wick = min(c_open, current_price) - c_low
+                    wick_ratio = lower_wick / c_range
+                    delta_exhaustion = (c_delta > 0.0) or (wick_ratio >= 0.35)
+                    if delta_exhaustion:
+                        # Pinch stop loss to 0.60R above current price / candle tip
+                        pinch_sl = round(current_price + (0.60 * dist), decimals)
+                        if pinch_sl < new_sl:
+                            new_sl = pinch_sl
+                            pos["pinch_active"] = True
 
             pos["stop_loss"] = new_sl
 
@@ -447,7 +469,7 @@ class DynamicTradeManager:
 
         return {
             "action": "HOLD_POSITION",
-            "reason": f"⚡ Apex Runner Trailing Active: Gain {gain_rr:.1f}R (Peak: {peak_rr:.1f}R). SL @ ${new_sl:,.2f}.",
+            "reason": f"⚡ V5 Apex Runner Trailing Active: Gain {gain_rr:.1f}R (Peak: {peak_rr:.1f}R). SL @ ${new_sl:,.2f}.",
             "book_partial": False,
             "trail_sl": (new_sl != curr_sl),
             "new_sl": new_sl,

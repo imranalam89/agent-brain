@@ -120,6 +120,8 @@ class MultiPairLiveTrader:
         self._candle_cache: Dict[str, Any] = {}
         self.cooldown_until: Dict[str, float] = {}  # {symbol: expiration_timestamp}
         self.missing_exchange_counts: Dict[str, int] = {}
+        self.directional_loss_history: Dict[str, list] = defaultdict(list)  # {symbol: [(side, ts)]}
+        self.directional_freeze: Dict[str, Tuple[str, float]] = {}  # {symbol: (side, freeze_until)}
         self._verify_credentials()
         self._load_open_positions_from_db()
 
@@ -347,12 +349,14 @@ class MultiPairLiveTrader:
 
                 # 3A. RULE 2: If a position is running on this pair (locally or on Delta):
                 if has_local or has_exchange:
-                    # If tracked locally but no longer active on Delta Exchange, confirm across 3 consecutive cycles before finalizing
-                    if has_local and self.is_live_authenticated and not has_exchange:
+                    # Guard against phantom 16-second disconnect:
+                    # Never force-close trades younger than 90s, and confirm across 6 cycles (30s)
+                    pos_age = time.time() - self.active_positions.get(symbol, {}).get("opened_ts", time.time())
+                    if has_local and self.is_live_authenticated and not has_exchange and pos_age > 90:
                         self.missing_exchange_counts[symbol] = self.missing_exchange_counts.get(symbol, 0) + 1
-                        if self.missing_exchange_counts[symbol] >= 3:
+                        if self.missing_exchange_counts[symbol] >= 6:
                             self.missing_exchange_counts[symbol] = 0
-                            print(f"⚡ [DELTA EXCHANGE SYNC] {symbol} position confirmed closed on Delta (3 cycles). Finalizing trade @ mark price ${mark_price:,.2f}...")
+                            print(f"⚡ [DELTA EXCHANGE SYNC] {symbol} position confirmed closed on Delta (6 cycles & age {pos_age:.0f}s). Finalizing trade @ mark price ${mark_price:,.2f}...")
                             self._close_position(symbol, mark_price, reason="EXCHANGE_FILLED_EXIT")
                         continue
                     else:
@@ -635,7 +639,16 @@ class MultiPairLiveTrader:
 
         buy_score = (1 if sweep_buy else 0) + (1 if vwap_buy else 0) + (1 if absorb_buy else 0) + (1 if (macro_bull and sweep_buy) else 0)
         sell_score = (1 if sweep_sell else 0) + (1 if vwap_sell else 0) + (1 if absorb_sell else 0) + (1 if (macro_bear and sweep_sell) else 0)
-        min_score = 2 if ("BTC" in symbol or "ETH" in symbol) else 1
+        
+        # Pillar 4: Strict Multi-Factor Confluence (min_score = 2 across ALL assets)
+        min_score = 2
+
+        # Pillar 5: Higher-Timeframe Trend Hard Veto (200 EMA)
+        # Block counter-trend entries unless extraordinary 3+ star institutional setup
+        if not macro_bull and buy_score < 3:
+            buy_score = 0
+        if not macro_bear and sell_score < 3:
+            sell_score = 0
 
         # Periodic live transparency log into Brain Thoughts
         now_ts = time.time()
@@ -661,20 +674,69 @@ class MultiPairLiveTrader:
         if not is_buy and not is_sell:
             return None
 
-        side = "BUY" if is_buy else "SELL"
+        intended_side = "BUY" if is_buy else "SELL"
+
+        # Pillar 7: Anti-Tilt Consecutive Loss Directional Freeze Check
+        if symbol in self.directional_freeze:
+            freeze_side, freeze_until = self.directional_freeze[symbol]
+            if intended_side == freeze_side and time.time() < freeze_until:
+                rem_m = max(1, int((freeze_until - time.time()) / 60))
+                print(f"🛡️ [ANTI-TILT FREEZE] {symbol} {intended_side} frozen for {rem_m}m after 2 consecutive stop-outs.")
+                return None
+
+        # Pillar 2: Intermarket "Two Squads" Correlation Veto
+        # Never take opposing positions within correlated squads (Metals or Crypto)
+        if symbol in ("XAUTUSD", "SLVONUSD"):
+            partner = "SLVONUSD" if symbol == "XAUTUSD" else "XAUTUSD"
+            if partner in self.active_positions:
+                partner_side = self.active_positions[partner].get("side")
+                if partner_side and partner_side != intended_side:
+                    print(f"🛡️ [INTERMARKET VETO] Rejecting {intended_side} on {symbol} due to conflicting {partner_side} active on {partner}.")
+                    return None
+        elif symbol in ("BTCUSD", "ETHUSD"):
+            partner = "ETHUSD" if symbol == "BTCUSD" else "BTCUSD"
+            if partner in self.active_positions:
+                partner_side = self.active_positions[partner].get("side")
+                if partner_side and partner_side != intended_side:
+                    print(f"🛡️ [INTERMARKET VETO] Rejecting {intended_side} on {symbol} due to conflicting {partner_side} active on {partner}.")
+                    return None
+
+        # Pillar 8: Dynamic Level-2 DOM Imbalance Verification
+        dom_data = self.client.get_l2_orderbook(symbol) if hasattr(self.client, "get_l2_orderbook") else None
+        if dom_data and isinstance(dom_data, dict):
+            bids = dom_data.get("bids", [])
+            asks = dom_data.get("asks", [])
+            if bids and asks:
+                bid_vol = sum(float(b.get("size") or b.get("volume") or 0.0) for b in bids[:10])
+                ask_vol = sum(float(a.get("size") or a.get("volume") or 0.0) for a in asks[:10])
+                if ask_vol > 0 and bid_vol > 0:
+                    dom_ratio = bid_vol / ask_vol
+                    if is_buy and dom_ratio < 0.75:
+                        print(f"🛡️ [DOM VETO] BUY on {symbol} blocked by heavy ask wall (DOM ratio: {dom_ratio:.2f}).")
+                        return None
+                    elif is_sell and dom_ratio > 1.35:
+                        print(f"🛡️ [DOM VETO] SELL on {symbol} blocked by heavy bid wall (DOM ratio: {dom_ratio:.2f}).")
+                        return None
+
+        side = intended_side
         recent_window = today_candles[-8:] if len(today_candles) >= 8 else today_candles
+
+        # Pillar 6: Volatility-Based Stop Distance Floor (ATR 15m)
+        atr_window = candles[-14:] if len(candles) >= 14 else candles
+        atr_15m = sum(max(float(c["high"]) - float(c["low"]), 0.01) for c in atr_window) / max(1, len(atr_window))
+        min_vol_dist = 1.35 * atr_15m
 
         # Swing Low / Swing High Anchor with Generous Protective Buffer
         if is_buy:
             swing_low = min(float(c["low"]) for c in recent_window)
             raw_dist = (current_price - swing_low) + p["padding"]
-            stop_dist = max(p["min_stop_dist"], raw_dist)
+            stop_dist = max(p["min_stop_dist"], raw_dist, min_vol_dist)
             sl_price = round(current_price - stop_dist, p["decimals"])
             tp_price = round(current_price + (stop_dist * p["max_rr"]), p["decimals"])
         else:
             swing_high = max(float(c["high"]) for c in recent_window)
             raw_dist = (swing_high - current_price) + p["padding"]
-            stop_dist = max(p["min_stop_dist"], raw_dist)
+            stop_dist = max(p["min_stop_dist"], raw_dist, min_vol_dist)
             sl_price = round(current_price + stop_dist, p["decimals"])
             tp_price = round(current_price - (stop_dist * p["max_rr"]), p["decimals"])
 
@@ -741,6 +803,7 @@ class MultiPairLiveTrader:
             "notional_usd": notional,
             "margin_usd": margin,
             "opened_at": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S"),
+            "opened_ts": time.time(),
             "highest_price": current_price,
             "lowest_price": current_price,
             "tp1_hit": False,
@@ -748,7 +811,7 @@ class MultiPairLiveTrader:
             "leverage": LEVERAGE_MAP.get(symbol, 100),
             "risk_usd": current_risk,
             "max_rr": p.get("max_rr", 40.0),
-            "strategy_name": f"⚡ 4-Asset Apex Grandmaster Sniper ({symbol} | 1:10R to 1:40R Dynamic Trailing)"
+            "strategy_name": f"💎 4-Asset Apex Hybrid Sniper ({symbol} | 1:10R to 1:40R Dynamic Trailing)"
         }
 
         self.active_positions[symbol] = pos_record
@@ -888,6 +951,26 @@ class MultiPairLiveTrader:
 
         # Dispatch real-time exit email/telegram notification
         notifier.send_exit_alert(symbol, side, exit_price, total_pnl, reason)
+
+        # Pillar 7: Anti-Tilt Consecutive Loss Directional Freeze Engine
+        now_ts = time.time()
+        if total_pnl < -1.0:
+            hist = self.directional_loss_history[symbol]
+            hist.append((side, now_ts))
+            # Clean up losses older than 3 hours
+            self.directional_loss_history[symbol] = [(s, t) for (s, t) in hist if (now_ts - t) < 10800]
+            recent = self.directional_loss_history[symbol]
+            if len(recent) >= 2 and recent[-1][0] == recent[-2][0]:
+                freeze_until = now_ts + 5400.0  # 90 minutes
+                self.directional_freeze[symbol] = (side, freeze_until)
+                exp_fr = datetime.fromtimestamp(freeze_until).strftime("%H:%M:%S")
+                print(f"🛡️ [ANTI-TILT DIRECTIONAL FREEZE ACTIVATED] {symbol} {side} frozen until {exp_fr} (90 mins) after 2 consecutive stop-outs.")
+                self.db.log_thought(
+                    symbol=symbol,
+                    event_type="ANTI_TILT_FREEZE",
+                    stars=5.0,
+                    message=f"🛡️ Anti-Tilt Directional Freeze: {symbol} {side} trading frozen for 90 minutes until {exp_fr} after 2 consecutive stop-outs."
+                )
 
         # Enforce Rule 1: 10-minute cooldown on this pair after closing
         self.cooldown_until[symbol] = time.time() + 600.0

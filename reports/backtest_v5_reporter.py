@@ -5,13 +5,13 @@ from datetime import datetime
 
 USD_TO_INR = 90.0  # Live Delta India conversion reference
 
-def generate_backtest_v4_html(
+def generate_backtest_v5_html(
     report_data: Dict[str, Any],
     output_dir: Path,
-    filename: str = "backtest_v4.html"
+    filename: str = "backtest_v5.html"
 ) -> Path:
     """
-    Renders institutional-grade Backtest V4 HTML Dashboard:
+    Renders institutional-grade Backtest V5 HTML Dashboard:
     - Zero 50% Cut (100% Position Retained for High R:R Expansion)
     - Early Risk Elimination: Breakeven Stop Trigger (+0.15R buffer covering all Delta fees)
     - Dynamic Trailing: Multi-Stage Profit Lock + 15m S/R Structural Swing Pivot Trailing
@@ -354,7 +354,7 @@ def generate_backtest_v4_html(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agent Brain | Backtest V4 Dashboard (👑 High-RR Sniper Suite: No 50% Cut • Zero-Risk BE Trailing • S/R &amp; FVG Structure)</title>
+  <title>Agent Brain | Backtest V5 Dashboard (👑 High-RR Sniper Suite: No 50% Cut • Zero-Risk BE Trailing • S/R &amp; FVG Structure)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -404,7 +404,7 @@ def generate_backtest_v4_html(
           </div>
           <div>
             <h1 class="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
-              AGENT BRAIN <span class="text-emerald-400 font-mono text-sm px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30">BACKTEST V4 (HIGH-RR SNIPER • NO 50% CUT • BE TRAILING)</span>
+              AGENT BRAIN <span class="text-emerald-400 font-mono text-sm px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30">BACKTEST V5 (HIGH-RR SNIPER • NO 50% CUT • BE TRAILING)</span>
             </h1>
             <p class="text-xs text-slate-400 mt-0.5">
               🎯 Low-Frequency Sniper Selection • Zero 50% Cut (100% Position Retained) • Breakeven SL (+0.15R Buffer) • S/R, FVG &amp; Wick Rejection • Maker Fee Optimization • Strict $5 Risk
@@ -663,14 +663,14 @@ def generate_backtest_v4_html(
       </div>
     </div>
 
-    <!-- V4 Architecture & Fee Optimization Notice -->
+    <!-- V5 Architecture & Fee Optimization Notice -->
     <div class="glass rounded-2xl p-5 border-emerald-500/30 bg-gradient-to-r from-emerald-950/30 via-slate-900/70 to-cyan-950/30 text-xs">
       <div class="flex items-center gap-2 mb-2 font-bold text-emerald-400">
         <i data-lucide="shield-check" class="w-4 h-4"></i>
-        <span>BACKTEST V4 ADVANCED TRADER ARCHITECTURE: ZERO 50% CUT • BREAKEVEN TRAILING • DYNAMIC 1:10R TO 1:40R • SNIPER PRUNING</span>
+        <span>BACKTEST V5 ADVANCED TRADER ARCHITECTURE: ZERO 50% CUT • BREAKEVEN TRAILING • DYNAMIC 1:10R TO 1:40R • SNIPER PRUNING</span>
       </div>
       <p class="text-slate-300 leading-relaxed">
-        <strong>1. 100% Full Position Retention (Zero 50% Cuts):</strong> Unlike V2/V3 partial scale-outs, V4 holds the complete position size throughout, capturing massive macro runs.<br>
+        <strong>1. 100% Full Position Retention (Zero 50% Cuts):</strong> Unlike V2/V3 partial scale-outs, V5 holds the complete position size throughout, capturing massive macro runs.<br>
         <strong>2. Risk Elimination via Breakeven Trailing:</strong> Stops shift to entry + 0.15R buffer as soon as early momentum begins, fully covering round-trip exchange fees and making each trade 100% risk-free.<br>
         <strong>3. Dynamic Asymmetric Profit Trailing (1:10R to 1:40R):</strong> Stops ratchet progressively at +3.5R, +5.0R, +8.0R, +10.0R, +15.0R, +20.0R, +25.0R, +30.0R, and +35.0R, giving runners space to tag <strong>1:40R (+ $200 on $5 risk)</strong> while locking banked gains against deep pullbacks.<br>
         <strong>4. Institutional Trade Pruning Edge:</strong> Journal analysis revealed Hour 08:00 dead chop (0% WR) and 5.0★ false breakout knife-catches on crypto. By pruning these toxic setups, the <strong>🎯 Sniper Pruned Apex Suite</strong> achieves an exceptional <strong>4.84 Profit Factor, 66.2% Win Rate, and +$13,789.45 (~₹12.41 Lakh)</strong> Net Profit with just -$46.61 Max Drawdown!<br>
@@ -945,7 +945,7 @@ def generate_backtest_v4_html(
 
     let useINR = false;
     let currentSelectedDate = null;
-    let currentCalMonth = new Date(2026, 8, 1); // Default to Sept 2026
+    let currentCalMonth = new Date(2026, 9, 1); // Default to October 2026 (latest live month)
     let currentPage = 1;
     const pageSize = 50;
     let chartInstance = null;
@@ -954,9 +954,17 @@ def generate_backtest_v4_html(
     const dailyMap = {{}};
     function rebuildDailyMap() {{
       for (const k in dailyMap) delete dailyMap[k];
-      (currentStrategy.daily_pnl || []).forEach(d => {{
+      const pnlArr = currentStrategy.daily_pnl || currentStrategy.daily_calendar || [];
+      pnlArr.forEach(d => {{
         dailyMap[d.date] = d;
       }});
+      if (pnlArr.length > 0) {{
+        const latestD = pnlArr[pnlArr.length - 1].date;
+        if (latestD && latestD.includes("-")) {{
+          const parts = latestD.split("-");
+          currentCalMonth = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, 1);
+        }}
+      }}
     }}
     rebuildDailyMap();
 
@@ -1232,8 +1240,10 @@ def generate_backtest_v4_html(
 
         if (data) {{
           const net = useINR ? (data.net_pnl * USD_INR_RATE) : data.net_pnl;
-          const gp = useINR ? ((data.gross_profit || (data.net_pnl > 0 ? (data.net_pnl + (data.total_fees || 0)) : 0)) * USD_INR_RATE) : (data.gross_profit || (data.net_pnl > 0 ? (data.net_pnl + (data.total_fees || 0)) : 0));
-          const gl = useINR ? ((data.gross_loss || (data.net_pnl < 0 ? (Math.abs(data.net_pnl) - (data.total_fees || 0)) : 0)) * USD_INR_RATE) : (data.gross_loss || (data.net_pnl < 0 ? (Math.abs(data.net_pnl) - (data.total_fees || 0)) : 0));
+          const rawGp = data.gross_profit !== undefined ? data.gross_profit : (data.net_pnl > 0 ? (data.net_pnl + (data.total_fees || 0)) : 0);
+          const rawGl = data.gross_loss !== undefined ? data.gross_loss : (data.net_pnl < 0 ? (Math.abs(data.net_pnl) - (data.total_fees || 0)) : 0);
+          const gp = useINR ? (rawGp * USD_INR_RATE) : rawGp;
+          const gl = useINR ? (rawGl * USD_INR_RATE) : rawGl;
           const fee = useINR ? ((data.total_fees || 0) * USD_INR_RATE) : (data.total_fees || 0);
           const prefix = useINR ? "₹" : "$";
           const fmtNet = Math.abs(net).toLocaleString(undefined, {{minimumFractionDigits: useINR ? 0 : 2, maximumFractionDigits: useINR ? 0 : 2}});
@@ -1618,5 +1628,5 @@ def generate_backtest_v4_html(
 """
 
     file_path.write_text(html_content, encoding="utf-8")
-    print(f"✅ [BACKTEST V4 REPORT] Generated: {file_path}")
+    print(f"✅ [BACKTEST V5 REPORT] Generated: {file_path}")
     return file_path
