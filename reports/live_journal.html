@@ -46,13 +46,17 @@
         <i data-lucide="radio" class="w-3.5 h-3.5"></i>
         <span>Live Journal</span>
       </a>
-      <a href="backtest_v3.html" class="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 hover:text-white border border-amber-500/40 font-bold transition flex items-center gap-1.5 shadow-lg shadow-amber-500/10">
-        <i data-lucide="crown" class="w-3.5 h-3.5 text-amber-400"></i>
-        <span>Backtest V3</span>
+      <a href="backtest_v5.html" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-emerald-500/20 to-teal-500/20 text-emerald-300 hover:text-white border border-emerald-500/50 font-bold transition flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-500/30">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
+        <span>Backtest V5 (Active)</span>
       </a>
-      <a href="backtest_v2.html" class="px-3 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-300 hover:text-white border border-cyan-500/40 font-bold transition flex items-center gap-1.5 shadow-lg shadow-cyan-500/10">
-        <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
-        <span>Backtest V2</span>
+      <a href="backtest_v4.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
+        <i data-lucide="zap" class="w-3.5 h-3.5 text-slate-400"></i>
+        <span>Backtest V4</span>
+      </a>
+      <a href="backtest_v3.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
+        <i data-lucide="crown" class="w-3.5 h-3.5 text-slate-400"></i>
+        <span>Backtest V3</span>
       </a>
       <a href="agent_journal.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
         <i data-lucide="database" class="w-3.5 h-3.5"></i>
@@ -85,11 +89,11 @@
       </div>
       <div>
         <div class="font-bold text-white flex items-center gap-2">
-          <span>Active Strategy: ⚡ 4-Asset High-Velocity Suite (+$12,483.48 | ₹11.24L)</span>
+          <span>Active Strategy: 💎 4-Asset Apex Hybrid Sniper (+$17,251.30 | ₹15.53L)</span>
           <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px]">Delta Futures Live</span>
         </div>
         <p class="text-slate-400 text-[11px] mt-0.5">
-          Simultaneous Gold + Silver + BTC + ETH • 1:10R Velocity Target • Breakeven (+0.15R Buffer) • S/R Profit Trailing • Strict $5.00 Risk
+          Simultaneous Gold + Silver + BTC + ETH • 1:10R to 1:40R Macro Trailing • 3-Layer Continuous Floor • Zero 50% Cut • Breakeven (+0.20R Buffer) • Strict $5.00 Risk
         </p>
       </div>
     </div>
@@ -860,8 +864,8 @@
             <td><span class="px-2 py-0.5 rounded border text-[10px] font-bold ${sideClass}">${pos.side}</span></td>
             <td>${pos.lots} Lots <span class="text-slate-500">($${pos.notional_usd || '--'})</span></td>
             <td class="font-bold text-slate-200">$${pos.entry_price}</td>
-            <td id="livePrice_${pos.symbol}" class="font-bold text-white">Scanning...</td>
-            <td id="unrealized_${pos.symbol}" class="font-bold text-emerald-400">+$0.00</td>
+            <td id="livePrice_${pos.symbol}" class="font-bold text-white">${pos.live_mark_price ? '$' + pos.live_mark_price.toFixed(pos.symbol.includes('SLV') ? 3 : 2) : 'Scanning...'}</td>
+            <td id="unrealized_${pos.symbol}" class="font-bold ${pos.unrealized_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${pos.unrealized_pnl !== undefined ? (pos.unrealized_pnl >= 0 ? '+$' : '-$') + Math.abs(pos.unrealized_pnl).toFixed(2) : '+$0.00'}</td>
             <td class="text-rose-400 font-bold">$${pos.stop_loss} ${isBeLocked ? '<span class="text-[9px] text-emerald-400 bg-emerald-500/20 px-1 py-0.2 rounded">BE</span>' : ''}</td>
             <td class="text-teal-400 font-bold">$${pos.take_profit}</td>
             <td>${phaseBadge}</td>
@@ -1123,7 +1127,17 @@
         // Update Open Positions
         if (data.open_trades) {
           const posMap = {};
-          data.open_trades.forEach(p => posMap[p.symbol] = p);
+          data.open_trades.forEach(p => {
+            const sym = p.symbol;
+            const liveP = (data.tickers && data.tickers[sym]) ? data.tickers[sym] : 0;
+            if (liveP > 0) {
+              p.live_mark_price = liveP;
+              const diff = (p.side === 'BUY') ? (liveP - p.entry_price) : (p.entry_price - liveP);
+              const cVal = (sym === 'SLVONUSD') ? 0.1 : 0.001;
+              p.unrealized_pnl = Math.round(diff * p.lots * cVal * 100) / 100;
+            }
+            posMap[sym] = p;
+          });
           renderOpenPositions(posMap);
         }
 
