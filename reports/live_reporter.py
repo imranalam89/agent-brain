@@ -471,7 +471,7 @@ def generate_live_journal_html(
         <div class="flex items-center gap-3 flex-wrap">
           <div class="flex items-center rounded-xl bg-slate-950 border border-slate-800 p-0.5 text-xs font-semibold">
             <button id="calModeSuite" onclick="setCalDataMode('suite')" class="px-3 py-1.5 rounded-lg bg-emerald-500 text-white font-bold transition flex items-center gap-1 shadow-md shadow-emerald-500/20">
-              <span>⚡ Strategy (1,824 Trades)</span>
+              <span>💎 V5 Apex Sniper (1,755 Trades)</span>
             </button>
             <button id="calModeLive" onclick="setCalDataMode('live')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1">
               <span>🟢 Live Fills Only</span>
@@ -583,9 +583,9 @@ def generate_live_journal_html(
     let customStart = null;
     let customEnd = null;
 
-    // Calendar view state - Defaults directly to September 2026 (matching Backtest V3)
-    let calCurrentDate = new Date(2026, 8, 1);
-    let calDataMode = 'suite'; // 'suite' (includes all 1,824 strategy trades + live) or 'live' (only VPS live fills)
+    // Calendar view state - Defaults directly to October 2026 (matching V5 Active Model)
+    let calCurrentDate = new Date(2026, 9, 1);
+    let calDataMode = 'suite'; // 'suite' (includes all 1,755 strategy trades + live) or 'live' (only VPS live fills)
     const STRATEGY_DAILY_PNL = {strategy_daily_json};
     let strategyHistoricalTrades = [];
 
