@@ -152,17 +152,17 @@ def generate_live_journal_html(
         <i data-lucide="radio" class="w-3.5 h-3.5"></i>
         <span>Live Journal</span>
       </a>
-      <a href="backtest_v4.html" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300 hover:text-white border border-emerald-500/40 font-bold transition flex items-center gap-1.5 shadow-lg shadow-emerald-500/10">
-        <i data-lucide="zap" class="w-3.5 h-3.5 text-emerald-400"></i>
-        <span>Backtest V4 (Active)</span>
+      <a href="backtest_v5.html" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-emerald-500/20 to-teal-500/20 text-emerald-300 hover:text-white border border-emerald-500/50 font-bold transition flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-500/30">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
+        <span>Backtest V5 (Active)</span>
       </a>
-      <a href="backtest_v3.html" class="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 hover:text-white border border-amber-500/40 font-bold transition flex items-center gap-1.5 shadow-lg shadow-amber-500/10">
-        <i data-lucide="crown" class="w-3.5 h-3.5 text-amber-400"></i>
+      <a href="backtest_v4.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
+        <i data-lucide="zap" class="w-3.5 h-3.5 text-slate-400"></i>
+        <span>Backtest V4</span>
+      </a>
+      <a href="backtest_v3.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
+        <i data-lucide="crown" class="w-3.5 h-3.5 text-slate-400"></i>
         <span>Backtest V3</span>
-      </a>
-      <a href="backtest_v2.html" class="px-3 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-300 hover:text-white border border-cyan-500/40 font-bold transition flex items-center gap-1.5 shadow-lg shadow-cyan-500/10">
-        <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
-        <span>Backtest V2</span>
       </a>
       <a href="agent_journal.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
         <i data-lucide="database" class="w-3.5 h-3.5"></i>
@@ -195,11 +195,11 @@ def generate_live_journal_html(
       </div>
       <div>
         <div class="font-bold text-white flex items-center gap-2">
-          <span>Active Strategy: ⚡ 4-Asset Apex Grandmaster Sniper (+$13,764.45 | ₹12.39L)</span>
+          <span>Active Strategy: 💎 4-Asset Apex Hybrid Sniper (+$17,251.30 | ₹15.53L)</span>
           <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px]">Delta Futures Live</span>
         </div>
         <p class="text-slate-400 text-[11px] mt-0.5">
-          Simultaneous Gold + Silver + BTC + ETH • 1:10R to 1:40R Dynamic Trailing • Zero 50% Cut • Breakeven (+0.15R Buffer) • Strict $5.00 Risk
+          Simultaneous Gold + Silver + BTC + ETH • 1:10R to 1:40R Macro Trailing • 3-Layer Continuous Floor • Zero 50% Cut • Breakeven (+0.20R Buffer) • Strict $5.00 Risk
         </p>
       </div>
     </div>
