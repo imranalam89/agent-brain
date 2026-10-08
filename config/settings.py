@@ -141,5 +141,6 @@ HIGH_LIQUIDITY_SESSIONS = {
 # 6. LOCAL PERSISTENCE & DATABASE
 # ==========================================
 DATABASE_PATH = BASE_DIR / "data" / "trading_brain.db"
+DOM_DATABASE_PATH = BASE_DIR / "data" / "dom_recorder.db"
 REPORTS_DIR = BASE_DIR / "reports"
 CSV_IMPORTS_DIR = BASE_DIR / "data" / "csv_imports"

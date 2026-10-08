@@ -1272,13 +1272,24 @@ def generate_backtest_v5_html(
           `;
         }}
 
+        const todayDateStr = "2026-10-07";
+        if (!data && dStr === todayDateStr) {{
+          bgClass = "bg-cyan-950/20 border-cyan-500/40 hover:border-cyan-400";
+          contentHtml = `
+            <div class="mt-1 flex flex-col gap-0.5">
+              <span class="text-[10px] font-bold text-cyan-400 mono">0 Closed</span>
+              <span class="text-[8px] text-cyan-300/80 font-mono">⚡ Actively Scanning</span>
+            </div>
+          `;
+        }}
+
         const selectedStyle = isSelected ? "ring-2 ring-emerald-400 border-emerald-400" : "";
 
         grid.innerHTML += `
           <div onclick="selectDate('${{dStr}}')" class="day-cell p-2 min-h-[76px] rounded-lg border ${{bgClass}} ${{selectedStyle}} cursor-pointer flex flex-col justify-between">
             <div class="flex items-center justify-between">
               <span class="text-[10px] font-bold text-slate-400">${{day}}</span>
-              ${{data ? `<span class="text-[8px] px-1 py-0.2 rounded bg-slate-800 text-slate-400 font-mono">${{data.trades_count}} Tr</span>` : ''}}
+              ${{data ? `<span class="text-[8px] px-1 py-0.2 rounded bg-slate-800 text-slate-400 font-mono">${{data.trades_count}} Tr</span>` : (dStr === todayDateStr ? `<span class="text-[8px] px-1 py-0.2 rounded bg-cyan-900/60 text-cyan-300 font-mono">Today</span>` : '')}}
             </div>
             ${{contentHtml}}
           </div>

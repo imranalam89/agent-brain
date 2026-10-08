@@ -11,13 +11,24 @@ class OrderFlowEngine:
     def __init__(self, min_imbalance_ratio: float = 1.8):
         self.min_imbalance = min_imbalance_ratio
 
-    def analyze_dom(self, bids: List[List[float]], asks: List[List[float]]) -> Dict[str, Any]:
+    def analyze_dom(self, bids: List[Any], asks: List[Any]) -> Dict[str, Any]:
         """
         Analyzes Level 2 Order Book Depth.
-        Each entry is [price, size].
+        Each entry is [price, size] or {'price': ..., 'size': ...}.
+        Extracts depth, imbalance, spread, mid price, and resting liquidity walls.
         """
-        total_bid_size = sum(float(b[1]) for b in bids) if bids else 0.0
-        total_ask_size = sum(float(a[1]) for a in asks) if asks else 0.0
+        def _parse_level(item):
+            if isinstance(item, (list, tuple)) and len(item) >= 2:
+                return float(item[0]), float(item[1])
+            elif isinstance(item, dict):
+                return float(item.get("price", 0.0)), float(item.get("size", 0.0))
+            return 0.0, 0.0
+
+        parsed_bids = [_parse_level(b) for b in (bids or []) if _parse_level(b)[1] > 0]
+        parsed_asks = [_parse_level(a) for a in (asks or []) if _parse_level(a)[1] > 0]
+
+        total_bid_size = sum(b[1] for b in parsed_bids)
+        total_ask_size = sum(a[1] for a in parsed_asks)
 
         bid_imbalance = (total_bid_size / total_ask_size) if total_ask_size > 0 else 1.0
         ask_imbalance = (total_ask_size / total_bid_size) if total_bid_size > 0 else 1.0
@@ -28,12 +39,29 @@ class OrderFlowEngine:
         elif ask_imbalance >= self.min_imbalance:
             dominant_side = "SELLERS"
 
+        best_bid = parsed_bids[0][0] if parsed_bids else 0.0
+        best_ask = parsed_asks[0][0] if parsed_asks else 0.0
+        spread = round(max(0.0, best_ask - best_bid), 4) if (best_bid and best_ask) else 0.0
+        mid_price = round((best_bid + best_ask) / 2.0, 4) if (best_bid and best_ask) else (best_bid or best_ask)
+
+        # Detect institutional resting walls (orders >= 3x the average level depth)
+        bid_avg = (total_bid_size / len(parsed_bids)) if parsed_bids else 0.0
+        ask_avg = (total_ask_size / len(parsed_asks)) if parsed_asks else 0.0
+        bid_walls = [{"price": p, "size": s} for p, s in parsed_bids if s >= max(1.0, bid_avg * 3.0)]
+        ask_walls = [{"price": p, "size": s} for p, s in parsed_asks if s >= max(1.0, ask_avg * 3.0)]
+
         return {
             "total_bid_size": round(total_bid_size, 3),
             "total_ask_size": round(total_ask_size, 3),
             "bid_imbalance_ratio": round(bid_imbalance, 2),
             "ask_imbalance_ratio": round(ask_imbalance, 2),
-            "dominant_side": dominant_side
+            "dominant_side": dominant_side,
+            "best_bid": best_bid,
+            "best_ask": best_ask,
+            "mid_price": mid_price,
+            "spread": spread,
+            "bid_walls": bid_walls,
+            "ask_walls": ask_walls
         }
 
     def detect_liquidity_sweep(

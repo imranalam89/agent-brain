@@ -78,13 +78,37 @@ Environment=DASHBOARD_HOST=0.0.0.0
 WantedBy=multi-user.target
 EOF
 
-# 6. Reload Systemd & Start Services
-echo "🚀 Step 5: Enabling and starting background services..."
+# 6. Create Systemd Service for 24/7 L2 DOM Recorder (scripts/record_l2_dom.py)
+echo "⚙️ Step 5: Installing 24/7 systemd service for Level 2 DOM Recorder..."
+cat << EOF > /etc/systemd/system/trading-dom-recorder.service
+[Unit]
+Description=Agent Brain - 24/7 Level 2 DOM Orderbook & Heatmap Recorder
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=$APP_DIR
+ExecStart=$APP_DIR/.venv/bin/python $APP_DIR/scripts/record_l2_dom.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# 7. Reload Systemd & Start Services
+echo "🚀 Step 6: Enabling and starting background services..."
 systemctl daemon-reload
 systemctl enable trading-brain.service
 systemctl enable trading-dashboard.service
+systemctl enable trading-dom-recorder.service
 systemctl restart trading-brain.service
 systemctl restart trading-dashboard.service
+systemctl restart trading-dom-recorder.service
 
 # 7. Open Firewall Port 5050 for Live Journal Dashboard
 echo "🛡️ Step 6: Configuring firewall rules for port 5050..."
@@ -106,7 +130,10 @@ echo "=================================================================="
 echo "  ✅ AGENT BRAIN SUCCESSFULLY DEPLOYED AND RUNNING 24/7!          "
 echo "=================================================================="
 echo "  📊 Live Journal Cockpit:  http://62.72.31.29:5050"
+echo "  📈 L2 DOM Heatmap:        http://62.72.31.29:5050/dom_heatmap.html"
 echo "  🤖 Check Engine Status:   systemctl status trading-brain"
 echo "  📋 View Live Engine Logs: journalctl -u trading-brain -f"
-echo "  🌐 Check Dashboard Status: systemctl status trading-dashboard"
+echo "  📊 Check DOM Recorder:    systemctl status trading-dom-recorder"
+echo "  📜 View DOM Recorder Logs:journalctl -u trading-dom-recorder -f"
+echo "  🌐 Check Dashboard Status:systemctl status trading-dashboard"
 echo "=================================================================="

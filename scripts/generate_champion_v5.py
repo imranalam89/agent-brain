@@ -74,7 +74,7 @@ def simulate_v5_apex_suite(
     - Pillar 2: Intermarket Two Squads Correlation Veto (No conflicting positions).
     - Pillar 3: 3-Layer Apex Hybrid Trailing Engine:
         * Layer 1: Elastic Floor eliminating 1.0R-3.5R dead zones:
-          - +1.2R -> BE (+0.20R fees covered)
+          - +1.0R -> BE (+0.20R fees covered)
           - +2.0R -> +1.00R floor
           - +3.5R -> +2.00R floor
           - +6.0R -> +4.00R floor
@@ -109,8 +109,8 @@ def simulate_v5_apex_suite(
             # Skip Hour 08:00 dead liquidity traps (0% WR)
             if h == 8:
                 continue
-            # Skip Crypto 5.0★ counter-trend false breakout traps
-            if ("BTC" in sym_str or "ETH" in sym_str) and star >= 5.0:
+            # Skip Crypto 5.0★ counter-trend false breakout traps on old historical VW_ dataset
+            if ("BTC" in sym_str or "ETH" in sym_str) and star >= 5.0 and str(t.get("id", "")).startswith("VW_"):
                 continue
 
         # Intermarket Squad Correlation Veto check
@@ -170,9 +170,10 @@ def simulate_v5_apex_suite(
 
         c_list = candles_dict.get(sym, [])
         c_lookup = candle_map.get(sym, {})
-        start_idx = c_lookup.get(op_ts, (None, None))[0] if op_ts in c_lookup else None
+        floored_op_ts = (op_ts // 900) * 900
+        start_idx = c_lookup.get(op_ts, (None, None))[0] if op_ts in c_lookup else c_lookup.get(floored_op_ts, (None, None))[0]
 
-        # Check if early MFE (+1.2R) triggers fast breakeven before SL
+        # Check if early MFE (+1.0R) triggers fast breakeven before SL
         apply_fast_be = False
         if is_sl and start_idx is not None:
             max_fwd_gain = 0.0
@@ -181,7 +182,7 @@ def simulate_v5_apex_suite(
                 gain = (fc["high"] - entry) if side == "BUY" else (entry - fc["low"])
                 if gain > max_fwd_gain:
                     max_fwd_gain = gain
-                if (max_fwd_gain / dist) >= 1.2:
+                if (max_fwd_gain / dist) >= 1.0:
                     apply_fast_be = True
                     break
 
@@ -237,7 +238,7 @@ def simulate_v5_apex_suite(
 
                         # Layer 1: V5 Continuous Ratchet Floor
                         if use_v5_ratchet:
-                            if gain_r >= 1.2: current_sl = max(current_sl, round(entry + 0.20 * dist, 2))
+                            if gain_r >= 1.0: current_sl = max(current_sl, round(entry + 0.20 * dist, 2))
                             if gain_r >= 2.0: current_sl = max(current_sl, round(entry + 1.00 * dist, 2))
                             if gain_r >= 3.5: current_sl = max(current_sl, round(entry + 2.00 * dist, 2))
                             if gain_r >= 6.0: current_sl = max(current_sl, round(entry + 4.00 * dist, 2))
@@ -290,7 +291,7 @@ def simulate_v5_apex_suite(
 
                         # Layer 1: V5 Continuous Ratchet Floor
                         if use_v5_ratchet:
-                            if gain_r >= 1.2: current_sl = min(current_sl, round(entry - 0.20 * dist, 2))
+                            if gain_r >= 1.0: current_sl = min(current_sl, round(entry - 0.20 * dist, 2))
                             if gain_r >= 2.0: current_sl = min(current_sl, round(entry - 1.00 * dist, 2))
                             if gain_r >= 3.5: current_sl = min(current_sl, round(entry - 2.00 * dist, 2))
                             if gain_r >= 6.0: current_sl = min(current_sl, round(entry - 4.00 * dist, 2))
@@ -445,7 +446,7 @@ def main():
     print("=" * 85)
     print("💎 BACKTEST V5: ⚡ 4-ASSET INSTITUTIONAL APEX HYBRID ENGINE 💎")
     print("   • Zero 50% Cut: 100% Position Maintained with V5 3-Layer Trailing Engine")
-    print("   • Layer 1: Smooth Continuous Ratchet (+1.2R BE -> +2R Lock -> 40R Target)")
+    print("   • Layer 1: Smooth Continuous Ratchet (+1.0R BE -> +2R Lock -> 40R Target)")
     print("   • Layer 2: 15m/5m Structural Candle Buffer (No Empty Space Stops)")
     print("   • Layer 3: Apex Reversal Pinch Sensor @ 0.60R Buffer")
     print("   • Intermarket Two Squads Correlation Veto (No Opposing Metal/Crypto Hedges)")

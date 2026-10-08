@@ -19,8 +19,13 @@ class DatabaseManager:
         self.init_database()
 
     def get_connection(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path, timeout=30.0)
         conn.row_factory = sqlite3.Row
+        try:
+            conn.execute("PRAGMA journal_mode=WAL;")
+            conn.execute("PRAGMA busy_timeout=30000;")
+        except Exception:
+            pass
         return conn
 
     def init_database(self):
@@ -74,6 +79,32 @@ class DatabaseManager:
                     cvd REAL,
                     absorption_detected INTEGER DEFAULT 0
                 )
+            """)
+
+            # 3b. Level 2 DOM Price Ladder Snapshots (for Heatmaps & Precision DOM Backtesting)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS dom_snapshots (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    symbol TEXT NOT NULL,
+                    timestamp INTEGER NOT NULL,
+                    datetime_ist TEXT NOT NULL,
+                    best_bid REAL,
+                    best_ask REAL,
+                    mid_price REAL,
+                    spread REAL,
+                    total_bid_size REAL,
+                    total_ask_size REAL,
+                    imbalance_ratio REAL,
+                    dominant_side TEXT,
+                    bid_walls_json TEXT,
+                    ask_walls_json TEXT,
+                    bids_json TEXT NOT NULL,
+                    asks_json TEXT NOT NULL
+                )
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_dom_sym_time 
+                ON dom_snapshots (symbol, timestamp)
             """)
 
             # 4. Master Trade Journal
@@ -169,6 +200,152 @@ class DatabaseManager:
             """, (symbol, timeframe, limit))
             rows = cursor.fetchall()
             return [dict(r) for r in reversed(rows)]
+
+    # ------------------ Level 2 DOM Operations (Heatmaps & Backtesting) ------------------
+    def save_dom_snapshot(
+        self,
+        symbol: str,
+        timestamp: int,
+        datetime_ist: str,
+        bids: List[Any],
+        asks: List[Any],
+        analysis: Optional[Dict[str, Any]] = None
+    ):
+        """Saves a single L2 DOM snapshot with raw depth and orderflow metrics."""
+        analysis = analysis or {}
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO dom_snapshots (
+                    symbol, timestamp, datetime_ist,
+                    best_bid, best_ask, mid_price, spread,
+                    total_bid_size, total_ask_size, imbalance_ratio,
+                    dominant_side, bid_walls_json, ask_walls_json,
+                    bids_json, asks_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                symbol, timestamp, datetime_ist,
+                analysis.get("best_bid", 0.0),
+                analysis.get("best_ask", 0.0),
+                analysis.get("mid_price", 0.0),
+                analysis.get("spread", 0.0),
+                analysis.get("total_bid_size", 0.0),
+                analysis.get("total_ask_size", 0.0),
+                analysis.get("bid_imbalance_ratio", 1.0),
+                analysis.get("dominant_side", "NEUTRAL"),
+                json.dumps(analysis.get("bid_walls", [])),
+                json.dumps(analysis.get("ask_walls", [])),
+                json.dumps(bids),
+                json.dumps(asks)
+            ))
+            conn.commit()
+
+    def get_closest_dom_snapshot(self, symbol: str, timestamp: int, tolerance_seconds: int = 300) -> Optional[Dict[str, Any]]:
+        """
+        Retrieves the DOM snapshot closest to the given timestamp (for backtesting replay).
+        Looks for the latest snapshot at or before the timestamp within tolerance.
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT * FROM dom_snapshots 
+                WHERE symbol = ? AND timestamp <= ? AND timestamp >= ?
+                ORDER BY timestamp DESC LIMIT 1
+            """, (symbol, timestamp, timestamp - tolerance_seconds))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            res = dict(row)
+            try:
+                res["bids"] = json.loads(res.get("bids_json", "[]"))
+                res["asks"] = json.loads(res.get("asks_json", "[]"))
+                res["bid_walls"] = json.loads(res.get("bid_walls_json", "[]"))
+                res["ask_walls"] = json.loads(res.get("ask_walls_json", "[]"))
+            except Exception:
+                pass
+            return res
+
+    def get_dom_snapshots(
+        self,
+        symbol: str,
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None,
+        limit: int = 500
+    ) -> List[Dict[str, Any]]:
+        """Queries DOM snapshots within a time window."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            query = "SELECT * FROM dom_snapshots WHERE symbol = ?"
+            params = [symbol]
+            if start_time is not None:
+                query += " AND timestamp >= ?"
+                params.append(start_time)
+            if end_time is not None:
+                query += " AND timestamp <= ?"
+                params.append(end_time)
+            query += " ORDER BY timestamp ASC LIMIT ?"
+            params.append(limit)
+
+            cursor.execute(query, tuple(params))
+            rows = cursor.fetchall()
+            results = []
+            for r in rows:
+                item = dict(r)
+                try:
+                    item["bids"] = json.loads(item.get("bids_json", "[]"))
+                    item["asks"] = json.loads(item.get("asks_json", "[]"))
+                    item["bid_walls"] = json.loads(item.get("bid_walls_json", "[]"))
+                    item["ask_walls"] = json.loads(item.get("ask_walls_json", "[]"))
+                except Exception:
+                    pass
+                results.append(item)
+            return results
+
+    def get_dom_heatmap_data(
+        self,
+        symbol: str,
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None,
+        max_snapshots: int = 300
+    ) -> Dict[str, Any]:
+        """
+        Prepares aggregated DOM snapshots for visual Heatmap rendering (Bookmap style).
+        Returns timestamp timeline, mid_prices, and price-liquidity grid.
+        """
+        snapshots = self.get_dom_snapshots(symbol, start_time, end_time, limit=max_snapshots)
+        if not snapshots:
+            return {"symbol": symbol, "count": 0, "timeline": [], "mid_prices": [], "levels": []}
+
+        timeline = []
+        mid_prices = []
+        all_levels = []
+        for s in snapshots:
+            t = s["timestamp"]
+            mid = s["mid_price"]
+            timeline.append(s.get("datetime_ist") or str(t))
+            mid_prices.append(mid)
+            all_levels.append({
+                "timestamp": t,
+                "datetime_ist": s.get("datetime_ist"),
+                "mid_price": mid,
+                "spread": s.get("spread", 0.0),
+                "total_bid_size": s.get("total_bid_size", 0.0),
+                "total_ask_size": s.get("total_ask_size", 0.0),
+                "imbalance_ratio": s.get("imbalance_ratio", 1.0),
+                "dominant_side": s.get("dominant_side", "NEUTRAL"),
+                "bids": s.get("bids", []),
+                "asks": s.get("asks", []),
+                "bid_walls": s.get("bid_walls", []),
+                "ask_walls": s.get("ask_walls", [])
+            })
+
+        return {
+            "symbol": symbol,
+            "count": len(all_levels),
+            "timeline": timeline,
+            "mid_prices": mid_prices,
+            "levels": all_levels
+        }
 
     # ------------------ Trade Operations ------------------
     def log_trade(self, trade: Dict[str, Any]):

@@ -24,7 +24,7 @@ from backtest.multi_strategy_backtester import MultiStrategyBacktester
 from reports.html_reporter import HTMLReporter
 from exchange.delta_client import DeltaExchangeClient
 from strategies.orderflow_engine import OrderFlowEngine
-from config.settings import ACTIVE_SYMBOLS, ACCOUNT_CAPITAL_USD, calculate_brokerage_fee
+from config.settings import ACTIVE_SYMBOLS, ACCOUNT_CAPITAL_USD, calculate_brokerage_fee, DOM_DATABASE_PATH
 
 PORT = 5050
 
@@ -48,10 +48,13 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         if self.path.startswith("/api/live-status"):
             self._handle_live_status()
             return
-        if self.path in ("/", "/index.html"):
+        if self.path.startswith("/api/dom/heatmap"):
+            self._handle_dom_heatmap()
+            return
+        if self.path in ("/", "/index.html", "/live"):
             self.path = "/live_journal.html"
-        elif self.path == "/live":
-            self.path = "/live_journal.html"
+        elif self.path in ("/heatmap", "/dom-heatmap"):
+            self.path = "/dom_heatmap.html"
         return super().do_GET()
 
     def do_POST(self):
@@ -261,6 +264,22 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 "pause_reason": reason_str,
                 "pause_until": pause_until
             })
+        except Exception as e:
+            self._send_json({"success": False, "error": str(e)})
+
+    def _handle_dom_heatmap(self):
+        try:
+            import urllib.parse
+            parsed = urllib.parse.urlparse(self.path)
+            qs = urllib.parse.parse_qs(parsed.query)
+            symbol = qs.get("symbol", ["BTCUSD"])[0].upper()
+            limit = int(qs.get("limit", [100])[0])
+            
+            # Use dedicated DOM database if exists, fallback to default DB
+            db_file = DOM_DATABASE_PATH if DOM_DATABASE_PATH.exists() else None
+            db = DatabaseManager(db_path=db_file) if db_file else DatabaseManager()
+            heatmap_data = db.get_dom_heatmap_data(symbol, max_snapshots=limit)
+            self._send_json({"success": True, "data": heatmap_data})
         except Exception as e:
             self._send_json({"success": False, "error": str(e)})
 

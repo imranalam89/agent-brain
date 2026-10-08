@@ -148,7 +148,8 @@ def simulate_v4_velocity_suite(
 
         c_list = candles_dict.get(sym, [])
         c_lookup = candle_map.get(sym, {})
-        start_idx = c_lookup.get(op_ts, (None, None))[0] if op_ts in c_lookup else None
+        floored_op_ts = (op_ts // 900) * 900
+        start_idx = c_lookup.get(op_ts, (None, None))[0] if op_ts in c_lookup else c_lookup.get(floored_op_ts, (None, None))[0]
 
         # Commodity Win Rate Edge: Check if early MFE (+1.0R) triggers fast breakeven before SL
         apply_fast_be = False

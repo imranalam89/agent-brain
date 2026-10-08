@@ -364,7 +364,7 @@ class DynamicTradeManager:
 
         # 4. V5 3-Layer Apex Hybrid Trailing Engine (Continuous 1:1R to 40R) - Zero 50% Cut
         # LAYER 1: Elastic Mathematical Floor (Eliminates dead zones)
-        be_trigger = 1.2
+        be_trigger = 1.0
         if peak_rr >= be_trigger and not pos.get("be_locked"):
             pos["be_locked"] = True
             be_sl = round(entry + (0.20 * dist), decimals) if side == "BUY" else round(entry - (0.20 * dist), decimals)

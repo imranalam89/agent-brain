@@ -161,17 +161,33 @@ class DeltaExchangeClient:
                 return {"symbol": symbol, "contract_value": 1.0, "tick_size": "0.001", "contract_unit": "SLV"}
         return spec
 
-    def get_l2_orderbook(self, symbol: str, depth: int = 20) -> Dict[str, Any]:
+    def get_l2_orderbook(self, symbol: str, depth: int = 50) -> Dict[str, Any]:
         """
         Fetches Level 2 Depth of Market (DOM).
-        Returns top bids and asks for imbalance ratio calculations.
+        Returns top bids and asks as standardized [[price, size], ...] pairs.
+        Supports customizable depth (default 50 for rich heatmap reconstruction).
         """
         # Delta endpoint: /v2/l2orderbook/{symbol}
         res = self._request("GET", f"/v2/l2orderbook/{symbol}")
         if res.get("success") and "result" in res:
             book = res["result"]
-            bids = book.get("buy", [])[:depth]
-            asks = book.get("sell", [])[:depth]
+            raw_bids = book.get("buy", [])[:depth]
+            raw_asks = book.get("sell", [])[:depth]
+            
+            bids = []
+            for b in raw_bids:
+                if isinstance(b, dict):
+                    bids.append([float(b.get("price", 0)), float(b.get("size", 0))])
+                elif isinstance(b, (list, tuple)) and len(b) >= 2:
+                    bids.append([float(b[0]), float(b[1])])
+
+            asks = []
+            for a in raw_asks:
+                if isinstance(a, dict):
+                    asks.append([float(a.get("price", 0)), float(a.get("size", 0))])
+                elif isinstance(a, (list, tuple)) and len(a) >= 2:
+                    asks.append([float(a[0]), float(a[1])])
+
             return {"success": True, "bids": bids, "asks": asks}
         return {"success": False, "bids": [], "asks": []}
 
