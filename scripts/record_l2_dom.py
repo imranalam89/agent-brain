@@ -81,11 +81,13 @@ class L2DOMRecorder:
                 # 1. Fetch full Level 2 depth from Delta Exchange
                 book_res = self.client.get_l2_orderbook(symbol, depth=self.depth)
                 if not book_res.get("success"):
+                    print(f"[DOM Recorder Error] {symbol}: {book_res.get('error', 'Failed to fetch orderbook')}")
                     continue
 
                 bids = book_res.get("bids", [])
                 asks = book_res.get("asks", [])
                 if not bids or not asks:
+                    print(f"[DOM Recorder Warning] {symbol}: Empty bids/asks returned")
                     continue
 
                 # 2. Analyze microstructure metrics (imbalance, spread, walls)
@@ -103,11 +105,15 @@ class L2DOMRecorder:
 
                 self.snapshot_counter += 1
 
-            except Exception as e:
-                print(f"[DOM Recorder Error] {symbol}: {e}")
+                # Log the first round immediately so the user knows data is flowing
+                if self.snapshot_counter <= len(self.symbols):
+                    print(f"[{now_ist}] Initial snapshot recorded: {symbol} at ${analysis.get('mid_price')} (Ratio: {analysis.get('bid_imbalance_ratio')}x)")
 
-        # Periodic status logging every 50 snapshots
-        if self.snapshot_counter > 0 and self.snapshot_counter % 50 == 0:
+            except Exception as e:
+                print(f"[DOM Recorder Exception] {symbol}: {e}")
+
+        # Periodic status logging every 20 snapshots
+        if self.snapshot_counter > 0 and self.snapshot_counter % 20 == 0:
             uptime_min = (time.time() - self.start_time) / 60.0
             print(f"[{now_ist}] Recorded {self.snapshot_counter} snapshots | Uptime: {uptime_min:.1f}m | Monitored: {', '.join(self.symbols)}")
 

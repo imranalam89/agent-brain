@@ -31,6 +31,8 @@ if [ ! -f "$APP_DIR/.env" ]; then
     echo "⚠️ Warning: .env file not found. Copying .env.example to .env..."
     cp "$APP_DIR/.env.example" "$APP_DIR/.env"
     echo "⚡ Please verify your DELTA_API_KEY and DELTA_API_SECRET in $APP_DIR/.env"
+else
+    sed -i 's/DELTA_ENVIRONMENT=demo/DELTA_ENVIRONMENT=india/g' "$APP_DIR/.env" 2>/dev/null || true
 fi
 
 # 4. Create Systemd Service for Live Trader Engine (run_live_trader.py)

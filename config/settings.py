@@ -12,8 +12,8 @@ load_dotenv(dotenv_path=ENV_PATH)
 # ==========================================
 # 1. DELTA EXCHANGE API CREDENTIALS & VENUE
 # ==========================================
-# Environment: 'demo' (Delta Demo/Testnet), 'india' (Delta India), or 'global'
-DELTA_ENVIRONMENT = os.getenv("DELTA_ENVIRONMENT", "demo")
+# Environment: 'india' (Delta India FIU registered), 'global', or 'demo'
+DELTA_ENVIRONMENT = os.getenv("DELTA_ENVIRONMENT", "india")
 
 # Delta API Endpoints
 DELTA_BASE_URLS = {
