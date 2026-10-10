@@ -48,18 +48,28 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         if self.path.startswith("/api/live-status"):
             self._handle_live_status()
             return
+        if self.path.startswith("/api/dom/summary") or self.path.startswith("/api/dom-summary"):
+            self._handle_dom_summary()
+            return
         if self.path.startswith("/api/dom/heatmap"):
             self._handle_dom_heatmap()
+            return
+        if self.path.startswith("/api/dom/backtest") or self.path.startswith("/api/dom-backtest"):
+            self._handle_dom_backtest()
             return
         if self.path in ("/", "/index.html", "/live"):
             self.path = "/live_journal.html"
         elif self.path in ("/heatmap", "/dom-heatmap"):
             self.path = "/dom_heatmap.html"
+        elif self.path in ("/dom-backtest", "/dom_backtest"):
+            self.path = "/dom_backtest_report.html"
         return super().do_GET()
 
     def do_POST(self):
         if self.path == "/api/run-backtest":
             self._handle_run_backtest()
+        elif self.path in ("/api/dom/backtest", "/api/dom-backtest", "/api/dom/run-backtest"):
+            self._handle_dom_backtest()
         elif self.path == "/api/paper-scan":
             self._handle_paper_scan()
         elif self.path == "/api/set-risk":
@@ -283,6 +293,72 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         except Exception as e:
             self._send_json({"success": False, "error": str(e)})
 
+    def _handle_dom_summary(self):
+        try:
+            db_file = DOM_DATABASE_PATH if DOM_DATABASE_PATH.exists() else None
+            db = DatabaseManager(db_path=db_file) if db_file else DatabaseManager()
+            summary = db.get_dom_summary()
+            db_size_mb = round(DOM_DATABASE_PATH.stat().st_size / (1024 * 1024), 2) if DOM_DATABASE_PATH.exists() else 0.0
+
+            # Calculate recorder status and uptime metrics
+            recorder_active = False
+            now_ts = int(datetime.now(timezone.utc).timestamp())
+            for sym, st in summary.items():
+                last_ts = st.get("latest_ts", 0)
+                if now_ts - last_ts < 180: # Snapshot within last 3 minutes
+                    recorder_active = True
+
+            self._send_json({
+                "success": True,
+                "timestamp": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S"),
+                "db_size_mb": db_size_mb,
+                "recorder_active": recorder_active,
+                "summary": summary
+            })
+        except Exception as e:
+            self._send_json({"success": False, "error": str(e)})
+
+    def _handle_dom_backtest(self):
+        try:
+            import urllib.parse
+            from scripts.backtest_dom_strategy import DOMStrategyBacktester
+
+            symbol = ""
+            imbalance = 1.8
+            tp = 0.003
+            sl = 0.0015
+
+            if self.command == "POST":
+                content_length = int(self.headers.get('Content-Length', 0))
+                post_data = self.rfile.read(content_length) if content_length > 0 else b'{}'
+                try:
+                    body = json.loads(post_data.decode("utf-8"))
+                except Exception:
+                    body = {}
+                symbol = body.get("symbol", "")
+                imbalance = float(body.get("imbalance", 1.8))
+                tp = float(body.get("tp", 0.003))
+                sl = float(body.get("sl", 0.0015))
+            else:
+                parsed = urllib.parse.urlparse(self.path)
+                qs = urllib.parse.parse_qs(parsed.query)
+                symbol = qs.get("symbol", [""])[0]
+                imbalance = float(qs.get("imbalance", [1.8])[0])
+                tp = float(qs.get("tp", [0.003])[0])
+                sl = float(qs.get("sl", [0.0015])[0])
+
+            db_file = DOM_DATABASE_PATH if DOM_DATABASE_PATH.exists() else None
+            tester = DOMStrategyBacktester(db_path=db_file)
+
+            symbols = [symbol.upper()] if symbol and symbol.upper() in ACTIVE_SYMBOLS else ACTIVE_SYMBOLS
+            res = tester.run_all_symbols(symbols=symbols, min_imbalance=imbalance, tp_pct=tp, sl_pct=sl)
+            tester.generate_html_report(res)
+
+            res["report_url"] = "/dom_backtest_report.html"
+            self._send_json(res)
+        except Exception as e:
+            self._send_json({"success": False, "error": str(e)})
+
     def _handle_close_position(self):
         try:
             content_length = int(self.headers.get('Content-Length', 0))
@@ -419,6 +495,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 pass
             try:
                 subprocess.run(["systemctl", "restart", "trading-brain"], capture_output=True, text=True, timeout=10)
+                subprocess.run(["systemctl", "restart", "trading-dom-recorder"], capture_output=True, text=True, timeout=10)
             except Exception:
                 pass
             db = DatabaseManager()
@@ -429,6 +506,14 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 message=f"Git sync executed on VPS: {res.stdout.strip() if res.stdout else res.stderr.strip()}"
             )
             self._send_json({"success": res.returncode == 0, "output": res.stdout, "error": res.stderr})
+
+            # Schedule clean exit so systemd automatically reloads trading-dashboard with updated code
+            import threading
+            def _delayed_restart():
+                import time
+                time.sleep(1.0)
+                os._exit(0)
+            threading.Thread(target=_delayed_restart, daemon=True).start()
         except Exception as e:
             self._send_json({"success": False, "error": str(e)})
 

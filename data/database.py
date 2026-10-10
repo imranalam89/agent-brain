@@ -265,17 +265,73 @@ class DatabaseManager:
                 pass
             return res
 
+    def get_dom_summary(self) -> Dict[str, Any]:
+        """Ultra-fast summary of recorded DOM snapshots per symbol."""
+        summary = {}
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT symbol, COUNT(*), MIN(datetime_ist), MAX(datetime_ist),
+                       MIN(timestamp), MAX(timestamp)
+                FROM dom_snapshots 
+                GROUP BY symbol
+            """)
+            rows = cursor.fetchall()
+            for r in rows:
+                sym = r[0]
+                summary[sym] = {
+                    "count": r[1],
+                    "start_ist": r[2],
+                    "end_ist": r[3],
+                    "start_ts": r[4],
+                    "end_ts": r[5]
+                }
+                
+                # Fetch latest snapshot info
+                cursor.execute("""
+                    SELECT mid_price, spread, imbalance_ratio, dominant_side,
+                           datetime_ist, timestamp, bid_walls_json, ask_walls_json
+                    FROM dom_snapshots
+                    WHERE symbol = ?
+                    ORDER BY timestamp DESC LIMIT 1
+                """, (sym,))
+                latest_row = cursor.fetchone()
+                if latest_row:
+                    try:
+                        bw = len(json.loads(latest_row[6] or "[]"))
+                        aw = len(json.loads(latest_row[7] or "[]"))
+                    except Exception:
+                        bw, aw = 0, 0
+                    summary[sym].update({
+                        "latest_price": latest_row[0],
+                        "latest_spread": latest_row[1],
+                        "latest_imbalance": latest_row[2],
+                        "latest_side": latest_row[3],
+                        "latest_ist": latest_row[4],
+                        "latest_ts": latest_row[5],
+                        "bid_walls_count": bw,
+                        "ask_walls_count": aw
+                    })
+        return summary
+
     def get_dom_snapshots(
         self,
         symbol: str,
         start_time: Optional[int] = None,
         end_time: Optional[int] = None,
-        limit: int = 500
+        limit: int = 500,
+        order: str = "ASC",
+        include_raw_ladders: bool = True
     ) -> List[Dict[str, Any]]:
-        """Queries DOM snapshots within a time window."""
+        """Queries DOM snapshots within a time window with optional ladder exclusion for high-speed backtesting."""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            query = "SELECT * FROM dom_snapshots WHERE symbol = ?"
+            cols = "*" if include_raw_ladders else (
+                "id, symbol, timestamp, datetime_ist, best_bid, best_ask, mid_price, "
+                "spread, total_bid_size, total_ask_size, imbalance_ratio, dominant_side, "
+                "bid_walls_json, ask_walls_json"
+            )
+            query = f"SELECT {cols} FROM dom_snapshots WHERE symbol = ?"
             params = [symbol]
             if start_time is not None:
                 query += " AND timestamp >= ?"
@@ -283,7 +339,9 @@ class DatabaseManager:
             if end_time is not None:
                 query += " AND timestamp <= ?"
                 params.append(end_time)
-            query += " ORDER BY timestamp ASC LIMIT ?"
+            
+            order_dir = "DESC" if order.upper() == "DESC" else "ASC"
+            query += f" ORDER BY timestamp {order_dir} LIMIT ?"
             params.append(limit)
 
             cursor.execute(query, tuple(params))
@@ -292,13 +350,17 @@ class DatabaseManager:
             for r in rows:
                 item = dict(r)
                 try:
-                    item["bids"] = json.loads(item.get("bids_json", "[]"))
-                    item["asks"] = json.loads(item.get("asks_json", "[]"))
+                    if include_raw_ladders:
+                        item["bids"] = json.loads(item.get("bids_json", "[]"))
+                        item["asks"] = json.loads(item.get("asks_json", "[]"))
                     item["bid_walls"] = json.loads(item.get("bid_walls_json", "[]"))
                     item["ask_walls"] = json.loads(item.get("ask_walls_json", "[]"))
                 except Exception:
                     pass
                 results.append(item)
+            
+            if order.upper() == "DESC":
+                results.reverse()
             return results
 
     def get_dom_heatmap_data(
@@ -310,9 +372,9 @@ class DatabaseManager:
     ) -> Dict[str, Any]:
         """
         Prepares aggregated DOM snapshots for visual Heatmap rendering (Bookmap style).
-        Returns timestamp timeline, mid_prices, and price-liquidity grid.
+        Returns timestamp timeline, mid_prices, and price-liquidity grid for the latest snapshots.
         """
-        snapshots = self.get_dom_snapshots(symbol, start_time, end_time, limit=max_snapshots)
+        snapshots = self.get_dom_snapshots(symbol, start_time, end_time, limit=max_snapshots, order="DESC", include_raw_ladders=True)
         if not snapshots:
             return {"symbol": symbol, "count": 0, "timeline": [], "mid_prices": [], "levels": []}
 
