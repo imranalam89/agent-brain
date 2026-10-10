@@ -1,0 +1,422 @@
+{
+  "candle_audit": {
+    "entry_match_pct": 100.0,
+    "exit_match_pct": 100.0,
+    "sample_matches": [
+      {
+        "id": "DOM_XAUTUSD_1791440844",
+        "symbol": "XAUTUSD",
+        "entry_time": "2026-10-08 11:57:24",
+        "entry_price": 4123.06,
+        "entry_candle": {
+          "timestamp": 1791440700,
+          "open": 4124.75,
+          "high": 4125.27,
+          "low": 4122.62,
+          "close": 4124.12,
+          "volume": 1245567.0,
+          "delta": -69093.7166
+        },
+        "entry_matched": true,
+        "exit_time": "2026-10-08 13:03:13",
+        "exit_price": 4128.535,
+        "exit_candle": {
+          "timestamp": 1791444600,
+          "open": 4132.3,
+          "high": 4132.33,
+          "low": 4127.0,
+          "close": 4127.86,
+          "volume": 1244022.0,
+          "delta": -667290.6
+        },
+        "exit_matched": true
+      },
+      {
+        "id": "DOM_BTCUSD_1791441847",
+        "symbol": "BTCUSD",
+        "entry_time": "2026-10-08 12:14:07",
+        "entry_price": 82686.75,
+        "entry_candle": {
+          "timestamp": 1791441600,
+          "open": 82569.5,
+          "high": 82697.5,
+          "low": 82569.0,
+          "close": 82662.5,
+          "volume": 45152.0,
+          "delta": 19237.9144
+        },
+        "entry_matched": true,
+        "exit_time": "2026-10-08 12:33:31",
+        "exit_price": 82686.75,
+        "exit_candle": {
+          "timestamp": 1791442800,
+          "open": 82840.0,
+          "high": 82840.0,
+          "low": 82675.0,
+          "close": 82703.0,
+          "volume": 46025.0,
+          "delta": -24407.197
+        },
+        "exit_matched": true
+      },
+      {
+        "id": "DOM_XAUTUSD_1791445427",
+        "symbol": "XAUTUSD",
+        "entry_time": "2026-10-08 13:13:47",
+        "entry_price": 4127.94,
+        "entry_candle": {
+          "timestamp": 1791445200,
+          "open": 4128.32,
+          "high": 4129.75,
+          "low": 4126.5,
+          "close": 4126.86,
+          "volume": 523146.0,
+          "delta": -216180.024
+        },
+        "entry_matched": true,
+        "exit_time": "2026-10-08 15:55:11",
+        "exit_price": 4127.44,
+        "exit_candle": {
+          "timestamp": 1791455100,
+          "open": 4128.29,
+          "high": 4128.32,
+          "low": 4124.4,
+          "close": 4126.0,
+          "volume": 1577291.0,
+          "delta": -455483.0133
+        },
+        "exit_matched": true
+      },
+      {
+        "id": "DOM_ETHUSD_1791446066",
+        "symbol": "ETHUSD",
+        "entry_time": "2026-10-08 13:24:26",
+        "entry_price": 2568.85,
+        "entry_candle": {
+          "timestamp": 1791445800,
+          "open": 2571.3,
+          "high": 2572.0,
+          "low": 2567.9,
+          "close": 2568.15,
+          "volume": 50063.0,
+          "delta": -28572.5415
+        },
+        "entry_matched": true,
+        "exit_time": "2026-10-08 13:49:05",
+        "exit_price": 2569.15,
+        "exit_candle": {
+          "timestamp": 1791447300,
+          "open": 2566.05,
+          "high": 2569.5,
+          "low": 2565.2,
+          "close": 2567.8,
+          "volume": 51503.0,
+          "delta": 11618.1186
+        },
+        "exit_matched": true
+      },
+      {
+        "id": "DOM_ETHUSD_1791449279",
+        "symbol": "ETHUSD",
+        "entry_time": "2026-10-08 14:17:59",
+        "entry_price": 2559.075,
+        "entry_candle": {
+          "timestamp": 1791449100,
+          "open": 2561.5,
+          "high": 2562.9,
+          "low": 2558.5,
+          "close": 2560.35,
+          "volume": 66320.0,
+          "delta": -10098.7273
+        },
+        "entry_matched": true,
+        "exit_time": "2026-10-08 15:03:04",
+        "exit_price": 2566.925,
+        "exit_candle": {
+          "timestamp": 1791451800,
+          "open": 2562.05,
+          "high": 2568.05,
+          "low": 2560.3,
+          "close": 2567.45,
+          "volume": 86939.0,
+          "delta": 46273.9839
+        },
+        "exit_matched": true
+      },
+      {
+        "id": "DOM_BTCUSD_1791450329",
+        "symbol": "BTCUSD",
+        "entry_time": "2026-10-08 14:35:29",
+        "entry_price": 83002.25,
+        "entry_candle": {
+          "timestamp": 1791450300,
+          "open": 82980.5,
+          "high": 83014.5,
+          "low": 82980.0,
+          "close": 82995.5,
+          "volume": 36995.0,
+          "delta": 5307.9783
+        },
+        "entry_matched": true,
+        "exit_time": "2026-10-08 15:56:57",
+        "exit_price": 82750.25,
+        "exit_candle": {
+          "timestamp": 1791455100,
+          "open": 82916.0,
+          "high": 82923.5,
+          "low": 82686.0,
+          "close": 82745.5,
+          "volume": 141807.0,
+          "delta": -61947.2684
+        },
+        "exit_matched": true
+      },
+      {
+        "id": "DOM_ETHUSD_1791453791",
+        "symbol": "ETHUSD",
+        "entry_time": "2026-10-08 15:33:11",
+        "entry_price": 2567.825,
+        "entry_candle": {
+          "timestamp": 1791453600,
+          "open": 2566.55,
+          "high": 2568.05,
+          "low": 2566.1,
+          "close": 2568.0,
+          "volume": 22033.0,
+          "delta": 12824.3359
+        },
+        "entry_matched": true,
+        "exit_time": "2026-10-08 16:41:47",
+        "exit_price": 2534.9,
+        "exit_candle": {
+          "timestamp": 1791457800,
+          "open": 2537.25,
+          "high": 2540.05,
+          "low": 2525.7,
+          "close": 2537.85,
+          "volume": 612525.0,
+          "delta": 137658.0575
+        },
+        "exit_matched": true
+      },
+      {
+        "id": "DOM_XAUTUSD_1791455762",
+        "symbol": "XAUTUSD",
+        "entry_time": "2026-10-08 16:06:02",
+        "entry_price": 4120.33,
+        "entry_candle": {
+          "timestamp": 1791455700,
+          "open": 4121.78,
+          "high": 4121.78,
+          "low": 4118.32,
+          "close": 4119.01,
+          "volume": 1333298.0,
+          "delta": -667419.6925
+        },
+        "entry_matched": true,
+        "exit_time": "2026-10-08 18:00:51",
+        "exit_price": 4129.335,
+        "exit_candle": {
+          "timestamp": 1791462600,
+          "open": 4136.88,
+          "high": 4136.88,
+          "low": 4127.53,
+          "close": 4129.02,
+          "volume": 2549502.0,
+          "delta": -1378367.1241
+        },
+        "exit_matched": true
+      },
+      {
+        "id": "DOM_BTCUSD_1791459008",
+        "symbol": "BTCUSD",
+        "entry_time": "2026-10-08 17:00:08",
+        "entry_price": 82562.25,
+        "entry_candle": {
+          "timestamp": 1791459000,
+          "open": 82514.0,
+          "high": 82598.0,
+          "low": 82351.5,
+          "close": 82361.5,
+          "volume": 69450.0,
+          "delta": -36330.9432
+        },
+        "entry_matched": true,
+        "exit_time": "2026-10-08 17:34:48",
+        "exit_price": 82310.25,
+        "exit_candle": {
+          "timestamp": 1791460800,
+          "open": 82458.5,
+          "high": 82479.0,
+          "low": 82294.0,
+          "close": 82303.0,
+          "volume": 101350.0,
+          "delta": -61522.1892
+        },
+        "exit_matched": true
+      },
+      {
+        "id": "DOM_ETHUSD_1791460112",
+        "symbol": "ETHUSD",
+        "entry_time": "2026-10-08 17:18:32",
+        "entry_price": 2538.125,
+        "entry_candle": {
+          "timestamp": 1791459900,
+          "open": 2541.0,
+          "high": 2542.4,
+          "low": 2537.05,
+          "close": 2539.3,
+          "volume": 105956.0,
+          "delta": -18517.5439
+        },
+        "entry_matched": true,
+        "exit_time": "2026-10-08 18:20:37",
+        "exit_price": 2526.775,
+        "exit_candle": {
+          "timestamp": 1791463800,
+          "open": 2527.55,
+          "high": 2533.6,
+          "low": 2517.75,
+          "close": 2530.0,
+          "volume": 585548.0,
+          "delta": 132071.5521
+        },
+        "exit_matched": true
+      }
+    ]
+  },
+  "hourly_stats": {
+    "1": {
+      "trades": 1,
+      "wins": 0,
+      "net": -5.94,
+      "gross": -5.05,
+      "fees": 0.885
+    },
+    "3": {
+      "trades": 1,
+      "wins": 1,
+      "net": 23.94,
+      "gross": 24.33,
+      "fees": 0.3929
+    },
+    "6": {
+      "trades": 1,
+      "wins": 1,
+      "net": 19.55,
+      "gross": 20.14,
+      "fees": 0.5904
+    },
+    "8": {
+      "trades": 1,
+      "wins": 1,
+      "net": 3.14,
+      "gross": 3.92,
+      "fees": 0.7754
+    },
+    "10": {
+      "trades": 1,
+      "wins": 1,
+      "net": 8.54,
+      "gross": 9.13,
+      "fees": 0.5896
+    },
+    "11": {
+      "trades": 2,
+      "wins": 1,
+      "net": 1.81,
+      "gross": 3.28,
+      "fees": 1.4753
+    },
+    "12": {
+      "trades": 2,
+      "wins": 1,
+      "net": 11.67,
+      "gross": 13.23,
+      "fees": 1.56
+    },
+    "13": {
+      "trades": 4,
+      "wins": 0,
+      "net": -10.59,
+      "gross": -6.06,
+      "fees": 4.5329
+    },
+    "14": {
+      "trades": 3,
+      "wins": 0,
+      "net": -18.84,
+      "gross": -15.2,
+      "fees": 3.6298000000000004
+    },
+    "15": {
+      "trades": 2,
+      "wins": 2,
+      "net": 25.509999999999998,
+      "gross": 27.099999999999998,
+      "fees": 1.5793
+    },
+    "16": {
+      "trades": 2,
+      "wins": 1,
+      "net": 3.9899999999999998,
+      "gross": 5.46,
+      "fees": 1.4759
+    },
+    "17": {
+      "trades": 3,
+      "wins": 2,
+      "net": 2.15,
+      "gross": 5.1,
+      "fees": 2.9466
+    },
+    "18": {
+      "trades": 5,
+      "wins": 3,
+      "net": 11.670000000000002,
+      "gross": 15.89,
+      "fees": 4.2164
+    },
+    "19": {
+      "trades": 7,
+      "wins": 5,
+      "net": 46.65,
+      "gross": 52.46,
+      "fees": 5.7923
+    },
+    "20": {
+      "trades": 3,
+      "wins": 0,
+      "net": -13.32,
+      "gross": -10.159999999999998,
+      "fees": 3.1493
+    },
+    "21": {
+      "trades": 6,
+      "wins": 3,
+      "net": 13.629999999999999,
+      "gross": 19.75,
+      "fees": 6.139100000000001
+    },
+    "22": {
+      "trades": 4,
+      "wins": 1,
+      "net": -17.240000000000002,
+      "gross": -12.35,
+      "fees": 4.881600000000001
+    },
+    "23": {
+      "trades": 3,
+      "wins": 2,
+      "net": 12.71,
+      "gross": 15.48,
+      "fees": 2.7685
+    }
+  },
+  "duration_dynamics": {
+    "avg_win_minutes": 120.4,
+    "avg_loss_minutes": 52.8,
+    "median_win_minutes": 68.6,
+    "median_loss_minutes": 20.3
+  }
+}
