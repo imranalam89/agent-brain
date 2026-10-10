@@ -61,21 +61,25 @@ class DOMStrategyBacktester:
         self,
         symbol: str,
         min_imbalance: float = 1.8,
-        tp_pct: float = 0.003, # 0.30% Take Profit
-        sl_pct: float = 0.0015, # 0.15% Stop Loss (1:2 R:R)
+        tp_pct: float = 0.003, # Take Profit %
+        sl_pct: float = 0.0015, # Stop Loss %
         risk_per_trade_usd: float = TARGET_RISK_USD,
         account_capital_usd: float = ACCOUNT_CAPITAL_USD,
         enable_breakeven: bool = True,
+        trailing_stop: bool = False,
+        cooldown_snapshots: int = 60, # ~3 minutes cooldown between trades
         mode: str = "BOUNCE",
         max_snapshots: int = 500000
     ) -> Dict[str, Any]:
         """
         Backtests an Institutional DOM Imbalance & Liquidity Wall Strategy:
-        - Mode 'BOUNCE'  : Long off Bid Wall support / Short off Ask Wall resistance
-        - Mode 'BREAKOUT': Long when aggressive buyers sweep Ask Walls / Short when sellers smash Bid Walls
-        - Breakeven      : Automatic Stop Loss move to Breakeven at +0.8R
+        - Mode 'BOUNCE'          : Long off Bid Wall support / Short off Ask Wall resistance
+        - Mode 'BREAKOUT'        : Long when buyers sweep Ask Walls / Short when sellers smash Bid Walls
+        - Mode 'RANGE_EXTREME'   : Only enter when price is at 20-30 min Range High/Low boundaries
+        - Mode 'ABSORPTION_FADE' : Contrarian fade when heavy flow fails to push price past walls (Trap)
+        - Mode 'SESSION_FLOW'    : Only trade during high-volume London/NY sessions (13:30 - 23:30 IST)
+        - Breakeven & Trailing   : Move SL to Breakeven at +0.8R and optionally trail
         """
-        # Ultra-fast load: omit 50-level JSON ladders, load only metrics & walls
         snapshots = self.db.get_dom_snapshots(
             symbol,
             limit=max_snapshots,
@@ -94,13 +98,19 @@ class DOMStrategyBacktester:
         trades = []
         in_trade = False
         current_pos = None
+        last_exit_idx = -99999
 
         contract_multiplier = CONTRACT_VALUES.get(symbol, 0.001)
+        window_prices = []
 
-        for snap in snapshots:
+        for i, snap in enumerate(snapshots):
             mid = snap.get("mid_price") or 0.0
             if mid <= 0:
                 continue
+
+            window_prices.append(mid)
+            if len(window_prices) > 400: # ~20 minutes rolling window
+                window_prices.pop(0)
 
             ratio = snap.get("imbalance_ratio") or 1.0
             side = snap.get("dominant_side") or "NEUTRAL"
@@ -124,13 +134,19 @@ class DOMStrategyBacktester:
                 current_sl = current_pos["stop_loss"]
 
                 if pos_side == "BUY":
+                    profit_pct = (mid - entry) / entry
                     # Breakeven move at +0.8R
-                    if enable_breakeven and (mid - entry) >= (entry * sl_pct * 0.8):
+                    if enable_breakeven and profit_pct >= (sl_pct * 0.8):
                         if current_sl < entry:
                             current_pos["stop_loss"] = entry
 
+                    # Trailing stop: lock in profit at each 1.0R gain
+                    if trailing_stop and profit_pct >= (sl_pct * 1.5):
+                        trail_level = mid * (1.0 - sl_pct)
+                        if trail_level > current_pos["stop_loss"]:
+                            current_pos["stop_loss"] = trail_level
+
                     if mid >= current_pos["take_profit"]:
-                        # WIN exit
                         diff = mid - entry
                         gross_pnl = diff * lots * contract_multiplier
                         fee = calculate_brokerage_fee(symbol, notional, is_sl=False)
@@ -149,6 +165,8 @@ class DOMStrategyBacktester:
                         })
                         trades.append(current_pos)
                         in_trade = False
+                        last_exit_idx = i
+
                     elif mid <= current_pos["stop_loss"]:
                         diff = mid - entry
                         gross_pnl = diff * lots * contract_multiplier
@@ -171,15 +189,22 @@ class DOMStrategyBacktester:
                         })
                         trades.append(current_pos)
                         in_trade = False
+                        last_exit_idx = i
 
                 elif pos_side == "SELL":
+                    profit_pct = (entry - mid) / entry
                     # Breakeven move at +0.8R
-                    if enable_breakeven and (entry - mid) >= (entry * sl_pct * 0.8):
+                    if enable_breakeven and profit_pct >= (sl_pct * 0.8):
                         if current_sl > entry:
                             current_pos["stop_loss"] = entry
 
+                    # Trailing stop: lock in profit at each 1.0R gain
+                    if trailing_stop and profit_pct >= (sl_pct * 1.5):
+                        trail_level = mid * (1.0 + sl_pct)
+                        if trail_level < current_pos["stop_loss"]:
+                            current_pos["stop_loss"] = trail_level
+
                     if mid <= current_pos["take_profit"]:
-                        # WIN exit
                         diff = entry - mid
                         gross_pnl = diff * lots * contract_multiplier
                         fee = calculate_brokerage_fee(symbol, notional, is_sl=False)
@@ -198,6 +223,8 @@ class DOMStrategyBacktester:
                         })
                         trades.append(current_pos)
                         in_trade = False
+                        last_exit_idx = i
+
                     elif mid >= current_pos["stop_loss"]:
                         diff = entry - mid
                         gross_pnl = diff * lots * contract_multiplier
@@ -220,10 +247,15 @@ class DOMStrategyBacktester:
                         })
                         trades.append(current_pos)
                         in_trade = False
+                        last_exit_idx = i
                 continue
 
             # 2. Check Entry Trigger
             if not in_trade:
+                # Enforce trade cooldown to stop high-frequency churn
+                if (i - last_exit_idx) < cooldown_snapshots:
+                    continue
+
                 sl_distance_usd = mid * sl_pct
                 raw_lots = risk_per_trade_usd / max(0.0001, sl_distance_usd * contract_multiplier)
                 lots = max(1, round(raw_lots))
@@ -232,17 +264,51 @@ class DOMStrategyBacktester:
                 has_bid_wall = any(w.get("price", 0) <= mid for w in bid_walls) if bid_walls else False
                 has_ask_wall = any(w.get("price", 0) >= mid for w in ask_walls) if ask_walls else False
 
-                if mode == "BREAKOUT":
+                strat_title = ""
+                long_trigger = False
+                short_trigger = False
+
+                if mode == "RANGE_EXTREME":
+                    min_p = min(window_prices) if window_prices else mid
+                    max_p = max(window_prices) if window_prices else mid
+                    p_span = max_p - min_p
+                    if p_span > 0:
+                        is_near_low = (mid - min_p) <= (p_span * 0.25)
+                        is_near_high = (max_p - mid) <= (p_span * 0.25)
+                        long_trigger = is_near_low and (side == "BUYERS" and buyer_ratio >= min_imbalance and (has_bid_wall or len(bid_walls) > 0))
+                        short_trigger = is_near_high and (side == "SELLERS" and seller_ratio >= min_imbalance and (has_ask_wall or len(ask_walls) > 0))
+                        strat_title = "DOM Range Extreme Support Defense" if long_trigger else "DOM Range Extreme Resistance Defense"
+
+                elif mode == "ABSORPTION_FADE":
+                    if len(window_prices) >= 20:
+                        price_change = mid - window_prices[-20]
+                        # Trapped sellers: sellers dominating book but price refuses to go down
+                        long_trigger = (side == "SELLERS" and seller_ratio >= min_imbalance and price_change >= (-0.0001 * mid) and (has_bid_wall or len(bid_walls) > 0))
+                        # Trapped buyers: buyers dominating book but price refuses to go up
+                        short_trigger = (side == "BUYERS" and buyer_ratio >= min_imbalance and price_change <= (0.0001 * mid) and (has_ask_wall or len(ask_walls) > 0))
+                        strat_title = "DOM Seller Absorption Trap & Reversal" if long_trigger else "DOM Buyer Absorption Trap & Reversal"
+
+                elif mode == "SESSION_FLOW":
+                    hour_ist = int(ts_str[11:13]) if len(ts_str) >= 13 else 12
+                    in_session = (13 <= hour_ist <= 23)
+                    if in_session:
+                        long_trigger = (side == "BUYERS" and buyer_ratio >= min_imbalance and (has_bid_wall or len(bid_walls) > 0))
+                        short_trigger = (side == "SELLERS" and seller_ratio >= min_imbalance and (has_ask_wall or len(ask_walls) > 0))
+                        strat_title = "DOM London/NY Session Wall Defense"
+
+                elif mode == "BREAKOUT":
                     long_trigger = (side == "BUYERS" and buyer_ratio >= min_imbalance and (has_ask_wall or len(ask_walls) > 0))
                     short_trigger = (side == "SELLERS" and seller_ratio >= min_imbalance and (has_bid_wall or len(bid_walls) > 0))
-                else: # "BOUNCE"
+                    strat_title = "DOM Imbalance & Ask Wall Sweep" if long_trigger else "DOM Imbalance & Bid Wall Sweep"
+
+                else: # Default "BOUNCE"
                     long_trigger = (side == "BUYERS" and buyer_ratio >= min_imbalance and (has_bid_wall or len(bid_walls) > 0))
                     short_trigger = (side == "SELLERS" and seller_ratio >= min_imbalance and (has_ask_wall or len(ask_walls) > 0))
+                    strat_title = "DOM Imbalance & Bid Wall Bounce" if long_trigger else "DOM Imbalance & Ask Wall Rejection"
 
                 if long_trigger:
                     tp = mid * (1.0 + tp_pct)
                     sl = mid * (1.0 - sl_pct)
-                    strat_title = "DOM Imbalance & Ask Wall Sweep" if mode == "BREAKOUT" else "DOM Imbalance & Bid Wall Bounce"
                     current_pos = {
                         "id": f"DOM_{symbol}_{ts}",
                         "symbol": symbol,
@@ -263,7 +329,6 @@ class DOMStrategyBacktester:
                 elif short_trigger:
                     tp = mid * (1.0 - tp_pct)
                     sl = mid * (1.0 + sl_pct)
-                    strat_title = "DOM Imbalance & Bid Wall Sweep" if mode == "BREAKOUT" else "DOM Imbalance & Ask Wall Rejection"
                     current_pos = {
                         "id": f"DOM_{symbol}_{ts}",
                         "symbol": symbol,
@@ -331,6 +396,8 @@ class DOMStrategyBacktester:
         tp_pct: float = 0.003,
         sl_pct: float = 0.0015,
         enable_breakeven: bool = True,
+        trailing_stop: bool = False,
+        cooldown_snapshots: int = 60,
         mode: str = "BOUNCE"
     ) -> Dict[str, Any]:
         """Runs DOM backtest across all monitored symbols and generates joint portfolio metrics."""
@@ -345,6 +412,8 @@ class DOMStrategyBacktester:
                 tp_pct=tp_pct,
                 sl_pct=sl_pct,
                 enable_breakeven=enable_breakeven,
+                trailing_stop=trailing_stop,
+                cooldown_snapshots=cooldown_snapshots,
                 mode=mode
             )
             results[sym] = res

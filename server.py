@@ -341,6 +341,9 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 sl = float(body.get("sl", 0.0015))
                 be_val = body.get("breakeven", True)
                 enable_breakeven = str(be_val).lower() in ("true", "1", "yes")
+                trail_val = body.get("trailing", False)
+                trailing_stop = str(trail_val).lower() in ("true", "1", "yes")
+                cooldown = int(body.get("cooldown", 60))
                 mode = body.get("mode", "BOUNCE").upper()
             else:
                 parsed = urllib.parse.urlparse(self.path)
@@ -351,13 +354,25 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 sl = float(qs.get("sl", [0.0015])[0])
                 be_val = qs.get("breakeven", ["true"])[0]
                 enable_breakeven = be_val.lower() in ("true", "1", "yes")
+                trail_val = qs.get("trailing", ["false"])[0]
+                trailing_stop = trail_val.lower() in ("true", "1", "yes")
+                cooldown = int(qs.get("cooldown", [60])[0])
                 mode = qs.get("mode", ["BOUNCE"])[0].upper()
 
             db_file = DOM_DATABASE_PATH if DOM_DATABASE_PATH.exists() else None
             tester = DOMStrategyBacktester(db_path=db_file)
 
             symbols = [symbol.upper()] if symbol and symbol.upper() in ACTIVE_SYMBOLS else ACTIVE_SYMBOLS
-            res = tester.run_all_symbols(symbols=symbols, min_imbalance=imbalance, tp_pct=tp, sl_pct=sl, enable_breakeven=enable_breakeven, mode=mode)
+            res = tester.run_all_symbols(
+                symbols=symbols,
+                min_imbalance=imbalance,
+                tp_pct=tp,
+                sl_pct=sl,
+                enable_breakeven=enable_breakeven,
+                trailing_stop=trailing_stop,
+                cooldown_snapshots=cooldown,
+                mode=mode
+            )
             tester.generate_html_report(res)
 
             res["report_url"] = "/dom_backtest_report.html"
