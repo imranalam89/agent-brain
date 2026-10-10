@@ -27,6 +27,13 @@ def main():
 ================================================================================
     """)
 
+    # Ensure sibling services (Dashboard & DOM Recorder) are synchronized
+    import subprocess
+    try:
+        subprocess.run(["systemctl", "restart", "trading-dashboard"], capture_output=True, timeout=5)
+    except Exception:
+        pass
+
     trader = MultiPairLiveTrader(fixed_risk_usd=5.0)
 
     print("\n[STARTING CONTINUOUS EXECUTION LOOP]")
