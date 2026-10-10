@@ -63,6 +63,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self.path = "/dom_heatmap.html"
         elif self.path in ("/dom-backtest", "/dom_backtest"):
             self.path = "/dom_backtest_report.html"
+        elif self.path in ("/dom-journal", "/dom_journal", "/journal-dom"):
+            self.path = "/dom_2day_journal_report.html"
         return super().do_GET()
 
     def do_POST(self):
