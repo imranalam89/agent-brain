@@ -66,13 +66,14 @@ class DOMStrategyBacktester:
         risk_per_trade_usd: float = TARGET_RISK_USD,
         account_capital_usd: float = ACCOUNT_CAPITAL_USD,
         enable_breakeven: bool = True,
+        mode: str = "BOUNCE",
         max_snapshots: int = 500000
     ) -> Dict[str, Any]:
         """
         Backtests an Institutional DOM Imbalance & Liquidity Wall Strategy:
-        - Long Trigger : Buyer Imbalance >= 1.8x AND Active Bid Wall support below price
-        - Short Trigger: Seller Imbalance >= 1.8x AND Active Ask Wall resistance above price
-        - Breakeven   : Automatic Stop Loss move to Breakeven at +0.8R
+        - Mode 'BOUNCE'  : Long off Bid Wall support / Short off Ask Wall resistance
+        - Mode 'BREAKOUT': Long when aggressive buyers sweep Ask Walls / Short when sellers smash Bid Walls
+        - Breakeven      : Automatic Stop Loss move to Breakeven at +0.8R
         """
         # Ultra-fast load: omit 50-level JSON ladders, load only metrics & walls
         snapshots = self.db.get_dom_snapshots(
@@ -223,19 +224,25 @@ class DOMStrategyBacktester:
 
             # 2. Check Entry Trigger
             if not in_trade:
-                # Calculate lots based on fixed risk per trade ($5.00)
                 sl_distance_usd = mid * sl_pct
                 raw_lots = risk_per_trade_usd / max(0.0001, sl_distance_usd * contract_multiplier)
                 lots = max(1, round(raw_lots))
                 notional = mid * lots * contract_multiplier
 
-                # Strong buyers + Bid Wall support detected below current price
                 has_bid_wall = any(w.get("price", 0) <= mid for w in bid_walls) if bid_walls else False
                 has_ask_wall = any(w.get("price", 0) >= mid for w in ask_walls) if ask_walls else False
 
-                if side == "BUYERS" and buyer_ratio >= min_imbalance and (has_bid_wall or len(bid_walls) > 0):
+                if mode == "BREAKOUT":
+                    long_trigger = (side == "BUYERS" and buyer_ratio >= min_imbalance and (has_ask_wall or len(ask_walls) > 0))
+                    short_trigger = (side == "SELLERS" and seller_ratio >= min_imbalance and (has_bid_wall or len(bid_walls) > 0))
+                else: # "BOUNCE"
+                    long_trigger = (side == "BUYERS" and buyer_ratio >= min_imbalance and (has_bid_wall or len(bid_walls) > 0))
+                    short_trigger = (side == "SELLERS" and seller_ratio >= min_imbalance and (has_ask_wall or len(ask_walls) > 0))
+
+                if long_trigger:
                     tp = mid * (1.0 + tp_pct)
                     sl = mid * (1.0 - sl_pct)
+                    strat_title = "DOM Imbalance & Ask Wall Sweep" if mode == "BREAKOUT" else "DOM Imbalance & Bid Wall Bounce"
                     current_pos = {
                         "id": f"DOM_{symbol}_{ts}",
                         "symbol": symbol,
@@ -248,14 +255,15 @@ class DOMStrategyBacktester:
                         "lots": lots,
                         "notional_usd": round(notional, 2),
                         "imbalance_ratio": round(buyer_ratio, 2),
-                        "walls_count": len(bid_walls),
-                        "strategy_name": "DOM Imbalance & Bid Wall Bounce"
+                        "walls_count": len(ask_walls if mode == "BREAKOUT" else bid_walls),
+                        "strategy_name": strat_title
                     }
                     in_trade = True
 
-                elif side == "SELLERS" and seller_ratio >= min_imbalance and (has_ask_wall or len(ask_walls) > 0):
+                elif short_trigger:
                     tp = mid * (1.0 - tp_pct)
                     sl = mid * (1.0 + sl_pct)
+                    strat_title = "DOM Imbalance & Bid Wall Sweep" if mode == "BREAKOUT" else "DOM Imbalance & Ask Wall Rejection"
                     current_pos = {
                         "id": f"DOM_{symbol}_{ts}",
                         "symbol": symbol,
@@ -268,8 +276,8 @@ class DOMStrategyBacktester:
                         "lots": lots,
                         "notional_usd": round(notional, 2),
                         "imbalance_ratio": round(seller_ratio, 2),
-                        "walls_count": len(ask_walls),
-                        "strategy_name": "DOM Imbalance & Ask Wall Rejection"
+                        "walls_count": len(bid_walls if mode == "BREAKOUT" else ask_walls),
+                        "strategy_name": strat_title
                     }
                     in_trade = True
 
@@ -322,7 +330,8 @@ class DOMStrategyBacktester:
         min_imbalance: float = 1.8,
         tp_pct: float = 0.003,
         sl_pct: float = 0.0015,
-        enable_breakeven: bool = True
+        enable_breakeven: bool = True,
+        mode: str = "BOUNCE"
     ) -> Dict[str, Any]:
         """Runs DOM backtest across all monitored symbols and generates joint portfolio metrics."""
         targets = symbols or ACTIVE_SYMBOLS
@@ -335,7 +344,8 @@ class DOMStrategyBacktester:
                 min_imbalance=min_imbalance,
                 tp_pct=tp_pct,
                 sl_pct=sl_pct,
-                enable_breakeven=enable_breakeven
+                enable_breakeven=enable_breakeven,
+                mode=mode
             )
             results[sym] = res
             if res.get("success"):

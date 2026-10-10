@@ -341,6 +341,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 sl = float(body.get("sl", 0.0015))
                 be_val = body.get("breakeven", True)
                 enable_breakeven = str(be_val).lower() in ("true", "1", "yes")
+                mode = body.get("mode", "BOUNCE").upper()
             else:
                 parsed = urllib.parse.urlparse(self.path)
                 qs = urllib.parse.parse_qs(parsed.query)
@@ -350,12 +351,13 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 sl = float(qs.get("sl", [0.0015])[0])
                 be_val = qs.get("breakeven", ["true"])[0]
                 enable_breakeven = be_val.lower() in ("true", "1", "yes")
+                mode = qs.get("mode", ["BOUNCE"])[0].upper()
 
             db_file = DOM_DATABASE_PATH if DOM_DATABASE_PATH.exists() else None
             tester = DOMStrategyBacktester(db_path=db_file)
 
             symbols = [symbol.upper()] if symbol and symbol.upper() in ACTIVE_SYMBOLS else ACTIVE_SYMBOLS
-            res = tester.run_all_symbols(symbols=symbols, min_imbalance=imbalance, tp_pct=tp, sl_pct=sl, enable_breakeven=enable_breakeven)
+            res = tester.run_all_symbols(symbols=symbols, min_imbalance=imbalance, tp_pct=tp, sl_pct=sl, enable_breakeven=enable_breakeven, mode=mode)
             tester.generate_html_report(res)
 
             res["report_url"] = "/dom_backtest_report.html"
