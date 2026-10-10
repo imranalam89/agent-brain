@@ -65,12 +65,14 @@ class DOMStrategyBacktester:
         sl_pct: float = 0.0015, # 0.15% Stop Loss (1:2 R:R)
         risk_per_trade_usd: float = TARGET_RISK_USD,
         account_capital_usd: float = ACCOUNT_CAPITAL_USD,
+        enable_breakeven: bool = True,
         max_snapshots: int = 500000
     ) -> Dict[str, Any]:
         """
         Backtests an Institutional DOM Imbalance & Liquidity Wall Strategy:
         - Long Trigger : Buyer Imbalance >= 1.8x AND Active Bid Wall support below price
         - Short Trigger: Seller Imbalance >= 1.8x AND Active Ask Wall resistance above price
+        - Breakeven   : Automatic Stop Loss move to Breakeven at +0.8R
         """
         # Ultra-fast load: omit 50-level JSON ladders, load only metrics & walls
         snapshots = self.db.get_dom_snapshots(
@@ -101,6 +103,12 @@ class DOMStrategyBacktester:
 
             ratio = snap.get("imbalance_ratio") or 1.0
             side = snap.get("dominant_side") or "NEUTRAL"
+            total_bids = snap.get("total_bid_size") or 0.0
+            total_asks = snap.get("total_ask_size") or 0.0
+
+            buyer_ratio = (total_bids / total_asks) if total_asks > 0 else ratio
+            seller_ratio = (total_asks / total_bids) if total_bids > 0 else (1.0 / max(0.001, ratio))
+
             bid_walls = snap.get("bid_walls", [])
             ask_walls = snap.get("ask_walls", [])
             ts_str = snap.get("datetime_ist", "")
@@ -112,11 +120,18 @@ class DOMStrategyBacktester:
                 pos_side = current_pos["side"]
                 lots = current_pos["lots"]
                 notional = current_pos["notional_usd"]
+                current_sl = current_pos["stop_loss"]
 
                 if pos_side == "BUY":
+                    # Breakeven move at +0.8R
+                    if enable_breakeven and (mid - entry) >= (entry * sl_pct * 0.8):
+                        if current_sl < entry:
+                            current_pos["stop_loss"] = entry
+
                     if mid >= current_pos["take_profit"]:
                         # WIN exit
-                        gross_pnl = (mid - entry) * lots * contract_multiplier
+                        diff = mid - entry
+                        gross_pnl = diff * lots * contract_multiplier
                         fee = calculate_brokerage_fee(symbol, notional, is_sl=False)
                         net_pnl = gross_pnl - fee
                         current_pos.update({
@@ -128,35 +143,44 @@ class DOMStrategyBacktester:
                             "fee_usd": round(fee, 4),
                             "pnl_usd": round(net_pnl, 2),
                             "pnl_inr": round(net_pnl * 90.0, 2),
-                            "rr_achieved": 2.0,
+                            "rr_achieved": round(diff / (entry * sl_pct), 2),
                             "reason": "TAKE_PROFIT"
                         })
                         trades.append(current_pos)
                         in_trade = False
                     elif mid <= current_pos["stop_loss"]:
-                        # LOSS exit
-                        gross_pnl = (mid - entry) * lots * contract_multiplier
-                        fee = calculate_brokerage_fee(symbol, notional, is_sl=True)
+                        diff = mid - entry
+                        gross_pnl = diff * lots * contract_multiplier
+                        is_sl = diff < 0
+                        fee = calculate_brokerage_fee(symbol, notional, is_sl=is_sl)
                         net_pnl = gross_pnl - fee
+                        is_be = abs(diff) < (entry * 0.0002)
+                        outcome = "WIN" if net_pnl > 0 else ("BE" if is_be else "LOSS")
                         current_pos.update({
                             "exit_price": mid,
                             "exit_time": ts_str,
                             "exit_ts": ts,
-                            "outcome": "LOSS",
+                            "outcome": outcome,
                             "gross_pnl_usd": round(gross_pnl, 2),
                             "fee_usd": round(fee, 4),
                             "pnl_usd": round(net_pnl, 2),
                             "pnl_inr": round(net_pnl * 90.0, 2),
-                            "rr_achieved": -1.0,
-                            "reason": "STOP_LOSS"
+                            "rr_achieved": round(diff / (entry * sl_pct), 2),
+                            "reason": "BREAKEVEN" if is_be else "STOP_LOSS"
                         })
                         trades.append(current_pos)
                         in_trade = False
 
                 elif pos_side == "SELL":
+                    # Breakeven move at +0.8R
+                    if enable_breakeven and (entry - mid) >= (entry * sl_pct * 0.8):
+                        if current_sl > entry:
+                            current_pos["stop_loss"] = entry
+
                     if mid <= current_pos["take_profit"]:
                         # WIN exit
-                        gross_pnl = (entry - mid) * lots * contract_multiplier
+                        diff = entry - mid
+                        gross_pnl = diff * lots * contract_multiplier
                         fee = calculate_brokerage_fee(symbol, notional, is_sl=False)
                         net_pnl = gross_pnl - fee
                         current_pos.update({
@@ -168,27 +192,30 @@ class DOMStrategyBacktester:
                             "fee_usd": round(fee, 4),
                             "pnl_usd": round(net_pnl, 2),
                             "pnl_inr": round(net_pnl * 90.0, 2),
-                            "rr_achieved": 2.0,
+                            "rr_achieved": round(diff / (entry * sl_pct), 2),
                             "reason": "TAKE_PROFIT"
                         })
                         trades.append(current_pos)
                         in_trade = False
                     elif mid >= current_pos["stop_loss"]:
-                        # LOSS exit
-                        gross_pnl = (entry - mid) * lots * contract_multiplier
-                        fee = calculate_brokerage_fee(symbol, notional, is_sl=True)
+                        diff = entry - mid
+                        gross_pnl = diff * lots * contract_multiplier
+                        is_sl = diff < 0
+                        fee = calculate_brokerage_fee(symbol, notional, is_sl=is_sl)
                         net_pnl = gross_pnl - fee
+                        is_be = abs(diff) < (entry * 0.0002)
+                        outcome = "WIN" if net_pnl > 0 else ("BE" if is_be else "LOSS")
                         current_pos.update({
                             "exit_price": mid,
                             "exit_time": ts_str,
                             "exit_ts": ts,
-                            "outcome": "LOSS",
+                            "outcome": outcome,
                             "gross_pnl_usd": round(gross_pnl, 2),
                             "fee_usd": round(fee, 4),
                             "pnl_usd": round(net_pnl, 2),
                             "pnl_inr": round(net_pnl * 90.0, 2),
-                            "rr_achieved": -1.0,
-                            "reason": "STOP_LOSS"
+                            "rr_achieved": round(diff / (entry * sl_pct), 2),
+                            "reason": "BREAKEVEN" if is_be else "STOP_LOSS"
                         })
                         trades.append(current_pos)
                         in_trade = False
@@ -198,7 +225,6 @@ class DOMStrategyBacktester:
             if not in_trade:
                 # Calculate lots based on fixed risk per trade ($5.00)
                 sl_distance_usd = mid * sl_pct
-                # lots = risk / (sl_dist * multiplier)
                 raw_lots = risk_per_trade_usd / max(0.0001, sl_distance_usd * contract_multiplier)
                 lots = max(1, round(raw_lots))
                 notional = mid * lots * contract_multiplier
@@ -207,7 +233,7 @@ class DOMStrategyBacktester:
                 has_bid_wall = any(w.get("price", 0) <= mid for w in bid_walls) if bid_walls else False
                 has_ask_wall = any(w.get("price", 0) >= mid for w in ask_walls) if ask_walls else False
 
-                if side == "BUYERS" and ratio >= min_imbalance and (has_bid_wall or len(bid_walls) > 0):
+                if side == "BUYERS" and buyer_ratio >= min_imbalance and (has_bid_wall or len(bid_walls) > 0):
                     tp = mid * (1.0 + tp_pct)
                     sl = mid * (1.0 - sl_pct)
                     current_pos = {
@@ -221,13 +247,13 @@ class DOMStrategyBacktester:
                         "stop_loss": sl,
                         "lots": lots,
                         "notional_usd": round(notional, 2),
-                        "imbalance_ratio": round(ratio, 2),
+                        "imbalance_ratio": round(buyer_ratio, 2),
                         "walls_count": len(bid_walls),
                         "strategy_name": "DOM Imbalance & Bid Wall Bounce"
                     }
                     in_trade = True
 
-                elif side == "SELLERS" and ratio >= min_imbalance and (has_ask_wall or len(ask_walls) > 0):
+                elif side == "SELLERS" and seller_ratio >= min_imbalance and (has_ask_wall or len(ask_walls) > 0):
                     tp = mid * (1.0 - tp_pct)
                     sl = mid * (1.0 + sl_pct)
                     current_pos = {
@@ -241,7 +267,7 @@ class DOMStrategyBacktester:
                         "stop_loss": sl,
                         "lots": lots,
                         "notional_usd": round(notional, 2),
-                        "imbalance_ratio": round(ratio, 2),
+                        "imbalance_ratio": round(seller_ratio, 2),
                         "walls_count": len(ask_walls),
                         "strategy_name": "DOM Imbalance & Ask Wall Rejection"
                     }
@@ -295,7 +321,8 @@ class DOMStrategyBacktester:
         symbols: Optional[List[str]] = None,
         min_imbalance: float = 1.8,
         tp_pct: float = 0.003,
-        sl_pct: float = 0.0015
+        sl_pct: float = 0.0015,
+        enable_breakeven: bool = True
     ) -> Dict[str, Any]:
         """Runs DOM backtest across all monitored symbols and generates joint portfolio metrics."""
         targets = symbols or ACTIVE_SYMBOLS
@@ -307,7 +334,8 @@ class DOMStrategyBacktester:
                 symbol=sym,
                 min_imbalance=min_imbalance,
                 tp_pct=tp_pct,
-                sl_pct=sl_pct
+                sl_pct=sl_pct,
+                enable_breakeven=enable_breakeven
             )
             results[sym] = res
             if res.get("success"):
