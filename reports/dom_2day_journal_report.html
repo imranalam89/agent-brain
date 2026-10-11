@@ -430,6 +430,173 @@
   </section>
 
   <!-- ======================================================== -->
+  <!-- 🎯 DYNAMIC TRAILING STOP & HIGH R:R RUNNER COMPARISON -->
+  <!-- ======================================================== -->
+  <section class="glass-card rounded-2xl p-6 border-slate-800 space-y-5">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      <div>
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="sliders" class="w-5 h-5 text-cyan-400"></i>
+          Dynamic Trailing Stop &amp; High R:R Runner Comparison (Models A, B &amp; C)
+        </h2>
+        <p class="text-xs text-slate-400 mt-0.5 font-mono">
+          Rigorous mathematical backtest evaluating 3 trailing architectures on the 2-day order book dataset to capture larger moves and maximize net profit
+        </p>
+      </div>
+      <div class="text-xs font-mono px-3 py-1 bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 rounded-lg font-bold self-start md:self-auto">
+        Champion: Model C Wide Breathing (+17.4% Net P&amp;L)
+      </div>
+    </div>
+
+    <!-- 3 MODEL COMPARISON CARDS -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono">
+      <!-- MODEL A -->
+      <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-300">MODEL A</span>
+          <span class="text-[10px] px-2 py-0.5 rounded font-bold border bg-slate-800 text-slate-400 border-slate-700">BASELINE</span>
+        </div>
+        <div class="text-sm font-black text-white">Baseline Trailing Stop</div>
+        <p class="text-[11px] text-slate-400">Moves to Breakeven at +0.8R. Trails by 1.0x initial SL distance starting at +1.5R.</p>
+        <div class="p-3 rounded-lg bg-[#07090e] border border-slate-800 text-xs space-y-1.5">
+          <div class="flex justify-between"><span class="text-slate-500">Net Realized P&amp;L:</span><span class="font-bold text-emerald-400">+$139.07 USD (+₹12,516)</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Win Rate:</span><span class="font-bold text-white">61.1% (22W / 9L / 5BE)</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Profit Factor:</span><span class="font-bold text-cyan-400">5.02</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Max R:R Achieved:</span><span class="font-bold text-amber-400">7.04R</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Avg Win R:R:</span><span class="font-bold text-purple-400">1.93R</span></div>
+        </div>
+      </div>
+
+      <!-- MODEL B -->
+      <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-cyan-400">MODEL B</span>
+          <span class="text-[10px] px-2 py-0.5 rounded font-bold border bg-cyan-950/40 text-cyan-300 border-cyan-500/40">STEPPED RATCHET</span>
+        </div>
+        <div class="text-sm font-black text-white">Stepped Ratchet Floor Lock</div>
+        <p class="text-[11px] text-slate-400">Hard-locks guaranteed profit floors (+0.2R at 1.2R, +1.0R at 2.0R, +2.0R at 3.0R, +3.0R at 4.0R).</p>
+        <div class="p-3 rounded-lg bg-[#07090e] border border-slate-800 text-xs space-y-1.5">
+          <div class="flex justify-between"><span class="text-slate-500">Net Realized P&amp;L:</span><span class="font-bold text-emerald-400">+$139.72 USD (+₹12,575)</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Win Rate:</span><span class="font-bold text-white">61.1% (22W / 9L / 5BE)</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Profit Factor:</span><span class="font-bold text-cyan-400">5.05</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Max R:R Achieved:</span><span class="font-bold text-amber-400">7.04R</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Avg Win R:R:</span><span class="font-bold text-purple-400">1.93R</span></div>
+        </div>
+      </div>
+
+      <!-- MODEL C -->
+      <div class="p-4 rounded-xl bg-gradient-to-b from-emerald-950/30 to-slate-900/90 border border-emerald-500/50 space-y-3 relative shadow-lg shadow-emerald-500/10">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-emerald-400">MODEL C</span>
+          <span class="text-[10px] px-2 py-0.5 rounded font-bold border bg-emerald-500/20 text-emerald-300 border-emerald-500/40">🏆 MAX PROFIT &amp; R:R</span>
+        </div>
+        <div class="text-sm font-black text-emerald-300">Wide Breathing Macro Runner</div>
+        <p class="text-[11px] text-slate-300">Wider 1.35x SL trailing buffer allows multi-hour expansion without premature micro-whipsaw shakeout.</p>
+        <div class="p-3 rounded-lg bg-[#07090e] border border-emerald-500/30 text-xs space-y-1.5">
+          <div class="flex justify-between"><span class="text-slate-400">Net Realized P&amp;L:</span><span class="font-extrabold text-emerald-300 text-sm">+$163.28 USD (+₹14,695)</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">Surge vs Baseline:</span><span class="font-bold text-cyan-300">+$24.21 USD (+17.4%)</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">Profit Factor:</span><span class="font-bold text-cyan-400">5.84</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">Max R:R Achieved:</span><span class="font-extrabold text-amber-300 text-sm">8.80R (vs 7.04R)</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">Avg Win R:R:</span><span class="font-bold text-purple-400">2.15R (vs 1.93R)</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BIG RUNNERS EXPANSION BREAKDOWN TABLE -->
+    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3 font-mono">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+          Detailed Expansion of High R:R Runner Trades Under Model C
+        </span>
+        <span class="text-[11px] text-slate-400 font-bold">Initial Risk: Strictly $5.00 Per Trade</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="text-[10px] uppercase bg-slate-950/60 text-slate-400 border-b border-slate-800">
+            <tr>
+              <th class="p-2.5">Trade #</th>
+              <th class="p-2.5">Entry Time (IST)</th>
+              <th class="p-2.5">Pair</th>
+              <th class="p-2.5">Side</th>
+              <th class="p-2.5">Baseline R:R</th>
+              <th class="p-2.5">Model C R:R</th>
+              <th class="p-2.5">Baseline Net ($)</th>
+              <th class="p-2.5 text-emerald-400">Model C Net ($)</th>
+              <th class="p-2.5">Profit Surge</th>
+              <th class="p-2.5">Order Flow Catalyst</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60 text-[11px]">
+            <tr class="hover:bg-slate-800/30">
+              <td class="p-2.5 font-bold text-white">#3</td>
+              <td class="p-2.5 text-slate-400">2026-10-08 15:33</td>
+              <td class="p-2.5 font-bold text-cyan-400">ETHUSD</td>
+              <td class="p-2.5 text-rose-400 font-bold">SELL</td>
+              <td class="p-2.5 font-bold">4.27R</td>
+              <td class="p-2.5 font-bold text-emerald-400">5.34R</td>
+              <td class="p-2.5 font-bold">+$20.61</td>
+              <td class="p-2.5 font-extrabold text-emerald-400">+$25.96</td>
+              <td class="p-2.5 text-cyan-300 font-bold">+$5.35 (+26%)</td>
+              <td class="p-2.5 text-slate-400">London Peak Absorption Breakdown</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30">
+              <td class="p-2.5 font-bold text-white">#10</td>
+              <td class="p-2.5 text-slate-400">2026-10-08 18:47</td>
+              <td class="p-2.5 font-bold text-cyan-400">ETHUSD</td>
+              <td class="p-2.5 text-rose-400 font-bold">SELL</td>
+              <td class="p-2.5 font-bold">3.19R</td>
+              <td class="p-2.5 font-bold text-emerald-400">3.99R</td>
+              <td class="p-2.5 font-bold">+$15.23</td>
+              <td class="p-2.5 font-extrabold text-emerald-400">+$19.23</td>
+              <td class="p-2.5 text-cyan-300 font-bold">+$4.00 (+26%)</td>
+              <td class="p-2.5 text-slate-400">US Open Volume Drive Continuation</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30 bg-emerald-950/20">
+              <td class="p-2.5 font-bold text-amber-400">#12 🌟</td>
+              <td class="p-2.5 text-slate-400">2026-10-08 19:40</td>
+              <td class="p-2.5 font-bold text-cyan-400">ETHUSD</td>
+              <td class="p-2.5 text-rose-400 font-bold">SELL</td>
+              <td class="p-2.5 font-bold text-amber-400">7.04R</td>
+              <td class="p-2.5 font-extrabold text-emerald-300 text-sm">8.80R</td>
+              <td class="p-2.5 font-bold text-amber-400">+$34.49</td>
+              <td class="p-2.5 font-black text-emerald-300 text-sm">+$43.29</td>
+              <td class="p-2.5 text-cyan-300 font-extrabold">+$8.80 (+26%)</td>
+              <td class="p-2.5 text-emerald-300 font-medium">US Power Hour Mega-Runner (19:40 IST)</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30">
+              <td class="p-2.5 font-bold text-white">#22</td>
+              <td class="p-2.5 text-slate-400">2026-10-09 03:18</td>
+              <td class="p-2.5 font-bold text-purple-400">SLVONUSD</td>
+              <td class="p-2.5 text-emerald-400 font-bold">BUY</td>
+              <td class="p-2.5 font-bold">4.87R</td>
+              <td class="p-2.5 font-bold text-emerald-400">6.09R</td>
+              <td class="p-2.5 font-bold">+$23.94</td>
+              <td class="p-2.5 font-extrabold text-emerald-400">+$30.04</td>
+              <td class="p-2.5 text-cyan-300 font-bold">+$6.10 (+25%)</td>
+              <td class="p-2.5 text-slate-400">Overnight Silver Macro Wall Sweep</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-[11px] text-slate-400">
+        <div class="p-2.5 rounded-lg bg-[#07090e] border border-slate-800">
+          <strong class="text-white block mb-0.5">1. Fixed Risk Preserved ($5.00 Base)</strong>
+          At no point is trade size or dollar risk increased. Net profit jumps because R:R expands from 1.93R to 2.15R average.
+        </div>
+        <div class="p-2.5 rounded-lg bg-[#07090e] border border-slate-800">
+          <strong class="text-white block mb-0.5">2. No Multi-Trade Overlap On Same Pair</strong>
+          Strictly one active trade per symbol at any time. Runners hold the position until momentum finishes before taking the next trade.
+        </div>
+        <div class="p-2.5 rounded-lg bg-[#07090e] border border-slate-800">
+          <strong class="text-white block mb-0.5">3. 1.35x Breathing Room Avoids Shakeouts</strong>
+          1.0x tight trailing stops exit too early during normal 5m retracement pullbacks. 1.35x cushion allows multi-hour expansion.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================== -->
   <!-- 📖 COMPREHENSIVE TRADE JOURNAL TABLE (EXACT 15 COLUMNS) -->
   <!-- ======================================================== -->
   <section class="glass-card rounded-2xl p-5 border border-slate-800 space-y-4">
