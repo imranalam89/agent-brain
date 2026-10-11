@@ -67,6 +67,9 @@ class DOMStrategyBacktester:
         account_capital_usd: float = ACCOUNT_CAPITAL_USD,
         enable_breakeven: bool = True,
         trailing_stop: bool = False,
+        trail_mode: str = "STANDARD", # "STANDARD", "RATCHET", "BREATHING"
+        trail_mult: float = 1.0, # Multiplier on SL distance for breathing trail
+        breakeven_trigger_r: float = 0.8, # R-multiple at which breakeven is armed
         cooldown_snapshots: int = 60, # ~3 minutes cooldown between trades
         mode: str = "BOUNCE",
         max_snapshots: int = 500000
@@ -135,16 +138,41 @@ class DOMStrategyBacktester:
 
                 if pos_side == "BUY":
                     profit_pct = (mid - entry) / entry
-                    # Breakeven move at +0.8R
-                    if enable_breakeven and profit_pct >= (sl_pct * 0.8):
-                        if current_sl < entry:
-                            current_pos["stop_loss"] = entry
+                    r_mult = profit_pct / max(1e-6, sl_pct)
 
-                    # Trailing stop: lock in profit at each 1.0R gain
-                    if trailing_stop and profit_pct >= (sl_pct * 1.5):
-                        trail_level = mid * (1.0 - sl_pct)
-                        if trail_level > current_pos["stop_loss"]:
-                            current_pos["stop_loss"] = trail_level
+                    # Breakeven move at breakeven_trigger_r
+                    if enable_breakeven and r_mult >= breakeven_trigger_r:
+                        be_price = entry + (entry * sl_pct * 0.1) if trail_mode == "RATCHET" else entry
+                        if be_price > current_pos["stop_loss"]:
+                            current_pos["stop_loss"] = be_price
+
+                    # Advanced Trailing stop
+                    if trailing_stop:
+                        if trail_mode == "RATCHET":
+                            if r_mult >= 4.0:
+                                ratchet_sl = entry + (entry * sl_pct * 3.0)
+                            elif r_mult >= 3.0:
+                                ratchet_sl = entry + (entry * sl_pct * 2.0)
+                            elif r_mult >= 2.0:
+                                ratchet_sl = entry + (entry * sl_pct * 1.0)
+                            elif r_mult >= 1.2:
+                                ratchet_sl = entry + (entry * sl_pct * 0.2)
+                            else:
+                                ratchet_sl = current_pos["stop_loss"]
+                            if ratchet_sl > current_pos["stop_loss"]:
+                                current_pos["stop_loss"] = ratchet_sl
+
+                        elif trail_mode == "BREATHING":
+                            if r_mult >= 1.5:
+                                trail_level = mid * (1.0 - (sl_pct * trail_mult))
+                                if trail_level > current_pos["stop_loss"]:
+                                    current_pos["stop_loss"] = trail_level
+
+                        else: # STANDARD
+                            if r_mult >= 1.5:
+                                trail_level = mid * (1.0 - sl_pct)
+                                if trail_level > current_pos["stop_loss"]:
+                                    current_pos["stop_loss"] = trail_level
 
                     if mid >= current_pos["take_profit"]:
                         diff = mid - entry
@@ -193,16 +221,41 @@ class DOMStrategyBacktester:
 
                 elif pos_side == "SELL":
                     profit_pct = (entry - mid) / entry
-                    # Breakeven move at +0.8R
-                    if enable_breakeven and profit_pct >= (sl_pct * 0.8):
-                        if current_sl > entry:
-                            current_pos["stop_loss"] = entry
+                    r_mult = profit_pct / max(1e-6, sl_pct)
 
-                    # Trailing stop: lock in profit at each 1.0R gain
-                    if trailing_stop and profit_pct >= (sl_pct * 1.5):
-                        trail_level = mid * (1.0 + sl_pct)
-                        if trail_level < current_pos["stop_loss"]:
-                            current_pos["stop_loss"] = trail_level
+                    # Breakeven move at breakeven_trigger_r
+                    if enable_breakeven and r_mult >= breakeven_trigger_r:
+                        be_price = entry - (entry * sl_pct * 0.1) if trail_mode == "RATCHET" else entry
+                        if be_price < current_pos["stop_loss"]:
+                            current_pos["stop_loss"] = be_price
+
+                    # Advanced Trailing stop
+                    if trailing_stop:
+                        if trail_mode == "RATCHET":
+                            if r_mult >= 4.0:
+                                ratchet_sl = entry - (entry * sl_pct * 3.0)
+                            elif r_mult >= 3.0:
+                                ratchet_sl = entry - (entry * sl_pct * 2.0)
+                            elif r_mult >= 2.0:
+                                ratchet_sl = entry - (entry * sl_pct * 1.0)
+                            elif r_mult >= 1.2:
+                                ratchet_sl = entry - (entry * sl_pct * 0.2)
+                            else:
+                                ratchet_sl = current_pos["stop_loss"]
+                            if ratchet_sl < current_pos["stop_loss"]:
+                                current_pos["stop_loss"] = ratchet_sl
+
+                        elif trail_mode == "BREATHING":
+                            if r_mult >= 1.5:
+                                trail_level = mid * (1.0 + (sl_pct * trail_mult))
+                                if trail_level < current_pos["stop_loss"]:
+                                    current_pos["stop_loss"] = trail_level
+
+                        else: # STANDARD
+                            if r_mult >= 1.5:
+                                trail_level = mid * (1.0 + sl_pct)
+                                if trail_level < current_pos["stop_loss"]:
+                                    current_pos["stop_loss"] = trail_level
 
                     if mid <= current_pos["take_profit"]:
                         diff = entry - mid
@@ -397,6 +450,9 @@ class DOMStrategyBacktester:
         sl_pct: float = 0.0015,
         enable_breakeven: bool = True,
         trailing_stop: bool = False,
+        trail_mode: str = "STANDARD",
+        trail_mult: float = 1.0,
+        breakeven_trigger_r: float = 0.8,
         cooldown_snapshots: int = 60,
         mode: str = "BOUNCE"
     ) -> Dict[str, Any]:
@@ -413,6 +469,9 @@ class DOMStrategyBacktester:
                 sl_pct=sl_pct,
                 enable_breakeven=enable_breakeven,
                 trailing_stop=trailing_stop,
+                trail_mode=trail_mode,
+                trail_mult=trail_mult,
+                breakeven_trigger_r=breakeven_trigger_r,
                 cooldown_snapshots=cooldown_snapshots,
                 mode=mode
             )

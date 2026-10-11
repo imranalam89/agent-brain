@@ -345,6 +345,9 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 enable_breakeven = str(be_val).lower() in ("true", "1", "yes")
                 trail_val = body.get("trailing", False)
                 trailing_stop = str(trail_val).lower() in ("true", "1", "yes")
+                trail_mode = str(body.get("trail_mode", "STANDARD")).upper()
+                trail_mult = float(body.get("trail_mult", 1.0))
+                be_r = float(body.get("be_r", 0.8))
                 cooldown = int(body.get("cooldown", 60))
                 mode = body.get("mode", "BOUNCE").upper()
             else:
@@ -358,6 +361,9 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 enable_breakeven = be_val.lower() in ("true", "1", "yes")
                 trail_val = qs.get("trailing", ["false"])[0]
                 trailing_stop = trail_val.lower() in ("true", "1", "yes")
+                trail_mode = qs.get("trail_mode", ["STANDARD"])[0].upper()
+                trail_mult = float(qs.get("trail_mult", [1.0])[0])
+                be_r = float(qs.get("be_r", [0.8])[0])
                 cooldown = int(qs.get("cooldown", [60])[0])
                 mode = qs.get("mode", ["BOUNCE"])[0].upper()
 
@@ -372,6 +378,9 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 sl_pct=sl,
                 enable_breakeven=enable_breakeven,
                 trailing_stop=trailing_stop,
+                trail_mode=trail_mode,
+                trail_mult=trail_mult,
+                breakeven_trigger_r=be_r,
                 cooldown_snapshots=cooldown,
                 mode=mode
             )
