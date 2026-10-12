@@ -100,20 +100,21 @@ class TelegramNotifier:
         )
         self._dispatch_async(msg)
 
-    def send_breakeven_alert(self, symbol: str, side: str, current_price: float, be_sl: float, r_mult: float = 0.8):
-        """Sends instant push notification when Breakeven is locked at +0.8R."""
+    def send_breakeven_alert(self, symbol: str, side: str, current_price: float, be_sl: float, r_mult: float = 1.0):
+        """Sends instant push notification when Breakeven profit is locked at +1.0R."""
         self._load_config()
         if not self.is_configured():
             return
 
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         msg = (
-            f"🛡️ <b>BREAKEVEN STOP LOCKED (+{r_mult:.1f}R)</b>\n"
+            f"🛡️ <b>BREAKEVEN PROFIT LOCKED (+0.20R)</b>\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"📌 <b>Asset:</b> <code>{symbol}</code> ({side.upper()})\n"
-            f"💵 <b>Current Price:</b> <code>${current_price:,.2f}</code>\n"
-            f"🛡️ <b>New Stop Loss:</b> <code>${be_sl:,.2f}</code> (Risk-Free Breakeven)\n"
-            f"⚡ <b>Status:</b> Position is 100% risk-free running towards TP\n"
+            f"💵 <b>Current Price:</b> <code>${current_price:,.2f}</code> (+{r_mult:.1f}R reached)\n"
+            f"🛡️ <b>New Stop Loss:</b> <code>${be_sl:,.2f}</code> (+0.20R in profit)\n"
+            f"💰 <b>Guaranteed Outcome:</b> Fees fully covered + profit locked if reversed!\n"
+            f"🏃 <b>Macro Runner:</b> 100% position running towards full Take Profit\n"
             f"🕒 <b>Time:</b> <code>{now_str}</code>\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"🔗 <a href='http://62.72.31.29:5050/live_journal.html'>Open Live Trading Journal</a>"

@@ -51,7 +51,7 @@ class MultiPairLiveTrader:
        - Weekend Filter: Saturday & Sunday paused (institutional desks closed).
        - Time-Confluence Filter: Pauses during midday lunch chop (13:00-14:00 IST) and late NY whipsaw (22:00-23:15 IST).
     4. Model C Macro Runner Trade Management:
-       - Instant Breakeven lock at +0.8R.
+       - Breakeven profit lock (+0.20R guaranteed green) at +1.0R.
        - Wide Breathing Trailing Stop (1.35x SL buffer behind peak price) starting at +1.5R.
     """
 
@@ -428,31 +428,35 @@ class MultiPairLiveTrader:
 
         r_mult = profit_pct / max(1e-6, sl_pct)
 
-        # 1. Breakeven Lock at +0.8R
-        if r_mult >= 0.8:
-            be_price = round(entry, decimals)
-            if side == "BUY" and be_price > pos["stop_loss"]:
-                pos["stop_loss"] = be_price
-                pos["be_locked"] = True
-                print(f"🛡️ [BREAKEVEN STOP LOCKED] {symbol} {side} SL locked at entry ${be_price:,.2f} (+{r_mult:.1f}R reached). Position is risk-free.")
-                self.db.log_thought(
-                    symbol=symbol,
-                    event_type="BREAKEVEN_LOCKED",
-                    stars=5.0,
-                    message=f"🛡️ Model C Breakeven locked on {symbol} {side} @ ${current_price:,.2f} (+{r_mult:.1f}R). SL moved to ${be_price:,.2f}. Position running 100% risk-free."
-                )
-                notifier.send_breakeven_alert(symbol, side, current_price, be_price, r_mult)
-            elif side == "SELL" and be_price < pos["stop_loss"]:
-                pos["stop_loss"] = be_price
-                pos["be_locked"] = True
-                print(f"🛡️ [BREAKEVEN STOP LOCKED] {symbol} {side} SL locked at entry ${be_price:,.2f} (+{r_mult:.1f}R reached). Position is risk-free.")
-                self.db.log_thought(
-                    symbol=symbol,
-                    event_type="BREAKEVEN_LOCKED",
-                    stars=5.0,
-                    message=f"🛡️ Model C Breakeven locked on {symbol} {side} @ ${current_price:,.2f} (+{r_mult:.1f}R). SL moved to ${be_price:,.2f}. Position running 100% risk-free."
-                )
-                notifier.send_breakeven_alert(symbol, side, current_price, be_price, r_mult)
+        # 1. Breakeven Profit Lock at +1.0R (Locks +0.20R guaranteed net profit)
+        if r_mult >= 1.0:
+            one_r_dist = entry * sl_pct
+            if side == "BUY":
+                be_price = round(entry + (0.20 * one_r_dist), decimals)
+                if be_price > pos["stop_loss"]:
+                    pos["stop_loss"] = be_price
+                    pos["be_locked"] = True
+                    print(f"🛡️ [BREAKEVEN PROFIT LOCKED] {symbol} {side} SL locked at ${be_price:,.2f} (+0.20R profit buffer). Trade is guaranteed green.")
+                    self.db.log_thought(
+                        symbol=symbol,
+                        event_type="BREAKEVEN_LOCKED",
+                        stars=5.0,
+                        message=f"🛡️ Model C Breakeven locked on {symbol} {side} @ ${current_price:,.2f} (+{r_mult:.1f}R reached). SL moved to ${be_price:,.2f} (+0.20R profit secured). Position is 100% risk-free and fee-covered."
+                    )
+                    notifier.send_breakeven_alert(symbol, side, current_price, be_price, r_mult)
+            elif side == "SELL":
+                be_price = round(entry - (0.20 * one_r_dist), decimals)
+                if be_price < pos["stop_loss"]:
+                    pos["stop_loss"] = be_price
+                    pos["be_locked"] = True
+                    print(f"🛡️ [BREAKEVEN PROFIT LOCKED] {symbol} {side} SL locked at ${be_price:,.2f} (+0.20R profit buffer). Trade is guaranteed green.")
+                    self.db.log_thought(
+                        symbol=symbol,
+                        event_type="BREAKEVEN_LOCKED",
+                        stars=5.0,
+                        message=f"🛡️ Model C Breakeven locked on {symbol} {side} @ ${current_price:,.2f} (+{r_mult:.1f}R reached). SL moved to ${be_price:,.2f} (+0.20R profit secured). Position is 100% risk-free and fee-covered."
+                    )
+                    notifier.send_breakeven_alert(symbol, side, current_price, be_price, r_mult)
 
         # 2. Model C Wide Breathing Trailing (1.35x SL buffer behind price) starting at +1.5R
         if r_mult >= 1.5:
