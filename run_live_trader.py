@@ -19,11 +19,12 @@ from execution.multi_pair_trader import MultiPairLiveTrader
 def main():
     print("""
 ================================================================================
-     🧠 AGENT BRAIN | AUTONOMOUS DELTA LIVE TRADER (CHAMPION STRATEGY) 🧠     
-   Strategy: 💎 4-Asset Apex Hybrid Sniper (1:10R to 1:40R Dynamic Trailing)
-   Target R:R: 1:10R to 1:40R Trailing • Zero 50% Cut • Breakeven: +0.20R
-   Instruments: BTCUSD, ETHUSD, XAUTUSD (Gold), SLVONUSD (Silver)
-   Fee Model: Calibrated Delta Exchange India (0.01062% Commodity / 0.0531% Crypto)
+     🧠 AGENT BRAIN | AUTONOMOUS DELTA LIVE TRADER (MODEL C MACRO RUNNER) 🧠     
+   Strategy: 🏛️ Verified Level 2 DOM Institutional Order Flow Strategy
+   Microstructure: Real-Time L2 Book Imbalance & Resting Wall Exploitation
+   Instruments: BTCUSD (Breakout 3.0x), ETHUSD (Session 2.0x), XAUTUSD (Absorption 2.0x), SLVONUSD (Breakout 2.5x)
+   Trade Management: Model C Breathing Trail (1.35x @ +1.5R) • Breakeven @ +0.8R
+   Risk Base: Strictly $5.00 Fixed Risk Per Trade ($50 Capital Base)
 ================================================================================
     """)
 
