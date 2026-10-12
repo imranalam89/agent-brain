@@ -428,51 +428,43 @@ class MultiPairLiveTrader:
 
         r_mult = profit_pct / max(1e-6, sl_pct)
 
-        # 1. Breakeven Profit Lock at +1.0R (Locks +0.20R guaranteed net profit)
-        if r_mult >= 1.0:
-            one_r_dist = entry * sl_pct
-            if side == "BUY":
-                be_price = round(entry + (0.20 * one_r_dist), decimals)
-                if be_price > pos["stop_loss"]:
-                    pos["stop_loss"] = be_price
-                    pos["be_locked"] = True
-                    print(f"🛡️ [BREAKEVEN PROFIT LOCKED] {symbol} {side} SL locked at ${be_price:,.2f} (+0.20R profit buffer). Trade is guaranteed green.")
-                    self.db.log_thought(
-                        symbol=symbol,
-                        event_type="BREAKEVEN_LOCKED",
-                        stars=5.0,
-                        message=f"🛡️ Model C Breakeven locked on {symbol} {side} @ ${current_price:,.2f} (+{r_mult:.1f}R reached). SL moved to ${be_price:,.2f} (+0.20R profit secured). Position is 100% risk-free and fee-covered."
-                    )
-                    notifier.send_breakeven_alert(symbol, side, current_price, be_price, r_mult)
-            elif side == "SELL":
-                be_price = round(entry - (0.20 * one_r_dist), decimals)
-                if be_price < pos["stop_loss"]:
-                    pos["stop_loss"] = be_price
-                    pos["be_locked"] = True
-                    print(f"🛡️ [BREAKEVEN PROFIT LOCKED] {symbol} {side} SL locked at ${be_price:,.2f} (+0.20R profit buffer). Trade is guaranteed green.")
-                    self.db.log_thought(
-                        symbol=symbol,
-                        event_type="BREAKEVEN_LOCKED",
-                        stars=5.0,
-                        message=f"🛡️ Model C Breakeven locked on {symbol} {side} @ ${current_price:,.2f} (+{r_mult:.1f}R reached). SL moved to ${be_price:,.2f} (+0.20R profit secured). Position is 100% risk-free and fee-covered."
-                    )
-                    notifier.send_breakeven_alert(symbol, side, current_price, be_price, r_mult)
+        # 1. Progressive Profit-Locking Trailing Ladder
+        one_r_dist = entry * sl_pct
+        target_sl = None
 
-        # 2. Model C Wide Breathing Trailing (1.35x SL buffer behind price) starting at +1.5R
-        if r_mult >= 1.5:
-            trail_mult = 1.35
-            if side == "BUY":
-                trail_level = round(current_price * (1.0 - (sl_pct * trail_mult)), decimals)
-                if trail_level > pos["stop_loss"]:
-                    pos["stop_loss"] = trail_level
-                    print(f"⚡ [MODEL C TRAILING SL] {symbol} {side} trailing SL ratcheted to ${trail_level:,.2f} (+{r_mult:.1f}R expansion).")
-                    notifier.send_trailing_alert(symbol, side, current_price, trail_level, r_mult)
-            elif side == "SELL":
-                trail_level = round(current_price * (1.0 + (sl_pct * trail_mult)), decimals)
-                if trail_level < pos["stop_loss"]:
-                    pos["stop_loss"] = trail_level
-                    print(f"⚡ [MODEL C TRAILING SL] {symbol} {side} trailing SL ratcheted to ${trail_level:,.2f} (+{r_mult:.1f}R expansion).")
-                    notifier.send_trailing_alert(symbol, side, current_price, trail_level, r_mult)
+        if r_mult >= 4.0:
+            # Macro Runner: Trail 1.0R behind peak mark price
+            target_sl = (current_price - one_r_dist) if side == "BUY" else (current_price + one_r_dist)
+        elif r_mult >= 3.0:
+            target_sl = (entry + 2.0 * one_r_dist) if side == "BUY" else (entry - 2.0 * one_r_dist)
+        elif r_mult >= 2.5:
+            target_sl = (entry + 1.5 * one_r_dist) if side == "BUY" else (entry - 1.5 * one_r_dist)
+        elif r_mult >= 2.0:
+            target_sl = (entry + 1.0 * one_r_dist) if side == "BUY" else (entry - 1.0 * one_r_dist)
+        elif r_mult >= 1.5:
+            target_sl = (entry + 0.6 * one_r_dist) if side == "BUY" else (entry - 0.6 * one_r_dist)
+        elif r_mult >= 1.0:
+            target_sl = (entry + 0.2 * one_r_dist) if side == "BUY" else (entry - 0.2 * one_r_dist)
+
+        if target_sl is not None:
+            new_sl = round(target_sl, decimals)
+            is_tightened = (new_sl > pos["stop_loss"]) if side == "BUY" else (new_sl < pos["stop_loss"])
+            if is_tightened:
+                old_sl = pos["stop_loss"]
+                pos["stop_loss"] = new_sl
+                pos["be_locked"] = True
+                locked_r = round(abs(new_sl - entry) / one_r_dist, 2)
+                print(f"⚡ [PROFIT TRAIL RATCHET] {symbol} {side} SL ratcheted from ${old_sl} to ${new_sl} (+{locked_r}R profit locked @ +{r_mult:.1f}R expansion).")
+                self.db.log_thought(
+                    symbol=symbol,
+                    event_type="TRAILING_SL_RATCHET",
+                    stars=5.0,
+                    message=f"⚡ Trailing SL ratcheted on {symbol} {side} to ${new_sl} (+{locked_r}R profit locked @ +{r_mult:.1f}R). Profit secured."
+                )
+                if locked_r <= 0.25:
+                    notifier.send_breakeven_alert(symbol, side, current_price, new_sl, r_mult)
+                else:
+                    notifier.send_trailing_alert(symbol, side, current_price, new_sl, r_mult)
 
         # 3. Take Profit Exit Check
         tp_hit = (current_price >= pos["take_profit"]) if side == "BUY" else (current_price <= pos["take_profit"])
