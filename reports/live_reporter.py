@@ -152,9 +152,17 @@ def generate_live_journal_html(
         <i data-lucide="radio" class="w-3.5 h-3.5"></i>
         <span>Live Journal</span>
       </a>
-      <a href="backtest_v5.html" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-emerald-500/20 to-teal-500/20 text-emerald-300 hover:text-white border border-emerald-500/50 font-bold transition flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-500/30">
+      <a href="dom_2day_journal_report.html" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-emerald-500/20 to-teal-500/20 text-emerald-300 hover:text-white border border-emerald-500/50 font-bold transition flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-500/30">
         <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
-        <span>Backtest V5 (Active)</span>
+        <span>DOM Journal (Active)</span>
+      </a>
+      <a href="dom_heatmap.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
+        <i data-lucide="flame" class="w-3.5 h-3.5 text-amber-400"></i>
+        <span>DOM Heatmap</span>
+      </a>
+      <a href="backtest_v5.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
+        <i data-lucide="zap" class="w-3.5 h-3.5 text-slate-400"></i>
+        <span>Backtest V5</span>
       </a>
       <a href="backtest_v4.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
         <i data-lucide="zap" class="w-3.5 h-3.5 text-slate-400"></i>
@@ -195,11 +203,11 @@ def generate_live_journal_html(
       </div>
       <div>
         <div class="font-bold text-white flex items-center gap-2">
-          <span>Active Strategy: 💎 4-Asset Apex Hybrid Sniper (+$17,251.30 | ₹15.53L)</span>
-          <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px]">Delta Futures Live</span>
+          <span>Active Strategy: 🏛️ Level 2 DOM Institutional Order Flow Strategy (Model C Macro Runner)</span>
+          <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px]">DOM Sniper Live</span>
         </div>
         <p class="text-slate-400 text-[11px] mt-0.5">
-          Simultaneous Gold + Silver + BTC + ETH • 1:10R to 1:40R Macro Trailing • 3-Layer Continuous Floor • Zero 50% Cut • Breakeven (+0.20R Buffer) • Strict $5.00 Risk
+          BTC &amp; Silver (Breakout Wall Sweep) • Gold (Absorption Fade) • ETH (Session Flow) • Model C Breathing Trailing (1.35x @ +1.5R) • Breakeven (+0.8R) • Strict $5.00 Risk
         </p>
       </div>
     </div>
