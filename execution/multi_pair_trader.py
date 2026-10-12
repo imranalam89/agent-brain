@@ -441,6 +441,7 @@ class MultiPairLiveTrader:
                     stars=5.0,
                     message=f"🛡️ Model C Breakeven locked on {symbol} {side} @ ${current_price:,.2f} (+{r_mult:.1f}R). SL moved to ${be_price:,.2f}. Position running 100% risk-free."
                 )
+                notifier.send_breakeven_alert(symbol, side, current_price, be_price, r_mult)
             elif side == "SELL" and be_price < pos["stop_loss"]:
                 pos["stop_loss"] = be_price
                 pos["be_locked"] = True
@@ -451,6 +452,7 @@ class MultiPairLiveTrader:
                     stars=5.0,
                     message=f"🛡️ Model C Breakeven locked on {symbol} {side} @ ${current_price:,.2f} (+{r_mult:.1f}R). SL moved to ${be_price:,.2f}. Position running 100% risk-free."
                 )
+                notifier.send_breakeven_alert(symbol, side, current_price, be_price, r_mult)
 
         # 2. Model C Wide Breathing Trailing (1.35x SL buffer behind price) starting at +1.5R
         if r_mult >= 1.5:
@@ -460,11 +462,13 @@ class MultiPairLiveTrader:
                 if trail_level > pos["stop_loss"]:
                     pos["stop_loss"] = trail_level
                     print(f"⚡ [MODEL C TRAILING SL] {symbol} {side} trailing SL ratcheted to ${trail_level:,.2f} (+{r_mult:.1f}R expansion).")
+                    notifier.send_trailing_alert(symbol, side, current_price, trail_level, r_mult)
             elif side == "SELL":
                 trail_level = round(current_price * (1.0 + (sl_pct * trail_mult)), decimals)
                 if trail_level < pos["stop_loss"]:
                     pos["stop_loss"] = trail_level
                     print(f"⚡ [MODEL C TRAILING SL] {symbol} {side} trailing SL ratcheted to ${trail_level:,.2f} (+{r_mult:.1f}R expansion).")
+                    notifier.send_trailing_alert(symbol, side, current_price, trail_level, r_mult)
 
         # 3. Take Profit Exit Check
         tp_hit = (current_price >= pos["take_profit"]) if side == "BUY" else (current_price <= pos["take_profit"])

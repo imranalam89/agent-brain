@@ -1,6 +1,6 @@
 """
 Telegram Bot Instant Push Notifier for Agent Brain.
-Sends instantaneous mobile push alerts for trade entries, 50% scale-outs, and trade exits.
+Sends instantaneous mobile push alerts for trade entries, breakeven stop locks, and trade exits.
 Zero-delay, non-blocking background thread execution.
 """
 
@@ -22,6 +22,8 @@ if hasattr(sys.stdout, 'reconfigure'):
 
 load_dotenv(override=True)
 
+DEFAULT_BOT_TOKEN = "8668687479:AAH-kAPQYfZGCGEDXHhEfvbrPEM_BmG2j-Y"
+DEFAULT_CHAT_ID = "8953069874"
 
 class TelegramNotifier:
     def __init__(self):
@@ -29,9 +31,10 @@ class TelegramNotifier:
 
     def _load_config(self):
         load_dotenv(override=True)
-        self.enabled = os.getenv("TELEGRAM_ENABLED", "false").strip().lower() in ("true", "1", "yes")
-        self.bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
-        self.chat_id = os.getenv("TELEGRAM_CHAT_ID", "").strip()
+        # Default enabled to True with configured credentials fallback
+        self.enabled = os.getenv("TELEGRAM_ENABLED", "true").strip().lower() in ("true", "1", "yes")
+        self.bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip() or DEFAULT_BOT_TOKEN
+        self.chat_id = os.getenv("TELEGRAM_CHAT_ID", "").strip() or DEFAULT_CHAT_ID
 
     def is_configured(self) -> bool:
         self._load_config()
@@ -93,26 +96,47 @@ class TelegramNotifier:
             f"🛡️ <b>Strict Risk:</b> <code>${risk_usd:.2f}</code>\n"
             f"🕒 <b>Time:</b> <code>{now_str}</code>\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"🔗 <a href='http://127.0.0.1:5050/live_journal.html'>Open Live Trading Journal</a>"
+            f"🔗 <a href='http://62.72.31.29:5050/live_journal.html'>Open Live Trading Journal</a>"
         )
         self._dispatch_async(msg)
 
-    def send_scale_out_alert(self, symbol: str, side: str, price: float, booked_gain: float, new_sl: float):
-        """Sends instant push notification when 50% profit is secured & breakeven locked."""
+    def send_breakeven_alert(self, symbol: str, side: str, current_price: float, be_sl: float, r_mult: float = 0.8):
+        """Sends instant push notification when Breakeven is locked at +0.8R."""
         self._load_config()
         if not self.is_configured():
             return
 
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         msg = (
-            f"🎯 <b>PROFIT BANKED & BREAKEVEN LOCKED</b>\n"
+            f"🛡️ <b>BREAKEVEN STOP LOCKED (+{r_mult:.1f}R)</b>\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"📌 <b>Asset:</b> <code>{symbol}</code> ({side})\n"
-            f"💰 <b>Banked Profit (50%):</b> <b>+${booked_gain:.2f}</b>\n"
-            f"🛡️ <b>New Stop Loss:</b> <code>${new_sl:,.2f}</code> (Risk-Free Breakeven)\n"
-            f"🏃 <b>Runner:</b> 50% remaining lots targeting extended trend\n"
+            f"📌 <b>Asset:</b> <code>{symbol}</code> ({side.upper()})\n"
+            f"💵 <b>Current Price:</b> <code>${current_price:,.2f}</code>\n"
+            f"🛡️ <b>New Stop Loss:</b> <code>${be_sl:,.2f}</code> (Risk-Free Breakeven)\n"
+            f"⚡ <b>Status:</b> Position is 100% risk-free running towards TP\n"
             f"🕒 <b>Time:</b> <code>{now_str}</code>\n"
-            f"━━━━━━━━━━━━━━━━━━━━"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"🔗 <a href='http://62.72.31.29:5050/live_journal.html'>Open Live Trading Journal</a>"
+        )
+        self._dispatch_async(msg)
+
+    def send_trailing_alert(self, symbol: str, side: str, current_price: float, new_sl: float, r_mult: float):
+        """Sends instant push notification when Model C breathing trailing ratchets."""
+        self._load_config()
+        if not self.is_configured():
+            return
+
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        msg = (
+            f"⚡ <b>MODEL C TRAILING STOP RATCHETED (+{r_mult:.1f}R)</b>\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"📌 <b>Asset:</b> <code>{symbol}</code> ({side.upper()})\n"
+            f"💵 <b>Current Price:</b> <code>${current_price:,.2f}</code>\n"
+            f"🛡️ <b>Trailing Stop:</b> <code>${new_sl:,.2f}</code> (Profit Protected)\n"
+            f"🏃 <b>Macro Runner:</b> 1.35x breathing buffer active\n"
+            f"🕒 <b>Time:</b> <code>{now_str}</code>\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"🔗 <a href='http://62.72.31.29:5050/live_journal.html'>Open Live Trading Journal</a>"
         )
         self._dispatch_async(msg)
 
@@ -123,19 +147,27 @@ class TelegramNotifier:
             return
 
         is_win = net_pnl > 0
-        icon = "🏆 <b>TRADE CLOSED (WIN)</b>" if is_win else "🛑 <b>TRADE CLOSED (LOSS)</b>"
-        pnl_str = f"+${net_pnl:.2f}" if is_win else f"-${abs(net_pnl):.2f}"
+        is_be = "BREAKEVEN" in reason.upper() or abs(net_pnl) < 1.0
+        if is_win:
+            icon = "🏆 <b>TRADE CLOSED (WIN)</b>"
+        elif is_be:
+            icon = "🛡️ <b>TRADE CLOSED (BREAKEVEN)</b>"
+        else:
+            icon = "🛑 <b>TRADE CLOSED (STOP LOSS)</b>"
+
+        pnl_str = f"+${net_pnl:.2f}" if net_pnl >= 0 else f"-${abs(net_pnl):.2f}"
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         msg = (
             f"{icon}\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"📌 <b>Asset:</b> <code>{symbol}</code> ({side})\n"
+            f"📌 <b>Asset:</b> <code>{symbol}</code> ({side.upper()})\n"
             f"💵 <b>Exit Price:</b> <code>${exit_price:,.2f}</code>\n"
-            f"📊 <b>Net Realized P&L:</b> <b>{pnl_str}</b>\n"
+            f"📊 <b>Net Realized P&L:</b> <b>{pnl_str} USD</b> (₹{net_pnl*90:+,.2f} INR)\n"
             f"📝 <b>Reason:</b> <code>{reason}</code>\n"
             f"🕒 <b>Time:</b> <code>{now_str}</code>\n"
-            f"━━━━━━━━━━━━━━━━━━━━"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"🔗 <a href='http://62.72.31.29:5050/live_journal.html'>Open Live Trading Journal</a>"
         )
         self._dispatch_async(msg)
 

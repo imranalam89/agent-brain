@@ -20,6 +20,14 @@ class AlertDispatcher:
         # Telegram
         telegram_notifier.send_scale_out_alert(symbol, side, price, booked_gain, new_sl)
 
+    def send_breakeven_alert(self, symbol: str, side: str, current_price: float, be_sl: float, r_mult: float = 0.8):
+        # Telegram
+        telegram_notifier.send_breakeven_alert(symbol, side, current_price, be_sl, r_mult)
+
+    def send_trailing_alert(self, symbol: str, side: str, current_price: float, new_sl: float, r_mult: float):
+        # Telegram
+        telegram_notifier.send_trailing_alert(symbol, side, current_price, new_sl, r_mult)
+
     def send_exit_alert(self, symbol: str, side: str, exit_price: float, net_pnl: float, reason: str):
         # Email
         email_notifier.send_exit_alert(symbol, side, exit_price, net_pnl, reason)
