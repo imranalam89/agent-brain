@@ -17,16 +17,19 @@ sys.path.insert(0, str(BASE_DIR))
 from execution.multi_pair_trader import MultiPairLiveTrader
 
 def main():
-    print("""
-================================================================================
-     🧠 AGENT BRAIN | AUTONOMOUS DELTA LIVE TRADER (MODEL C MACRO RUNNER) 🧠     
-   Strategy: 🏛️ Verified Level 2 DOM Institutional Order Flow Strategy
-   Microstructure: Real-Time L2 Book Imbalance & Resting Wall Exploitation
-   Instruments: BTCUSD (Breakout 3.0x), ETHUSD (Session 2.0x), XAUTUSD (Absorption 2.0x), SLVONUSD (Breakout 2.5x)
-   Trade Management: Model C Breathing Trail (1.35x @ +1.5R) • Breakeven @ +0.8R
-   Risk Base: Strictly $5.00 Fixed Risk Per Trade ($50 Capital Base)
-================================================================================
-    """)
+    trader = MultiPairLiveTrader(fixed_risk_usd=5.0)
+
+    print("=" * 80)
+    print("🧠 AGENT BRAIN | AUTONOMOUS LIVE TRADER")
+    print("STRATEGY: Profile 1 — Verified Level 2 DOM Institutional Order Flow Strategy")
+    print("=" * 80)
+    for sym, p in trader.params.items():
+        print(f"  • {sym:<8} | Strategy: {p['strategy_label']} | Mode: {p['mode']} | Imb: >={p['min_imbalance']}x | TP: {p['tp_pct']*100:.1f}% | SL: {p['sl_pct']*100:.2f}% | Trail: {p['trail_mode']} | BE Lock: +{p['be_lock_r']:.2f}R")
+    print("=" * 80)
+    print(f"Risk Rules: Strictly $5.00 fixed risk per trade | Base Capital: $50.00")
+    print(f"Weekend Filter: Active (Sat/Sun new entries blocked)")
+    print(f"L2 Reversal Guard: Active (Early +0.6R lock / 50% loss cut on adverse wall flip)")
+    print("=" * 80 + "\n")
 
     # Ensure sibling services (Dashboard & DOM Recorder) are synchronized
     import subprocess
@@ -35,9 +38,7 @@ def main():
     except Exception:
         pass
 
-    trader = MultiPairLiveTrader(fixed_risk_usd=5.0)
-
-    print("\n[STARTING CONTINUOUS EXECUTION LOOP]")
+    print("[STARTING CONTINUOUS EXECUTION LOOP]")
     print("Press Ctrl+C to halt gracefully.\n")
 
     cycle_count = 0
