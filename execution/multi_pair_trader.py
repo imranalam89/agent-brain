@@ -497,6 +497,61 @@ class MultiPairLiveTrader:
                 else:
                     notifier.send_trailing_alert(symbol, side, current_price, new_sl, r_mult)
 
+        # 2. Level 2 DOM High-Conviction Reversal Guard
+        # If running trade experiences severe opposing orderbook pressure (>=3.0x hostile imbalance + 2+ hostile walls):
+        try:
+            dom_data = self.client.get_l2_orderbook(symbol, depth=30)
+            if dom_data and isinstance(dom_data, dict):
+                bids = dom_data.get("bids", [])
+                asks = dom_data.get("asks", [])
+                if bids and asks:
+                    dom_m = self.orderflow_engine.analyze_dom(bids, asks)
+                    total_b = dom_m.get("total_bid_size", 0.0)
+                    total_a = dom_m.get("total_ask_size", 0.0)
+                    b_ratio = (total_b / total_a) if total_a > 0 else 1.0
+                    s_ratio = (total_a / total_b) if total_b > 0 else 1.0
+                    b_walls = dom_m.get("bid_walls", [])
+                    a_walls = dom_m.get("ask_walls", [])
+
+                    # Detect extreme hostile orderbook reversal
+                    hostile_reversal = False
+                    opposing_ratio = 1.0
+                    if side == "BUY":
+                        # We are LONG: Hostile sellers dump with heavy asks & ask walls
+                        hostile_reversal = (s_ratio >= 2.8 and len(a_walls) >= 2)
+                        opposing_ratio = s_ratio
+                    elif side == "SELL":
+                        # We are SHORT: Hostile buyers pump with heavy bids & bid walls
+                        hostile_reversal = (b_ratio >= 2.8 and len(b_walls) >= 2)
+                        opposing_ratio = b_ratio
+
+                    if hostile_reversal:
+                        # Case A: In profit (+0.6R or higher) -> Lock profit immediately rather than giving it back
+                        if r_mult >= 0.6:
+                            print(f"🚨 [L2 EARLY REVERSAL PROFIT LOCK] {symbol} {side} closed early @ ${current_price:,.2f} (+{r_mult:.2f}R). Hostile DOM reversal flow ({opposing_ratio:.2f}x).")
+                            self.db.log_thought(
+                                symbol=symbol,
+                                event_type="EARLY_REVERSAL_PROFIT_LOCK",
+                                stars=5.0,
+                                message=f"🚨 High-Conviction L2 DOM Reversal: Opposing orderbook flow reached {opposing_ratio:.2f}x with stacked hostile walls. Closed early to bank +{r_mult:.2f}R profit before pullback."
+                            )
+                            self._close_position(symbol, current_price, reason="EARLY_REVERSAL_EXIT")
+                            return
+
+                        # Case B: In loss (-0.3R to -0.8R) -> Cut early to save full -1.0R SL loss!
+                        elif r_mult <= -0.3:
+                            print(f"🛡️ [L2 EARLY REVERSAL LOSS CUT] {symbol} {side} cut early @ ${current_price:,.2f} ({r_mult:.2f}R). Saved ~50% SL capital from full stop-out.")
+                            self.db.log_thought(
+                                symbol=symbol,
+                                event_type="EARLY_REVERSAL_CUT",
+                                stars=4.5,
+                                message=f"🛡️ Early Reversal Risk Cut: Hostile DOM reversal confirmed thesis invalidated. Cut position early at {r_mult:.2f}R to prevent full -1.0R loss."
+                            )
+                            self._close_position(symbol, current_price, reason="EARLY_REVERSAL_CUT")
+                            return
+        except Exception:
+            pass
+
         # 3. Take Profit Exit Check
         tp_hit = (current_price >= pos["take_profit"]) if side == "BUY" else (current_price <= pos["take_profit"])
         if tp_hit:
