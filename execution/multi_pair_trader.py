@@ -74,47 +74,63 @@ class MultiPairLiveTrader:
         # Order Flow Microstructure Engine
         self.orderflow_engine = OrderFlowEngine(min_imbalance_ratio=1.8)
 
-        # Asset-specific DOM parameters calibrated from 80+ Hours continuous recording
+        # Asset-specific DOM parameters calibrated from 589K Level 2 DOM snapshots
         self.params = {
             "BTCUSD": {
                 "mode": "BREAKOUT",
                 "min_imbalance": 3.0,
-                "tp_pct": 0.022,     # 2.2% Take Profit
-                "sl_pct": 0.003,     # 0.3% Stop Loss (1:7.33 R:R)
-                "cooldown_sec": 900, # 15 minutes cooldown
+                "tp_pct": 0.022,      # 2.2% Take Profit
+                "sl_pct": 0.003,      # 0.3% Stop Loss (1:7.33 R:R)
+                "cooldown_sec": 900,  # 15 minutes cooldown (360 snapshots)
+                "trail_mode": "BREATHING",
+                "trail_mult": 1.50,
+                "be_trigger_r": 0.8,
+                "be_lock_r": 0.30,
                 "c_val": 0.001,
                 "decimals": 1,
-                "strategy_label": "DOM Breakout & Ask/Bid Sweep (Model C Macro Runner)"
+                "strategy_label": "DOM Breakout (Selective 3.0x • Breathing 1.5x)"
             },
             "ETHUSD": {
                 "mode": "SESSION_FLOW",
                 "min_imbalance": 2.0,
-                "tp_pct": 0.020,     # 2.0% Take Profit
-                "sl_pct": 0.003,     # 0.3% Stop Loss (1:6.67 R:R)
-                "cooldown_sec": 600, # 10 minutes cooldown
+                "tp_pct": 0.020,      # 2.0% Take Profit
+                "sl_pct": 0.003,      # 0.3% Stop Loss (1:6.67 R:R)
+                "cooldown_sec": 1200, # 20 minutes cooldown (480 snapshots)
+                "trail_mode": "BREATHING",
+                "trail_mult": 1.50,
+                "be_trigger_r": 1.0,
+                "be_lock_r": 0.30,
                 "c_val": 0.01,
                 "decimals": 2,
-                "strategy_label": "DOM London/NY Session Flow Wall Defense (Model C Macro Runner)"
+                "strategy_label": "DOM London/NY Session Flow Wall Defense (Breathing 1.5x)"
             },
             "XAUTUSD": {
                 "mode": "ABSORPTION_FADE",
-                "min_imbalance": 2.0,
-                "tp_pct": 0.008,     # 0.8% Take Profit
-                "sl_pct": 0.002,     # 0.2% Stop Loss (1:4.0 R:R)
-                "cooldown_sec": 600, # 10 minutes cooldown
+                "min_imbalance": 3.0, # 3.0x Imbalance
+                "tp_pct": 0.018,      # 1.8% Take Profit
+                "sl_pct": 0.0025,     # 0.25% Stop Loss (1:7.2 R:R)
+                "cooldown_sec": 600,  # 10 minutes cooldown (250 snapshots)
+                "trail_mode": "RATCHET",
+                "trail_mult": 1.0,
+                "be_trigger_r": 1.0,
+                "be_lock_r": 0.30,
                 "c_val": 0.001,
                 "decimals": 2,
-                "strategy_label": "DOM Institutional Absorption Trap & Reversal (Model C Macro Runner)"
+                "strategy_label": "DOM Institutional Absorption Fade (Ratchet Stepped Trail)"
             },
             "SLVONUSD": {
                 "mode": "BREAKOUT",
-                "min_imbalance": 2.5,
-                "tp_pct": 0.020,     # 2.0% Take Profit
-                "sl_pct": 0.003,     # 0.3% Stop Loss (1:6.67 R:R)
-                "cooldown_sec": 600, # 10 minutes cooldown
+                "min_imbalance": 2.0, # 2.0x Imbalance
+                "tp_pct": 0.020,      # 2.0% Take Profit
+                "sl_pct": 0.003,      # 0.3% Stop Loss (1:6.67 R:R)
+                "cooldown_sec": 0,    # 0s cooldown (No Cooldown)
+                "trail_mode": "BREATHING",
+                "trail_mult": 1.35,
+                "be_trigger_r": 1.0,
+                "be_lock_r": 0.30,
                 "c_val": 0.1,
                 "decimals": 3,
-                "strategy_label": "DOM Breakout & Liquidity Wall Sweep (Model C Macro Runner)"
+                "strategy_label": "DOM Breakout Runner (0m Cooldown • Breathing 1.35x)"
             }
         }
 
@@ -428,23 +444,38 @@ class MultiPairLiveTrader:
 
         r_mult = profit_pct / max(1e-6, sl_pct)
 
-        # 1. Progressive Profit-Locking Trailing Ladder
+        # 1. Progressive Profit-Locking Trailing Ladder & +0.30R Fee-Covered Breakeven
         one_r_dist = entry * sl_pct
+        trail_mode = self.params[symbol].get("trail_mode", "BREATHING")
+        trail_mult = self.params[symbol].get("trail_mult", 1.5)
+        be_trigger = self.params[symbol].get("be_trigger_r", 1.0)
+        be_lock = self.params[symbol].get("be_lock_r", 0.30)
         target_sl = None
 
-        if r_mult >= 4.0:
-            # Macro Runner: Trail 1.0R behind peak mark price
-            target_sl = (current_price - one_r_dist) if side == "BUY" else (current_price + one_r_dist)
-        elif r_mult >= 3.0:
-            target_sl = (entry + 2.0 * one_r_dist) if side == "BUY" else (entry - 2.0 * one_r_dist)
-        elif r_mult >= 2.5:
-            target_sl = (entry + 1.5 * one_r_dist) if side == "BUY" else (entry - 1.5 * one_r_dist)
-        elif r_mult >= 2.0:
-            target_sl = (entry + 1.0 * one_r_dist) if side == "BUY" else (entry - 1.0 * one_r_dist)
-        elif r_mult >= 1.5:
-            target_sl = (entry + 0.6 * one_r_dist) if side == "BUY" else (entry - 0.6 * one_r_dist)
-        elif r_mult >= 1.0:
-            target_sl = (entry + 0.2 * one_r_dist) if side == "BUY" else (entry - 0.2 * one_r_dist)
+        if trail_mode == "BREATHING":
+            if r_mult >= 4.0:
+                target_sl = (current_price - one_r_dist * trail_mult) if side == "BUY" else (current_price + one_r_dist * trail_mult)
+            elif r_mult >= 3.0:
+                target_sl = (entry + 2.0 * one_r_dist) if side == "BUY" else (entry - 2.0 * one_r_dist)
+            elif r_mult >= 2.5:
+                target_sl = (entry + 1.5 * one_r_dist) if side == "BUY" else (entry - 1.5 * one_r_dist)
+            elif r_mult >= 2.0:
+                target_sl = (entry + 1.0 * one_r_dist) if side == "BUY" else (entry - 1.0 * one_r_dist)
+            elif r_mult >= 1.5:
+                target_sl = (entry + 0.6 * one_r_dist) if side == "BUY" else (entry - 0.6 * one_r_dist)
+            elif r_mult >= be_trigger:
+                target_sl = (entry + be_lock * one_r_dist) if side == "BUY" else (entry - be_lock * one_r_dist)
+        elif trail_mode == "RATCHET":
+            if r_mult >= 4.0:
+                target_sl = (entry + 3.0 * one_r_dist) if side == "BUY" else (entry - 3.0 * one_r_dist)
+            elif r_mult >= 3.0:
+                target_sl = (entry + 2.0 * one_r_dist) if side == "BUY" else (entry - 2.0 * one_r_dist)
+            elif r_mult >= 2.0:
+                target_sl = (entry + 1.0 * one_r_dist) if side == "BUY" else (entry - 1.0 * one_r_dist)
+            elif r_mult >= 1.2:
+                target_sl = (entry + be_lock * one_r_dist) if side == "BUY" else (entry - be_lock * one_r_dist)
+            elif r_mult >= be_trigger:
+                target_sl = (entry + be_lock * one_r_dist) if side == "BUY" else (entry - be_lock * one_r_dist)
 
         if target_sl is not None:
             new_sl = round(target_sl, decimals)
@@ -509,23 +540,7 @@ class MultiPairLiveTrader:
                 )
             return None
 
-        # 3. Time-Confluence (Institutional Hours) Filter:
-        # A. London Lunch Consolidation Chop (13:00 - 14:00 IST)
-        # B. Late Night NY After-Hours Whipsaw (22:00 - 23:15 IST)
-        in_lunch_chop = (now_ist.hour == 13)
-        in_late_ny_whipsaw = (now_ist.hour == 22) or (now_ist.hour == 23 and now_ist.minute < 15)
-
-        if in_lunch_chop or in_late_ny_whipsaw:
-            if now_ts - self.last_thought_log.get(f"{symbol}_session_filter", 0) > 900:
-                self.last_thought_log[f"{symbol}_session_filter"] = now_ts
-                reason = "London Lunch Chop (13:00-14:00 IST)" if in_lunch_chop else "Late Night NY Whipsaw (22:00-23:15 IST)"
-                self.db.log_thought(
-                    symbol=symbol,
-                    event_type="SESSION_FILTER",
-                    stars=3.0,
-                    message=f"⏸️ Time-Confluence Filter: Paused during {reason}. Preserving capital for high-momentum institutional hours."
-                )
-            return None
+        # 3. Fetch Level 2 Order Book Depth from Delta Exchange
 
         # 4. Fetch Level 2 Order Book Depth from Delta Exchange
         dom_data = self.client.get_l2_orderbook(symbol, depth=50)

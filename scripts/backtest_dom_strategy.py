@@ -157,7 +157,7 @@ class DOMStrategyBacktester:
                             elif r_mult >= 1.5:
                                 target_sl = entry + (0.6 * one_r_dist)
                             elif enable_breakeven and r_mult >= breakeven_trigger_r:
-                                target_sl = entry + (0.2 * one_r_dist)
+                                target_sl = entry + (0.3 * one_r_dist)
                         elif trail_mode == "RATCHET":
                             # Model B: Hard stepped ratchet
                             if r_mult >= 4.0:
@@ -167,16 +167,16 @@ class DOMStrategyBacktester:
                             elif r_mult >= 2.0:
                                 target_sl = entry + (1.0 * one_r_dist)
                             elif r_mult >= 1.2:
-                                target_sl = entry + (0.2 * one_r_dist)
+                                target_sl = entry + (0.3 * one_r_dist)
                             elif enable_breakeven and r_mult >= breakeven_trigger_r:
-                                target_sl = entry + (0.2 * one_r_dist)
+                                target_sl = entry + (0.3 * one_r_dist)
                         else: # STANDARD
                             if r_mult >= 1.5:
                                 target_sl = mid - one_r_dist
                             elif enable_breakeven and r_mult >= breakeven_trigger_r:
-                                target_sl = entry + (0.2 * one_r_dist)
+                                target_sl = entry + (0.3 * one_r_dist)
                     elif enable_breakeven and r_mult >= breakeven_trigger_r:
-                        target_sl = entry + (0.2 * one_r_dist)
+                        target_sl = entry + (0.3 * one_r_dist)
 
                     if target_sl is not None and target_sl > current_pos["stop_loss"]:
                         current_pos["stop_loss"] = target_sl
@@ -252,7 +252,7 @@ class DOMStrategyBacktester:
                             elif r_mult >= 1.5:
                                 target_sl = entry - (0.6 * one_r_dist)
                             elif enable_breakeven and r_mult >= breakeven_trigger_r:
-                                target_sl = entry - (0.2 * one_r_dist)
+                                target_sl = entry - (0.3 * one_r_dist)
                         elif trail_mode == "RATCHET":
                             # Model B: Hard stepped ratchet
                             if r_mult >= 4.0:
@@ -262,16 +262,16 @@ class DOMStrategyBacktester:
                             elif r_mult >= 2.0:
                                 target_sl = entry - (1.0 * one_r_dist)
                             elif r_mult >= 1.2:
-                                target_sl = entry - (0.2 * one_r_dist)
+                                target_sl = entry - (0.3 * one_r_dist)
                             elif enable_breakeven and r_mult >= breakeven_trigger_r:
-                                target_sl = entry - (0.2 * one_r_dist)
+                                target_sl = entry - (0.3 * one_r_dist)
                         else: # STANDARD
                             if r_mult >= 1.5:
                                 target_sl = mid + one_r_dist
                             elif enable_breakeven and r_mult >= breakeven_trigger_r:
-                                target_sl = entry - (0.2 * one_r_dist)
+                                target_sl = entry - (0.3 * one_r_dist)
                     elif enable_breakeven and r_mult >= breakeven_trigger_r:
-                        target_sl = entry - (0.2 * one_r_dist)
+                        target_sl = entry - (0.3 * one_r_dist)
 
                     if target_sl is not None and target_sl < current_pos["stop_loss"]:
                         current_pos["stop_loss"] = target_sl
