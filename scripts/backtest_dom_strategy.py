@@ -37,6 +37,7 @@ sys.path.insert(0, str(BASE_DIR))
 from config.settings import (
     DOM_DATABASE_PATH,
     ACTIVE_SYMBOLS,
+    DOM_RECORDER_SYMBOLS,
     CONTRACT_VALUES,
     calculate_brokerage_fee,
     ACCOUNT_CAPITAL_USD,
@@ -483,7 +484,7 @@ class DOMStrategyBacktester:
         mode: str = "BOUNCE"
     ) -> Dict[str, Any]:
         """Runs DOM backtest across all monitored symbols and generates joint portfolio metrics."""
-        targets = symbols or ACTIVE_SYMBOLS
+        targets = symbols or DOM_RECORDER_SYMBOLS
         results = {}
         all_trades = []
 
@@ -736,7 +737,7 @@ def main():
         print(f"  {sym:<8} : {st.get('count', 0):,} snapshots ({st.get('start_ist', 'N/A')} to {st.get('end_ist', 'N/A')}) | Last Mid: ${st.get('latest_price', 0):,.2f}")
     print("=" * 70)
 
-    symbols = [args.symbol.upper()] if args.symbol else ACTIVE_SYMBOLS
+    symbols = [args.symbol.upper()] if args.symbol else DOM_RECORDER_SYMBOLS
     res = tester.run_all_symbols(symbols=symbols, min_imbalance=args.imbalance, tp_pct=args.tp, sl_pct=args.sl)
 
     report_path = tester.generate_html_report(res)

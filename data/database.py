@@ -240,6 +240,47 @@ class DatabaseManager:
             ))
             conn.commit()
 
+    def save_dom_snapshots_batch(self, snapshots: List[Dict[str, Any]]):
+        """
+        Saves multiple L2 DOM snapshots in a single atomic transaction.
+        Essential for high-frequency (1s) multi-pair recording to minimize disk I/O.
+        """
+        if not snapshots:
+            return
+        records = []
+        for s in snapshots:
+            analysis = s.get("analysis") or {}
+            records.append((
+                s["symbol"],
+                s["timestamp"],
+                s["datetime_ist"],
+                analysis.get("best_bid", 0.0),
+                analysis.get("best_ask", 0.0),
+                analysis.get("mid_price", 0.0),
+                analysis.get("spread", 0.0),
+                analysis.get("total_bid_size", 0.0),
+                analysis.get("total_ask_size", 0.0),
+                analysis.get("bid_imbalance_ratio", 1.0),
+                analysis.get("dominant_side", "NEUTRAL"),
+                json.dumps(analysis.get("bid_walls", [])),
+                json.dumps(analysis.get("ask_walls", [])),
+                json.dumps(s.get("bids", [])),
+                json.dumps(s.get("asks", []))
+            ))
+
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.executemany("""
+                INSERT INTO dom_snapshots (
+                    symbol, timestamp, datetime_ist,
+                    best_bid, best_ask, mid_price, spread,
+                    total_bid_size, total_ask_size, imbalance_ratio,
+                    dominant_side, bid_walls_json, ask_walls_json,
+                    bids_json, asks_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, records)
+            conn.commit()
+
     def get_closest_dom_snapshot(self, symbol: str, timestamp: int, tolerance_seconds: int = 300) -> Optional[Dict[str, Any]]:
         """
         Retrieves the DOM snapshot closest to the given timestamp (for backtesting replay).

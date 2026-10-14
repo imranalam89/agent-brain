@@ -84,14 +84,14 @@ EOF
 echo "⚙️ Step 5: Installing 24/7 systemd service for Level 2 DOM Recorder..."
 cat << EOF > /etc/systemd/system/trading-dom-recorder.service
 [Unit]
-Description=Agent Brain - 24/7 Level 2 DOM Orderbook & Heatmap Recorder
+Description=Agent Brain - 24/7 Level 2 DOM Orderbook & Heatmap Recorder (1s Multi-Pair)
 After=network.target
 
 [Service]
 Type=simple
 User=root
 WorkingDirectory=$APP_DIR
-ExecStart=$APP_DIR/.venv/bin/python $APP_DIR/scripts/record_l2_dom.py
+ExecStart=$APP_DIR/.venv/bin/python $APP_DIR/scripts/record_l2_dom.py --interval 1.0
 Restart=always
 RestartSec=5
 StandardOutput=journal

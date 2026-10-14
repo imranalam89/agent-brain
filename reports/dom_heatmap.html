@@ -68,14 +68,16 @@
           <button onclick="switchSymbol('ETHUSD')" class="px-3 py-1 rounded text-xs font-mono font-bold transition text-slate-400 hover:text-white" data-sym="ETHUSD">ETHUSD</button>
           <button onclick="switchSymbol('XAUTUSD')" class="px-3 py-1 rounded text-xs font-mono font-bold transition text-slate-400 hover:text-white" data-sym="XAUTUSD">XAUTUSD</button>
           <button onclick="switchSymbol('SLVONUSD')" class="px-3 py-1 rounded text-xs font-mono font-bold transition text-slate-400 hover:text-white" data-sym="SLVONUSD">SLVONUSD</button>
+          <button onclick="switchSymbol('PAXGUSD')" class="px-3 py-1 rounded text-xs font-mono font-bold transition text-slate-400 hover:text-white" data-sym="PAXGUSD">PAXGUSD</button>
+          <button onclick="switchSymbol('UNIUSD')" class="px-3 py-1 rounded text-xs font-mono font-bold transition text-slate-400 hover:text-white" data-sym="UNIUSD">UNIUSD</button>
         </div>
 
         <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 ml-2">History:</label>
         <select id="historyLimit" onchange="fetchHeatmap()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-mono text-slate-200">
-          <option value="50">50 Snapshots (~2.5m)</option>
-          <option value="100" selected>100 Snapshots (~5m)</option>
-          <option value="200">200 Snapshots (~10m)</option>
-          <option value="400">400 Snapshots (~20m)</option>
+          <option value="60">60 Snapshots (~1m)</option>
+          <option value="120" selected>120 Snapshots (~2m)</option>
+          <option value="300">300 Snapshots (~5m)</option>
+          <option value="600">600 Snapshots (~10m)</option>
         </select>
 
         <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 ml-2">Contrast:</label>
@@ -89,7 +91,7 @@
         <div class="flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           <span class="text-slate-400">Auto-Refresh:</span>
-          <button id="toggleAutoBtn" onclick="toggleAutoRefresh()" class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">ON (3s)</button>
+          <button id="toggleAutoBtn" onclick="toggleAutoRefresh()" class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">ON (1s)</button>
         </div>
         <button onclick="fetchHeatmap()" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold border border-slate-700 flex items-center gap-1.5">
           <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
@@ -249,7 +251,7 @@
       isAutoRefreshing = !isAutoRefreshing;
       const btn = document.getElementById("toggleAutoBtn");
       if (isAutoRefreshing) {
-        btn.textContent = "ON (3s)";
+        btn.textContent = "ON (1s)";
         btn.className = "px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold";
         startAutoRefresh();
       } else {
@@ -261,7 +263,7 @@
 
     function startAutoRefresh() {
       clearInterval(autoRefreshTimer);
-      autoRefreshTimer = setInterval(fetchHeatmap, 3000);
+      autoRefreshTimer = setInterval(fetchHeatmap, 1000);
     }
 
     async function fetchHeatmap() {

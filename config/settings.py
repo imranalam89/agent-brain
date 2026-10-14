@@ -41,9 +41,19 @@ ACTIVE_SYMBOLS = [
     "ETHUSD"      # Ethereum Perpetual (100x Isolated, 1 Lot = 0.01 ETH, Fee = 0.01%)
 ]
 
+# Dedicated Level 2 DOM orderbook recording symbols (Ultra-high fidelity 1s orderbook)
+DOM_RECORDER_SYMBOLS = [
+    "BTCUSD",     # Bitcoin Perpetual (100x Isolated, 1 Lot = 0.001 BTC)
+    "ETHUSD",     # Ethereum Perpetual (100x Isolated, 1 Lot = 0.01 ETH)
+    "XAUTUSD",    # Tether Gold Token Perpetual (100x Isolated, 1 Lot = 0.001 XAUT)
+    "SLVONUSD",   # iShares Silver Trust ONDO Perpetual (50x Isolated, 1 Lot = 0.1 SLVON)
+    "PAXGUSD",    # PAX Gold Token Perpetual (100x Isolated, 1 Lot = 0.001 PAXG)
+    "UNIUSD"      # Uniswap Perpetual (50x Isolated, 1 Lot = 1.0 UNI)
+]
+
 # Delta Exchange Fee & Contract Specifications:
-# - XAUTUSD (Gold) & SLVONUSD (Silver): 0.01% Maker (0.0001) & 0.02% Taker (0.0002)
-# - BTCUSD & ETHUSD: 0.02% Maker (0.0002) & 0.05% Taker (0.0005)
+# - XAUTUSD, PAXGUSD (Gold) & SLVONUSD (Silver): 0.01% Maker (0.0001) & 0.02% Taker (0.0002)
+# - BTCUSD & ETHUSD & UNIUSD: 0.02% Maker (0.0002) & 0.05% Taker (0.0005)
 # - Delta India: 18% GST on brokerage fees
 DELTA_GST_RATE = 0.18
 DELTA_BROKERAGE_FEE_PCT = 0.0002  # Default maker reference (0.02%)
@@ -52,15 +62,17 @@ DELTA_FEES = {
     "SLVONUSD": {"mode": "pct", "maker": 0.0001, "taker": 0.0002},
     "BTCUSD": {"mode": "pct", "maker": 0.0002, "taker": 0.0005},
     "ETHUSD": {"mode": "pct", "maker": 0.0002, "taker": 0.0005},
+    "PAXGUSD": {"mode": "pct", "maker": 0.0001, "taker": 0.0001},
+    "UNIUSD": {"mode": "pct", "maker": 0.0002, "taker": 0.0005},
 }
 
 def calculate_brokerage_fee(symbol: str, notional: float, is_sl: bool = False, include_gst: bool = True) -> float:
     """Calculates contract-specific brokerage fee + 18% GST on Delta Exchange India."""
     s = symbol.upper()
-    if "XAUT" in s or "SLV" in s:
+    if "XAUT" in s or "SLV" in s or "PAXG" in s:
         entry_rate = 0.0001
         exit_rate = 0.0002 if is_sl else 0.0001
-    else:  # BTC or ETH
+    else:  # BTC, ETH, UNI, etc.
         entry_rate = 0.0002
         exit_rate = 0.0005 if is_sl else 0.0002
 
@@ -72,13 +84,17 @@ LEVERAGE_MAP = {
     "XAUTUSD": 100,  # 100x Isolated Leverage on Gold Futures
     "SLVONUSD": 50,   # 50x Isolated Leverage on Silver Futures
     "BTCUSD": 100,   # 100x Isolated Leverage on Bitcoin Futures
-    "ETHUSD": 100    # 100x Isolated Leverage on Ethereum Futures
+    "ETHUSD": 100,   # 100x Isolated Leverage on Ethereum Futures
+    "PAXGUSD": 100,  # 100x Isolated Leverage on PAX Gold Futures
+    "UNIUSD": 50     # 50x Isolated Leverage on Uniswap Futures
 }
 CONTRACT_VALUES = {
     "XAUTUSD": 0.001, # 1 Lot = 0.001 XAUT ($4.29 per lot at $4,290)
     "SLVONUSD": 0.1,   # 1 Lot = 0.1 SLVON (~$5.81 per lot at $58.10, 50x Isolated)
     "BTCUSD": 0.001,  # 1 Lot = 0.001 BTC (~$65.00 per lot at $65,000, 100x Isolated)
-    "ETHUSD": 0.01    # 1 Lot = 0.01 ETH (~$25.00 per lot at $2,500, 100x Isolated)
+    "ETHUSD": 0.01,   # 1 Lot = 0.01 ETH (~$25.00 per lot at $2,500, 100x Isolated)
+    "PAXGUSD": 0.001, # 1 Lot = 0.001 PAXG (~$2.70 per lot at $2,700, 100x Isolated)
+    "UNIUSD": 1.0     # 1 Lot = 1.0 UNI (~$7.00 per lot at $7.00, 50x Isolated)
 }
 
 # Primary timeframe hierarchy

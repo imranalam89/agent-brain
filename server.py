@@ -24,7 +24,7 @@ from backtest.multi_strategy_backtester import MultiStrategyBacktester
 from reports.html_reporter import HTMLReporter
 from exchange.delta_client import DeltaExchangeClient
 from strategies.orderflow_engine import OrderFlowEngine
-from config.settings import ACTIVE_SYMBOLS, ACCOUNT_CAPITAL_USD, calculate_brokerage_fee, DOM_DATABASE_PATH
+from config.settings import ACTIVE_SYMBOLS, DOM_RECORDER_SYMBOLS, ACCOUNT_CAPITAL_USD, calculate_brokerage_fee, DOM_DATABASE_PATH
 
 PORT = 5050
 
@@ -370,7 +370,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             db_file = DOM_DATABASE_PATH if DOM_DATABASE_PATH.exists() else None
             tester = DOMStrategyBacktester(db_path=db_file)
 
-            symbols = [symbol.upper()] if symbol and symbol.upper() in ACTIVE_SYMBOLS else ACTIVE_SYMBOLS
+            valid_symbols = list(dict.fromkeys(ACTIVE_SYMBOLS + DOM_RECORDER_SYMBOLS))
+            symbols = [symbol.upper()] if symbol and symbol.upper() in valid_symbols else valid_symbols
             res = tester.run_all_symbols(
                 symbols=symbols,
                 min_imbalance=imbalance,
