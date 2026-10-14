@@ -46,22 +46,25 @@ def main():
         while True:
             cycle_count += 1
             now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            print(f"\n--- [Cycle #{cycle_count} | {now_str}] Scanning 4 Instruments & Managing Positions ---", flush=True)
-            
-            status = trader.scan_and_manage_all_pairs()
-            active_count = status.get("active_positions_count", 0)
-            bot_status = status.get("bot_status", "ACTIVE")
-            target_risk = status.get("target_risk_usd", 5.0)
+            try:
+                print(f"\n--- [Cycle #{cycle_count} | {now_str}] Scanning 4 Instruments & Managing Positions ---", flush=True)
+                status = trader.scan_and_manage_all_pairs()
+                active_count = status.get("active_positions_count", 0)
+                bot_status = status.get("bot_status", "ACTIVE")
+                target_risk = status.get("target_risk_usd", 5.0)
 
-            if bot_status == "PAUSED":
-                pause_reason = status.get("pause_reason", "News / Manual Pause")
-                pause_until = status.get("pause_until")
-                time_str = f" until {pause_until}" if pause_until else ""
-                print(f"⏸️ [PAUSE / SLEEP MODE ACTIVE] New entries paused ({pause_reason}{time_str}). Risk: ${target_risk:.2f}/trade.", flush=True)
-            elif active_count > 0:
-                print(f"⚡ Currently Managing {active_count} Active Position(s): {list(trader.active_positions.keys())} | Risk: ${target_risk:.2f}", flush=True)
-            else:
-                print(f"💤 No active positions. Scanning for A+ setups... [Status: ACTIVE | Risk: ${target_risk:.2f}/trade]", flush=True)
+                if bot_status == "PAUSED":
+                    pause_reason = status.get("pause_reason", "News / Manual Pause")
+                    pause_until = status.get("pause_until")
+                    time_str = f" until {pause_until}" if pause_until else ""
+                    print(f"⏸️ [PAUSE / SLEEP MODE ACTIVE] New entries paused ({pause_reason}{time_str}). Risk: ${target_risk:.2f}/trade.", flush=True)
+                elif active_count > 0:
+                    print(f"⚡ Currently Managing {active_count} Active Position(s): {list(trader.active_positions.keys())} | Risk: ${target_risk:.2f}", flush=True)
+                else:
+                    print(f"💤 No active positions. Scanning for A+ setups... [Status: ACTIVE | Risk: ${target_risk:.2f}/trade]", flush=True)
+            except Exception as e:
+                import traceback
+                print(f"❌ [UNHANDLED LOOP ERROR] {e}\n{traceback.format_exc()}", flush=True)
 
             # High-Frequency Scan: 3 seconds tick for instant execution & management
             time.sleep(3)

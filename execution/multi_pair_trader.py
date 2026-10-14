@@ -70,6 +70,9 @@ class MultiPairLiveTrader:
         
         # Concurrent active positions dictionary: {symbol: trade_dict}
         self.active_positions: Dict[str, Dict[str, Any]] = {}
+        self.verified_sl_orders: set = set()
+        self.candle_cache: Dict[str, List[Dict[str, Any]]] = {}
+        self.last_candle_fetch: Dict[str, float] = {}
 
         # Order Flow Microstructure Engine
         self.orderflow_engine = OrderFlowEngine(min_imbalance_ratio=1.8)
@@ -105,18 +108,18 @@ class MultiPairLiveTrader:
                 "strategy_label": "DOM London/NY Session Flow Wall Defense (Breathing 1.5x)"
             },
             "XAUTUSD": {
-                "mode": "ABSORPTION_FADE",
-                "min_imbalance": 3.0, # 3.0x Imbalance
-                "tp_pct": 0.018,      # 1.8% Take Profit
-                "sl_pct": 0.0025,     # 0.25% Stop Loss (1:7.2 R:R)
-                "cooldown_sec": 600,  # 10 minutes cooldown (250 snapshots)
-                "trail_mode": "RATCHET",
+                "mode": "PRICEACTION_DOM",
+                "min_imbalance": 1.5,
+                "tp_pct": 0.020,      # 2.0% Take Profit (1:5.0 R:R)
+                "sl_pct": 0.0040,     # 0.40% Stop Loss ($16.60 Gold buffer)
+                "cooldown_sec": 900,  # 15 minutes cooldown
+                "trail_mode": "BREATHING",
                 "trail_mult": 1.0,
-                "be_trigger_r": 1.0,
-                "be_lock_r": 0.30,
+                "be_trigger_r": 0.70, # Lock profit when reaching +0.70R
+                "be_lock_r": 0.50,    # Lock +0.50R ($2.50 profit)
                 "c_val": 0.001,
                 "decimals": 2,
-                "strategy_label": "DOM Institutional Absorption Fade (Ratchet Stepped Trail)"
+                "strategy_label": "Price Action Primary + L2 DOM Verification (15m Breakout/Retest & Trend Pullback)"
             },
             "SLVONUSD": {
                 "mode": "BREAKOUT",
@@ -485,17 +488,62 @@ class MultiPairLiveTrader:
                 pos["stop_loss"] = new_sl
                 pos["be_locked"] = True
                 locked_r = round(abs(new_sl - entry) / one_r_dist, 2)
+
+                # 1. Update SQLite trade record
+                try:
+                    with self.db.get_connection() as conn:
+                        conn.execute("UPDATE trades SET stop_loss = ? WHERE id = ?", (new_sl, pos["id"]))
+                        conn.commit()
+                except Exception as e:
+                    print(f"[DB SL UPDATE NOTICE] {e}")
+
+                # 2. Place / ratchet reduce-only stop order directly on Delta Exchange book
+                if self.is_live_authenticated:
+                    try:
+                        close_side = "sell" if side == "BUY" else "buy"
+                        rem_lots = pos.get("remaining_lots") or pos.get("lots") or 1
+                        self.client.cancel_all_orders(symbol)
+                        sl_res = self.client.place_stop_order(
+                            symbol=symbol,
+                            side=close_side,
+                            size=rem_lots,
+                            stop_price=new_sl,
+                            is_take_profit=False
+                        )
+                        self.verified_sl_orders.add(symbol)
+                        print(f"🛡️ [DELTA EXCHANGE TRAILING SL ORDER] {symbol} {close_side.upper()} {rem_lots} Lots Stop @ ${new_sl} -> Success: {sl_res.get('success')}")
+                    except Exception as e:
+                        print(f"[DELTA SL ORDER NOTICE] {e}")
+
                 print(f"⚡ [PROFIT TRAIL RATCHET] {symbol} {side} SL ratcheted from ${old_sl} to ${new_sl} (+{locked_r}R profit locked @ +{r_mult:.1f}R expansion).")
                 self.db.log_thought(
                     symbol=symbol,
                     event_type="TRAILING_SL_RATCHET",
                     stars=5.0,
-                    message=f"⚡ Trailing SL ratcheted on {symbol} {side} to ${new_sl} (+{locked_r}R profit locked @ +{r_mult:.1f}R). Profit secured."
+                    message=f"⚡ Trailing SL ratcheted on {symbol} {side} to ${new_sl} (+{locked_r}R profit locked @ +{r_mult:.1f}R). Exchange SL order placed on Delta."
                 )
                 if locked_r <= 0.25:
                     notifier.send_breakeven_alert(symbol, side, current_price, new_sl, r_mult)
                 else:
                     notifier.send_trailing_alert(symbol, side, current_price, new_sl, r_mult)
+
+        # Baseline check: If position is open and authenticated, ensure at least one exchange stop exists
+        if symbol not in self.verified_sl_orders and self.is_live_authenticated:
+            try:
+                close_side = "sell" if side == "BUY" else "buy"
+                rem_lots = pos.get("remaining_lots") or pos.get("lots") or 1
+                sl_res = self.client.place_stop_order(
+                    symbol=symbol,
+                    side=close_side,
+                    size=rem_lots,
+                    stop_price=pos["stop_loss"],
+                    is_take_profit=False
+                )
+                if sl_res.get("success"):
+                    self.verified_sl_orders.add(symbol)
+                    print(f"🛡️ [DELTA EXCHANGE SL VERIFIED] {symbol} {close_side.upper()} Stop placed on Delta @ ${pos['stop_loss']}")
+            except Exception as e:
+                print(f"[DELTA BASELINE SL NOTICE] {e}")
 
         # 2. Level 2 DOM High-Conviction Reversal Guard
         # If running trade experiences severe opposing orderbook pressure (>=3.0x hostile imbalance + 2+ hostile walls):
@@ -640,17 +688,83 @@ class MultiPairLiveTrader:
                 short_trigger = (side_dominant == "SELLERS" and seller_ratio >= min_imb and (has_ask_wall or len(ask_walls) > 0))
                 strat_title = f"DOM {symbol} London/NY Session Flow Wall Defense"
 
-        elif mode == "ABSORPTION_FADE":
-            # XAUTUSD (2.0x / Asks >= 3.1x Bids): Contrarian fade when massive order flow fails to push price
-            if len(win) >= 20:
-                price_change = mid - win[-20]
-                # Trapped sellers (BUY): Heavy seller pressure or ask wall dominance, but price refuses to drop
-                seller_exhausted = (side_dominant == "SELLERS" and seller_ratio >= min_imb) or (buyer_ratio <= 0.32)
-                long_trigger = seller_exhausted and (price_change >= (-0.0001 * mid)) and (has_bid_wall or len(bid_walls) > 0)
+        elif mode == "PRICEACTION_DOM":
+            # XAUTUSD: Price Action Primary (15m Breakout/Retest & Dynamic Trend Pullback) + Level 2 DOM Verification
+            candles_15m = self.candle_cache.get(symbol, [])
+            if now_ts - self.last_candle_fetch.get(symbol, 0) > 60 or not candles_15m:
+                try:
+                    c_start = int(now_ts - (86400 * 4)) # Last 4 days
+                    candles_15m = self.client.get_candles(symbol, resolution="15m", start=c_start, end=int(now_ts))
+                    if candles_15m and len(candles_15m) >= 25:
+                        self.candle_cache[symbol] = candles_15m
+                        self.last_candle_fetch[symbol] = now_ts
+                except Exception as e:
+                    print(f"[CANDLE FETCH NOTICE] {symbol}: {e}")
 
-                # Trapped buyers (SELL): Heavy buyer pressure, but price refuses to rally
-                short_trigger = (side_dominant == "BUYERS" and buyer_ratio >= min_imb) and (price_change <= (0.0001 * mid)) and (has_ask_wall or len(ask_walls) > 0)
-                strat_title = f"DOM {symbol} Seller Absorption Trap & Reversal" if long_trigger else f"DOM {symbol} Buyer Absorption Trap & Reversal"
+            if candles_15m and len(candles_15m) >= 25:
+                # Daily Profit Lock: If Gold already has a WIN closed today, pause new entries to lock the green day
+                today_str = now_ist.strftime("%Y-%m-%d")
+                recent_trades = self.db.get_trades(limit=25)
+                has_today_win = any(
+                    str(t.get("symbol", "")).upper() == symbol
+                    and str(t.get("status", "")).upper() == "CLOSED"
+                    and str(t.get("closed_at", "")).startswith(today_str)
+                    and float(t.get("pnl_usd", 0)) > 0
+                    for t in recent_trades
+                )
+                if has_today_win:
+                    if now_ts - self.last_thought_log.get(f"{symbol}_daily_lock", 0) > 900:
+                        self.last_thought_log[f"{symbol}_daily_lock"] = now_ts
+                        self.db.log_thought(
+                            symbol=symbol,
+                            event_type="DAILY_WIN_LOCK",
+                            stars=5.0,
+                            message=f"🔒 Daily Profit Lock Active: {symbol} has already secured a green day win. Capital protected, new entries paused until tomorrow."
+                        )
+                    return None
+
+                c = candles_15m[-1]
+                prev_c = candles_15m[-2]
+                prev_window = candles_15m[-18:-2]
+                prior_high = max(x['high'] for x in prev_window)
+                prior_low = min(x['low'] for x in prev_window)
+
+                # EMAs
+                closes = [x['close'] for x in candles_15m]
+                k20, k50 = 2 / 21, 2 / 51
+                ema20_val, ema50_val = closes[0], closes[0]
+                for p_val in closes[1:]:
+                    ema20_val = p_val * k20 + ema20_val * (1 - k20)
+                    ema50_val = p_val * k50 + ema50_val * (1 - k50)
+
+                # Price Action 1: Break & Retest
+                bull_retest = (prev_c['close'] > prior_high) and (c['low'] <= prior_high * 1.0005) and (c['close'] > prior_high)
+                bear_retest = (prev_c['close'] < prior_low) and (c['high'] >= prior_low * 0.9995) and (c['close'] < prior_low)
+
+                # Price Action 2: Dynamic Trend Pullback Rejection
+                is_uptrend = (ema20_val > ema50_val)
+                is_downtrend = (ema20_val < ema50_val)
+                c_range = max(0.1, c['high'] - c['low'])
+                lower_wick = min(c['open'], c['close']) - c['low']
+                upper_wick = c['high'] - max(c['open'], c['close'])
+
+                bull_pullback = is_uptrend and (c['low'] <= ema20_val) and (c['close'] > ema20_val) and (lower_wick / c_range >= 0.30) and (c['close'] > c['open'])
+                bear_pullback = is_downtrend and (c['high'] >= ema20_val) and (c['close'] < ema20_val) and (upper_wick / c_range >= 0.30) and (c['close'] < c['open'])
+
+                pa_bull = bull_retest or bull_pullback
+                pa_bear = bear_retest or bear_pullback
+
+                # Level 2 DOM Verification: Orderbook volume delta confirms direction
+                delta = c.get('delta', 0.0)
+                vol = max(1.0, c.get('volume', 1.0))
+                delta_ratio = delta / vol
+                dom_bull = (delta_ratio >= 0.05) or (side_dominant == "BUYERS" and buyer_ratio >= 1.5)
+                dom_bear = (delta_ratio <= -0.05) or (side_dominant == "SELLERS" and seller_ratio >= 1.5)
+
+                long_trigger = pa_bull and dom_bull
+                short_trigger = pa_bear and dom_bear
+                pattern_name = "Breakout Retest" if (bull_retest or bear_retest) else "Trend Pullback"
+                strat_title = f"PA Primary ({pattern_name}) + DOM Delta Verification"
 
         # Periodic status thought log in Live Journal for UI transparency
         last_t = self.last_thought_log.get(symbol, 0)
@@ -732,6 +846,22 @@ class MultiPairLiveTrader:
                     take_profit_price=tp
                 )
                 print(f"🚀 [DELTA LIVE ORDER PLACED] {symbol} {side} {lots} Lots (Risk: ${current_risk:.2f} | SL: ${sl} | TP: ${tp}) -> Response: {order_res.get('success')}")
+
+                # Standalone fallback stop order directly on Delta Exchange book
+                try:
+                    close_side = "sell" if side == "BUY" else "buy"
+                    sl_res = self.client.place_stop_order(
+                        symbol=symbol,
+                        side=close_side,
+                        size=lots,
+                        stop_price=sl,
+                        is_take_profit=False
+                    )
+                    self.verified_sl_orders.add(symbol)
+                    print(f"🛡️ [DELTA STANDALONE SL PLACED] {symbol} {close_side.upper()} {lots} Lots Stop @ ${sl} -> Success: {sl_res.get('success')}")
+                except Exception as e_sl:
+                    print(f"[DELTA STANDALONE SL NOTICE] {e_sl}")
+
             except Exception as e:
                 print(f"[DELTA LIVE ORDER ERROR] {e}")
 
@@ -810,6 +940,7 @@ class MultiPairLiveTrader:
 
     def _close_position(self, symbol: str, exit_price: float, reason: str):
         """Closes active position, calculates final P&L with Delta India fees, and updates journals."""
+        self.verified_sl_orders.discard(symbol)
         pos = self.active_positions.pop(symbol, None)
         if not pos:
             return
