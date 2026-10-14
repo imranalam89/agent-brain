@@ -391,7 +391,8 @@ class DeltaExchangeClient:
         if symbol:
             params["product_symbol"] = symbol
         res = self._request("GET", "/v2/orders", params=params, auth=True)
-        if res.get("success") and "result" in res:
-            return res["result"]
-        return []
+        orders = res.get("result", []) if (res.get("success") and "result" in res) else []
+        if symbol and orders:
+            orders = [o for o in orders if o.get("product_symbol") == symbol]
+        return orders
 

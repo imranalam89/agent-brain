@@ -408,9 +408,9 @@ class MultiPairLiveTrader:
                 # 3A. STRICT INVARIANT: 1 Active Position per symbol at any time
                 if has_local or has_exchange:
                     pos_age = time.time() - self.active_positions.get(symbol, {}).get("opened_ts", time.time())
-                    if has_local and self.is_live_authenticated and not has_exchange and pos_age > 90:
+                    if has_local and self.is_live_authenticated and not has_exchange and pos_age > 15:
                         self.missing_exchange_counts[symbol] = self.missing_exchange_counts.get(symbol, 0) + 1
-                        if self.missing_exchange_counts[symbol] >= 6:
+                        if self.missing_exchange_counts[symbol] >= 3:
                             self.missing_exchange_counts[symbol] = 0
                             print(f"⚡ [DELTA EXCHANGE SYNC] {symbol} position confirmed closed on Delta. Finalizing trade @ mark price ${mark_price:,.2f}...")
                             self._close_position(symbol, mark_price, reason="EXCHANGE_FILLED_EXIT")
