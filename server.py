@@ -507,6 +507,10 @@ class DashboardHandler(SimpleHTTPRequestHandler):
 
     def _handle_git_pull(self):
         try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            if content_length > 0:
+                self.rfile.read(content_length)
+
             import subprocess
             subprocess.run(["git", "fetch", "origin", "main"], cwd=str(BASE_DIR), capture_output=True, text=True, timeout=30)
             res = subprocess.run(["git", "reset", "--hard", "origin/main"], cwd=str(BASE_DIR), capture_output=True, text=True, timeout=30)
@@ -543,7 +547,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             import threading
             def _delayed_restart():
                 import time
-                time.sleep(1.0)
+                time.sleep(3.0)
                 os._exit(0)
             threading.Thread(target=_delayed_restart, daemon=True).start()
         except Exception as e:
@@ -569,8 +573,9 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 elif b.get("asset_symbol") == "INR":
                     inr_bal = f"{float(b.get('balance', 0)):.2f}"
 
-            # Delta positions
+            # Delta positions & open orders
             delta_pos = client.get_positions()
+            open_orders = client.get_open_orders()
 
             # DB trades
             db_trades = db.get_trades(limit=500)
@@ -621,6 +626,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 "tickers": tickers,
                 "open_trades": open_trades,
                 "delta_positions": delta_pos,
+                "open_orders": open_orders,
                 "closed_trades": closed_trades,
                 "thoughts": thoughts
             })

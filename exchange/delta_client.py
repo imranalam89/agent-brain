@@ -355,3 +355,13 @@ class DeltaExchangeClient:
         params = {"product_symbol": symbol} if symbol else None
         return self._request("DELETE", "/v2/orders/all", params=params, auth=True)
 
+    def get_open_orders(self, symbol: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Fetches resting / open orders (including conditional stop orders)."""
+        params = {"state": "open"}
+        if symbol:
+            params["product_symbol"] = symbol
+        res = self._request("GET", "/v2/orders", params=params, auth=True)
+        if res.get("success") and "result" in res:
+            return res["result"]
+        return []
+

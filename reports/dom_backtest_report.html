@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <title>Agent Brain | 📊 Level 2 DOM Strategy Backtest Report</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #080b11; color: #f1f5f9; font-family: system-ui, -apple-system, sans-serif; }
+  </style>
+</head>
+<body class="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+  <header class="flex flex-col md:flex-row items-center justify-between gap-4 border-b border-slate-800 pb-5">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">⚡</span>
+        <h1 class="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">Level 2 DOM Orderbook Backtest</h1>
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">DELTA CLOUD DOM</span>
+      </div>
+      <p class="text-xs text-slate-400 mt-1 font-mono">
+        Microstructure Imbalance (>=1.8x) • Resting Iceberg Walls • Delta India Verified Brokerage Fees
+      </p>
+    </div>
+    <div class="flex items-center gap-3 text-xs font-mono">
+      <a href="dom_heatmap.html" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700">DOM Heatmap</a>
+      <a href="live_journal.html" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700">Live Journal</a>
+    </div>
+  </header>
+
+  <!-- PORTFOLIO KPIS -->
+  <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+      <div class="text-xs text-slate-500 uppercase tracking-wider font-bold">Total Trades</div>
+      <div class="text-2xl font-black text-white mt-1">0</div>
+      <div class="text-xs text-slate-400 mt-0.5">Wins: 0 | Losses: 0</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+      <div class="text-xs text-slate-500 uppercase tracking-wider font-bold">Win Rate</div>
+      <div class="text-2xl font-black text-amber-400 mt-1">0.0%</div>
+      <div class="text-xs text-slate-400 mt-0.5">1:2 R:R Ratio (0.3% TP / 0.15% SL)</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+      <div class="text-xs text-slate-500 uppercase tracking-wider font-bold">Net P&L (USD)</div>
+      <div class="text-2xl font-black text-emerald-400 mt-1">$+0.00</div>
+      <div class="text-xs text-slate-400 mt-0.5">₹+0.00 INR (Fees: $0.00)</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+      <div class="text-xs text-slate-500 uppercase tracking-wider font-bold">Profit Factor</div>
+      <div class="text-2xl font-black text-white mt-1">0.0</div>
+      <div class="text-xs text-slate-400 mt-0.5">Max DD: $0.00 USD</div>
+    </div>
+  </section>
+
+  <!-- PER SYMBOL CARDS -->
+  <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    
+                  <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+                    <h3 class="text-sm font-bold text-slate-300">XAUTUSD</h3>
+                    <p class="text-xs text-rose-400 mt-2">Insufficient snapshots recorded for XAUTUSD (1 found).</p>
+                  </div>
+                
+  </section>
+
+  <!-- RECENT TRADES TABLE -->
+  <section class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+    <div class="flex items-center justify-between">
+      <h2 class="text-sm font-black text-white uppercase tracking-wider">Executed DOM Microstructure Trades (0 Total)</h2>
+      <span class="text-xs text-slate-400 font-mono">Showing recent executions</span>
+    </div>
+    <div class="overflow-x-auto max-h-[500px]">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-slate-800 text-[11px] text-slate-500 font-bold uppercase tracking-wider bg-slate-950/60 sticky top-0">
+            <th class="py-2 px-3">#</th>
+            <th class="py-2 px-3">Symbol</th>
+            <th class="py-2 px-3">Side</th>
+            <th class="py-2 px-3">Entry</th>
+            <th class="py-2 px-3">Exit</th>
+            <th class="py-2 px-3">Outcome</th>
+            <th class="py-2 px-3">Net P&L</th>
+            <th class="py-2 px-3">Fee</th>
+            <th class="py-2 px-3">Entry Time (IST)</th>
+            <th class="py-2 px-3">Microstructure Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="10" class="py-4 text-center text-slate-500">No trades triggered with current threshold.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</body>
+</html>

@@ -179,6 +179,17 @@ class MultiPairLiveTrader:
                 sl_pct = self.params[sym]["sl_pct"]
                 tp_pct = self.params[sym]["tp_pct"]
 
+                opened_at_str = t.get("opened_at")
+                opened_ts = time.time()
+                if opened_at_str:
+                    try:
+                        opened_ts = datetime.fromisoformat(opened_at_str).timestamp()
+                    except Exception:
+                        try:
+                            opened_ts = datetime.strptime(opened_at_str, "%Y-%m-%d %H:%M:%S").timestamp()
+                        except Exception:
+                            pass
+
                 self.active_positions[sym] = {
                     "id": t.get("id"),
                     "symbol": sym,
@@ -193,8 +204,8 @@ class MultiPairLiveTrader:
                     "remaining_lots": lots,
                     "notional_usd": float(t.get("notional_usd") or 0),
                     "margin_usd": float(t.get("margin_usd") or 0),
-                    "opened_at": t.get("opened_at"),
-                    "opened_ts": time.time(),
+                    "opened_at": opened_at_str,
+                    "opened_ts": opened_ts,
                     "be_locked": False,
                     "leverage": t.get("leverage") or LEVERAGE_MAP.get(sym, 100),
                     "risk_usd": self.fixed_risk_usd,
@@ -338,11 +349,11 @@ class MultiPairLiveTrader:
             "signals": {}
         }
 
-        # 1. Circuit Breaker Check
+        # 1. Circuit Breaker Check (Blocks new entries only, NEVER blocks managing active trades!)
         is_breaker, daily_loss = self.risk_mgr.is_daily_circuit_breaker_active()
         if is_breaker:
-            print(f"[CIRCUIT BREAKER ACTIVE] Daily loss ${daily_loss:.2f} >= ${self.risk_mgr.daily_loss_limit:.2f}. Halting new entries.")
-            return status_report
+            status_report["bot_status"] = "CIRCUIT_BREAKER_ACTIVE"
+            status_report["pause_reason"] = f"Daily loss limit hit (${daily_loss:.2f} >= ${self.risk_mgr.daily_loss_limit:.2f}). Managing open positions only."
 
         # 2. Query live exchange positions from Delta Exchange
         exchange_positions = {}
@@ -404,7 +415,10 @@ class MultiPairLiveTrader:
                     status_report["pause_until"] = pause_until
                     continue
 
-                # 3C. Pair is FLAT and cooldown clear: Scan Level 2 DOM for high-probability Institutional Setup
+                # 3C. Pair is FLAT and cooldown clear: Check circuit breaker before new entries
+                if is_breaker:
+                    continue
+
                 signal = self._evaluate_entry_signal(symbol, mark_price)
                 if signal:
                     status_report["signals"][symbol] = signal
