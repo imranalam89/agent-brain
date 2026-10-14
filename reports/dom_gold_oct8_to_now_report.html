@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Brain | 🥇 Gold (XAUTUSD) 40R Runner Backtest (Oct 08 - Till Now)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { background-color: #07090e; color: #f1f5f9; font-family: system-ui, -apple-system, sans-serif; }
+    .glass-card { background: rgba(13, 17, 28, 0.94); backdrop-filter: blur(14px); border: 1px solid #1a233a; }
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #0a0d14; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #1f2a44; border-radius: 4px; }
+  </style>
+</head>
+<body class="min-h-screen p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto custom-scroll">
+
+  <!-- TOP HEADER -->
+  <header class="flex flex-col md:flex-row items-center justify-between gap-4 border-b border-slate-800 pb-5">
+    <div class="flex items-center gap-3">
+      <div class="h-12 w-12 rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 flex items-center justify-center font-bold text-white text-2xl shadow-xl shadow-amber-500/20">
+        🥇
+      </div>
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white uppercase">Gold 40R Progressive Runner (Oct 08 - Till Now)</h1>
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            OCT 08, 2026 00:00 → OCT 14, 2026 23:30 (LIVE SYNC)
+          </span>
+        </div>
+        <p class="text-xs text-slate-400 font-mono mt-0.5">
+          Strategy: <span class="text-amber-400 font-bold">Champion 40R Progressive Runner</span> • Risk: <span class="text-cyan-400 font-bold">Strictly $5.00/Trade</span> • Initial Capital: <span class="text-emerald-400 font-bold">$50.00 Base</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- QUICK NAV LINKS -->
+    <div class="flex items-center gap-2 flex-wrap text-xs font-mono">
+      <a href="dom_master_analytics_report.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
+        <span>🎯 Master Report</span>
+      </a>
+      <a href="dom_gold_backtest_report.html" class="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow font-bold transition flex items-center gap-1.5">
+        <span>🥇 Gold (Oct 8 - Now)</span>
+      </a>
+      <a href="dom_silver_backtest_report.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
+        <span>🥈 Silver</span>
+      </a>
+      <a href="dom_btc_backtest_report.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
+        <span>₿ BTC</span>
+      </a>
+      <a href="dom_eth_backtest_report.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
+        <span>Ξ ETH</span>
+      </a>
+      <a href="dom_heatmap.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
+        <i data-lucide="layers" class="w-3.5 h-3.5 text-emerald-400"></i>
+        <span>DOM Heatmap</span>
+      </a>
+      <a href="live_journal.html" class="px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 font-bold transition flex items-center gap-1.5 shadow">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>⚡ Live Journal</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- STRATEGY PHILOSOPHY BANNER -->
+  <section class="glass-card rounded-2xl p-4 border-l-4 border-l-amber-500 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 font-mono text-xs">
+    <div class="space-y-1">
+      <div class="flex items-center gap-2 text-amber-400 font-bold text-sm">
+        <i data-lucide="shield-check" class="w-4 h-4"></i>
+        <span>Executed on Real Delta Exchange Candles: Oct 08 - Oct 14, 2026</span>
+      </div>
+      <p class="text-slate-400 text-[11px]">
+        Execution: <span class="text-emerald-400 font-bold">50% Booked at +2.0R (Risk Eliminated)</span> • Runner Trail: <span class="text-cyan-400 font-bold">50% Trails up to 40R with 15m Structural Swings</span> • Invalidation: <span class="text-rose-400 font-bold">Stop $2.0 + $0.80 Buffer</span> • Risk Rule: <span class="text-amber-300 font-bold">Strictly $5.00</span>
+      </p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">Positive Net P&L in Waterfall Market</span>
+      <span class="px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold">$0.001 / contract (100x Leverage)</span>
+    </div>
+  </section>
+
+  <!-- KEY PERFORMANCE METRICS ROW -->
+  <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="glass-card rounded-2xl p-4">
+      <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Verified Trades (7 Days)</div>
+      <div class="text-3xl font-black text-white mt-1">20 Trades</div>
+      <div class="text-xs text-slate-400 mt-1">7 Wins / 13 Losses (35.0% Win Rate)</div>
+    </div>
+    <div class="glass-card rounded-2xl p-4">
+      <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Net Realized Profit</div>
+      <div class="text-3xl font-black text-emerald-400 mt-1">$+2.52</div>
+      <div class="text-xs text-emerald-400/90 font-mono mt-1">+₹226.80 INR (+5.0% ROI)</div>
+    </div>
+    <div class="glass-card rounded-2xl p-4">
+      <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Profit Factor</div>
+      <div class="text-3xl font-black text-amber-400 mt-1">1.04</div>
+      <div class="text-xs text-slate-400 mt-1">Gains: $67.65 | Losses: $65.13</div>
+    </div>
+    <div class="glass-card rounded-2xl p-4">
+      <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Peak Trade & Max DD</div>
+      <div class="text-3xl font-black text-cyan-400 mt-1">$+15.52</div>
+      <div class="text-xs text-rose-400 font-mono mt-1">Max DD: -$45.14 | Max Loss: $-5.01</div>
+    </div>
+  </section>
+
+  <!-- 40R TRAILING MILESTONE ARCHITECTURE -->
+  <section class="glass-card rounded-2xl p-5 border border-slate-800 space-y-3">
+    <div class="flex items-center justify-between">
+      <h2 class="text-sm font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+        <i data-lucide="git-merge" class="w-4 h-4"></i>
+        Progressive Milestone Ratchet Locks (Trailing up to 40R)
+      </h2>
+      <span class="text-xs text-slate-400 font-mono">15m Swing Low Trail + Stepped Protective Barriers</span>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-xs font-mono">
+      <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 text-center">
+        <div class="text-slate-400 text-[10px]">MILESTONE 1</div>
+        <div class="text-emerald-400 font-bold mt-0.5">+2.0R Move</div>
+        <div class="text-[11px] text-amber-300 mt-0.5">Book 50% Lots</div>
+        <div class="text-[10px] text-slate-500">Lock BE (+0.2R)</div>
+      </div>
+      <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 text-center">
+        <div class="text-slate-400 text-[10px]">MILESTONE 2</div>
+        <div class="text-emerald-400 font-bold mt-0.5">+3.5R Move</div>
+        <div class="text-[11px] text-amber-300 mt-0.5">Lock +1.5R</div>
+        <div class="text-[10px] text-slate-500">Guaranteed Win</div>
+      </div>
+      <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 text-center">
+        <div class="text-slate-400 text-[10px]">MILESTONE 3</div>
+        <div class="text-emerald-400 font-bold mt-0.5">+6.0R Move</div>
+        <div class="text-[11px] text-amber-300 mt-0.5">Lock +3.5R</div>
+        <div class="text-[10px] text-slate-500">Swing Protection</div>
+      </div>
+      <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 text-center">
+        <div class="text-slate-400 text-[10px]">MILESTONE 4</div>
+        <div class="text-emerald-400 font-bold mt-0.5">+10.0R Move</div>
+        <div class="text-[11px] text-amber-300 mt-0.5">Lock +6.0R</div>
+        <div class="text-[10px] text-slate-500">Major Trend Ride</div>
+      </div>
+      <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 text-center">
+        <div class="text-slate-400 text-[10px]">MILESTONE 5</div>
+        <div class="text-emerald-400 font-bold mt-0.5">+20.0R Move</div>
+        <div class="text-[11px] text-amber-300 mt-0.5">Lock +15.0R</div>
+        <div class="text-[10px] text-slate-500">Super Trend Lock</div>
+      </div>
+      <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 text-center">
+        <div class="text-slate-400 text-[10px]">MAX TP CAP</div>
+        <div class="text-emerald-400 font-bold mt-0.5">+40.0R Move</div>
+        <div class="text-[11px] text-emerald-400 font-bold mt-0.5">Full Exit</div>
+        <div class="text-[10px] text-slate-500">+$70+ PnL Banked</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EQUITY CURVE CHART -->
+  <section class="glass-card rounded-2xl p-5 border border-slate-800">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 gap-2 border-b border-slate-800">
+      <div>
+        <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i>
+          Cumulative Equity Curve (Oct 08 - Till Now)
+        </h2>
+        <p class="text-xs text-slate-400 mt-0.5 font-mono">
+          Final Balance: <span class="text-emerald-400 font-bold">$52.52 USD</span> • Net Gain: <span class="text-emerald-400 font-bold">+$2.52 (+5.0%)</span> • Fixed Risk: <span class="text-amber-400 font-bold">$5.00/Trade</span>
+        </p>
+      </div>
+    </div>
+    <div class="h-72 mt-4">
+      <canvas id="equityChart"></canvas>
+    </div>
+  </section>
+
+  <!-- DAILY PERFORMANCE TILES -->
+  <section class="glass-card rounded-2xl p-5 border border-slate-800 space-y-3">
+    <div class="flex items-center justify-between">
+      <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+        <i data-lucide="calendar" class="w-4 h-4 text-amber-400"></i>
+        Daily Performance Tiles (Oct 08 - Oct 14)
+      </h3>
+      <button onclick="filterByDate('ALL')" class="text-xs font-mono text-amber-400 hover:underline">Show All Dates</button>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
+      
+      <div onclick="filterByDate('2026-10-08')" class="cursor-pointer glass-card rounded-xl p-3 border border-emerald-500/30 bg-emerald-500/5 hover:scale-105 transition">
+        <div class="flex items-center justify-between text-xs text-slate-400 font-mono mb-1">
+          <span>2026-10-08</span>
+          <span class="font-bold text-slate-300">2 trades</span>
+        </div>
+        <div class="text-base font-black text-emerald-400 font-mono">$+19.67</div>
+        <div class="text-[11px] text-slate-400 mt-1 flex justify-between">
+          <span class="text-emerald-400">2W</span>
+          <span class="text-rose-400">0L</span>
+          <span class="text-slate-300 font-bold">100.0%</span>
+        </div>
+      </div>
+    
+
+      <div onclick="filterByDate('2026-10-09')" class="cursor-pointer glass-card rounded-xl p-3 border border-emerald-500/30 bg-emerald-500/5 hover:scale-105 transition">
+        <div class="flex items-center justify-between text-xs text-slate-400 font-mono mb-1">
+          <span>2026-10-09</span>
+          <span class="font-bold text-slate-300">2 trades</span>
+        </div>
+        <div class="text-base font-black text-emerald-400 font-mono">$+10.51</div>
+        <div class="text-[11px] text-slate-400 mt-1 flex justify-between">
+          <span class="text-emerald-400">1W</span>
+          <span class="text-rose-400">1L</span>
+          <span class="text-slate-300 font-bold">50.0%</span>
+        </div>
+      </div>
+    
+
+      <div onclick="filterByDate('2026-10-11')" class="cursor-pointer glass-card rounded-xl p-3 border border-emerald-500/30 bg-emerald-500/5 hover:scale-105 transition">
+        <div class="flex items-center justify-between text-xs text-slate-400 font-mono mb-1">
+          <span>2026-10-11</span>
+          <span class="font-bold text-slate-300">2 trades</span>
+        </div>
+        <div class="text-base font-black text-emerald-400 font-mono">$+2.48</div>
+        <div class="text-[11px] text-slate-400 mt-1 flex justify-between">
+          <span class="text-emerald-400">1W</span>
+          <span class="text-rose-400">1L</span>
+          <span class="text-slate-300 font-bold">50.0%</span>
+        </div>
+      </div>
+    
+
+      <div onclick="filterByDate('2026-10-12')" class="cursor-pointer glass-card rounded-xl p-3 border border-rose-500/30 bg-rose-500/5 hover:scale-105 transition">
+        <div class="flex items-center justify-between text-xs text-slate-400 font-mono mb-1">
+          <span>2026-10-12</span>
+          <span class="font-bold text-slate-300">7 trades</span>
+        </div>
+        <div class="text-base font-black text-rose-400 font-mono">$-22.57</div>
+        <div class="text-[11px] text-slate-400 mt-1 flex justify-between">
+          <span class="text-emerald-400">1W</span>
+          <span class="text-rose-400">6L</span>
+          <span class="text-slate-300 font-bold">14.0%</span>
+        </div>
+      </div>
+    
+
+      <div onclick="filterByDate('2026-10-13')" class="cursor-pointer glass-card rounded-xl p-3 border border-emerald-500/30 bg-emerald-500/5 hover:scale-105 transition">
+        <div class="flex items-center justify-between text-xs text-slate-400 font-mono mb-1">
+          <span>2026-10-13</span>
+          <span class="font-bold text-slate-300">2 trades</span>
+        </div>
+        <div class="text-base font-black text-emerald-400 font-mono">$+2.48</div>
+        <div class="text-[11px] text-slate-400 mt-1 flex justify-between">
+          <span class="text-emerald-400">1W</span>
+          <span class="text-rose-400">1L</span>
+          <span class="text-slate-300 font-bold">50.0%</span>
+        </div>
+      </div>
+    
+
+      <div onclick="filterByDate('2026-10-14')" class="cursor-pointer glass-card rounded-xl p-3 border border-rose-500/30 bg-rose-500/5 hover:scale-105 transition">
+        <div class="flex items-center justify-between text-xs text-slate-400 font-mono mb-1">
+          <span>2026-10-14</span>
+          <span class="font-bold text-slate-300">5 trades</span>
+        </div>
+        <div class="text-base font-black text-rose-400 font-mono">$-10.05</div>
+        <div class="text-[11px] text-slate-400 mt-1 flex justify-between">
+          <span class="text-emerald-400">1W</span>
+          <span class="text-rose-400">4L</span>
+          <span class="text-slate-300 font-bold">20.0%</span>
+        </div>
+      </div>
+    
+    </div>
+  </section>
+
+  <!-- DAY OF WEEK & HOURLY BREAKDOWN -->
+  <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="glass-card rounded-2xl p-5 border border-slate-800 lg:col-span-1 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Day of Week Performance</h3>
+        <span class="text-[11px] font-mono text-emerald-400 font-bold">Best: Thu</span>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        
+      <div class="glass-card rounded-xl p-3 text-center border border-slate-800">
+        <div class="text-xs text-slate-400 font-bold uppercase">Mon</div>
+        <div class="text-lg font-black text-rose-400 font-mono mt-0.5">$-22.57</div>
+        <div class="text-[11px] text-slate-500 font-mono mt-0.5">7 trades</div>
+      </div>
+    
+
+      <div class="glass-card rounded-xl p-3 text-center border border-slate-800">
+        <div class="text-xs text-slate-400 font-bold uppercase">Tue</div>
+        <div class="text-lg font-black text-emerald-400 font-mono mt-0.5">$+2.48</div>
+        <div class="text-[11px] text-slate-500 font-mono mt-0.5">2 trades</div>
+      </div>
+    
+
+      <div class="glass-card rounded-xl p-3 text-center border border-slate-800">
+        <div class="text-xs text-slate-400 font-bold uppercase">Wed</div>
+        <div class="text-lg font-black text-rose-400 font-mono mt-0.5">$-10.05</div>
+        <div class="text-[11px] text-slate-500 font-mono mt-0.5">5 trades</div>
+      </div>
+    
+
+      <div class="glass-card rounded-xl p-3 text-center border border-slate-800">
+        <div class="text-xs text-slate-400 font-bold uppercase">Thu</div>
+        <div class="text-lg font-black text-emerald-400 font-mono mt-0.5">$+19.67</div>
+        <div class="text-[11px] text-slate-500 font-mono mt-0.5">2 trades</div>
+      </div>
+    
+
+      <div class="glass-card rounded-xl p-3 text-center border border-slate-800">
+        <div class="text-xs text-slate-400 font-bold uppercase">Fri</div>
+        <div class="text-lg font-black text-emerald-400 font-mono mt-0.5">$+10.51</div>
+        <div class="text-[11px] text-slate-500 font-mono mt-0.5">2 trades</div>
+      </div>
+    
+
+      <div class="glass-card rounded-xl p-3 text-center border border-slate-800">
+        <div class="text-xs text-slate-400 font-bold uppercase">Sat</div>
+        <div class="text-lg font-black text-emerald-400 font-mono mt-0.5">$+0.00</div>
+        <div class="text-[11px] text-slate-500 font-mono mt-0.5">0 trades</div>
+      </div>
+    
+
+      <div class="glass-card rounded-xl p-3 text-center border border-slate-800">
+        <div class="text-xs text-slate-400 font-bold uppercase">Sun</div>
+        <div class="text-lg font-black text-emerald-400 font-mono mt-0.5">$+2.48</div>
+        <div class="text-[11px] text-slate-500 font-mono mt-0.5">2 trades</div>
+      </div>
+    
+      </div>
+    </div>
+
+    <div class="glass-card rounded-2xl p-5 border border-slate-800 lg:col-span-2">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Hourly Realized Profit & Loss (00:00 - 23:00)</h3>
+        <span class="text-xs text-slate-400 font-mono">Execution Hours</span>
+      </div>
+      <div class="h-48 mt-3">
+        <canvas id="hourlyChart"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRADE JOURNAL LEDGER -->
+  <section class="glass-card rounded-2xl p-5 border border-slate-800 space-y-4">
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+      <div>
+        <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="book-open" class="w-4 h-4 text-amber-400"></i>
+          Complete Verified Execution Journal (20 Trades)
+        </h2>
+        <p class="text-xs text-slate-400 font-mono mt-0.5">Strictly $5.00 fixed loss per stopped trade • Zero stepped risk</p>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap text-xs font-mono">
+        <input type="text" id="searchJournal" placeholder="Search date / reason..." onkeyup="filterJournal()" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 text-xs">
+        <button onclick="setOutcomeFilter('ALL')" id="btn-all" class="px-3 py-1.5 rounded-xl bg-amber-500 text-slate-950 font-bold">ALL (20)</button>
+        <button onclick="setOutcomeFilter('WIN')" id="btn-win" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white font-bold">WINS (7)</button>
+        <button onclick="setOutcomeFilter('LOSS')" id="btn-loss" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white font-bold">LOSSES (13)</button>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto custom-scroll">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="border-b border-slate-800 text-slate-400 font-mono uppercase text-[11px] bg-slate-900/60">
+            <th class="py-2.5 px-2 text-center">#</th>
+            <th class="py-2.5 px-2.5">Date</th>
+            <th class="py-2.5 px-2.5">Entry</th>
+            <th class="py-2.5 px-2.5">Exit</th>
+            <th class="py-2.5 px-2 text-center">Side</th>
+            <th class="py-2.5 px-2 text-right">Lots</th>
+            <th class="py-2.5 px-2.5 text-right">Entry ($)</th>
+            <th class="py-2.5 px-2.5 text-right">SL ($)</th>
+            <th class="py-2.5 px-2.5 text-right">40R TP ($)</th>
+            <th class="py-2.5 px-2.5 text-right">Exit ($)</th>
+            <th class="py-2.5 px-2.5 text-right">Fee</th>
+            <th class="py-2.5 px-3 text-right">Net P&L ($)</th>
+            <th class="py-2.5 px-2.5 text-right">Peak R</th>
+            <th class="py-2.5 px-3">Exit Execution Reason</th>
+          </tr>
+        </thead>
+        <tbody id="journalBody" class="divide-y divide-slate-800/60 font-mono">
+          
+      <tr class="hover:bg-slate-800/40 transition trade-row" data-outcome="WIN" data-date="2026-10-08">
+        <td class="py-2.5 px-2 text-center text-slate-500 font-bold">1</td>
+        <td class="py-2.5 px-2.5 text-slate-300 font-mono text-xs">2026-10-08</td>
+        <td class="py-2.5 px-2.5 text-cyan-300 font-bold font-mono text-xs">13:45</td>
+        <td class="py-2.5 px-2.5 text-amber-300 font-bold font-mono text-xs">14:00</td>
+        <td class="py-2.5 px-2 text-center font-bold text-rose-400">SELL</td>
+        <td class="py-2.5 px-2 text-right text-slate-300 font-mono">1916</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4135.31</td>
+        <td class="py-2.5 px-2.5 text-right text-rose-400 font-mono">$4132.70</td>
+        <td class="py-2.5 px-2.5 text-right text-emerald-400 font-mono">$4030.91</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4132.70</td>
+        <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono text-xs">$0.01</td>
+        <td class="py-2.5 px-3 text-right text-emerald-400 font-bold font-mono">$+9.99</td>
+        <td class="py-2.5 px-2.5 text-right font-bold text-slate-200 font-mono">+1.5R</td>
+        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">🚀 40R TRAIL (+1.5R)</span></td>
+      </tr>
+
+      <tr class="hover:bg-slate-800/40 transition trade-row" data-outcome="WIN" data-date="2026-10-08">
+        <td class="py-2.5 px-2 text-center text-slate-500 font-bold">2</td>
+        <td class="py-2.5 px-2.5 text-slate-300 font-mono text-xs">2026-10-08</td>
+        <td class="py-2.5 px-2.5 text-cyan-300 font-bold font-mono text-xs">14:30</td>
+        <td class="py-2.5 px-2.5 text-amber-300 font-bold font-mono text-xs">21:45</td>
+        <td class="py-2.5 px-2 text-center font-bold text-rose-400">SELL</td>
+        <td class="py-2.5 px-2 text-right text-slate-300 font-mono">690</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4133.58</td>
+        <td class="py-2.5 px-2.5 text-right text-rose-400 font-mono">$4120.00</td>
+        <td class="py-2.5 px-2.5 text-right text-emerald-400 font-mono">$3843.58</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4120.00</td>
+        <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono text-xs">$0.01</td>
+        <td class="py-2.5 px-3 text-right text-emerald-400 font-bold font-mono">$+9.68</td>
+        <td class="py-2.5 px-2.5 text-right font-bold text-slate-200 font-mono">+1.9R</td>
+        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">🚀 40R TRAIL (+1.9R)</span></td>
+      </tr>
+
+      <tr class="hover:bg-slate-800/40 transition trade-row" data-outcome="WIN" data-date="2026-10-09">
+        <td class="py-2.5 px-2 text-center text-slate-500 font-bold">3</td>
+        <td class="py-2.5 px-2.5 text-slate-300 font-mono text-xs">2026-10-09</td>
+        <td class="py-2.5 px-2.5 text-cyan-300 font-bold font-mono text-xs">12:30</td>
+        <td class="py-2.5 px-2.5 text-amber-300 font-bold font-mono text-xs">18:15</td>
+        <td class="py-2.5 px-2 text-center font-bold text-rose-400">SELL</td>
+        <td class="py-2.5 px-2 text-right text-slate-300 font-mono">732</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4195.82</td>
+        <td class="py-2.5 px-2.5 text-right text-rose-400 font-mono">$4181.43</td>
+        <td class="py-2.5 px-2.5 text-right text-emerald-400 font-mono">$3922.62</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4181.43</td>
+        <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono text-xs">$0.01</td>
+        <td class="py-2.5 px-3 text-right text-emerald-400 font-bold font-mono">$+15.52</td>
+        <td class="py-2.5 px-2.5 text-right font-bold text-slate-200 font-mono">+2.1R</td>
+        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">🚀 40R TRAIL (+2.1R)</span></td>
+      </tr>
+
+      <tr class="hover:bg-slate-800/40 transition trade-row" data-outcome="LOSS" data-date="2026-10-09">
+        <td class="py-2.5 px-2 text-center text-slate-500 font-bold">4</td>
+        <td class="py-2.5 px-2.5 text-slate-300 font-mono text-xs">2026-10-09</td>
+        <td class="py-2.5 px-2.5 text-cyan-300 font-bold font-mono text-xs">21:45</td>
+        <td class="py-2.5 px-2.5 text-amber-300 font-bold font-mono text-xs">23:15</td>
+        <td class="py-2.5 px-2 text-center font-bold text-rose-400">SELL</td>
+        <td class="py-2.5 px-2 text-right text-slate-300 font-mono">825</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4189.69</td>
+        <td class="py-2.5 px-2.5 text-right text-rose-400 font-mono">$4195.75</td>
+        <td class="py-2.5 px-2.5 text-right text-emerald-400 font-mono">$3947.29</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4195.75</td>
+        <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono text-xs">$0.01</td>
+        <td class="py-2.5 px-3 text-right text-rose-400 font-bold font-mono">$-5.01</td>
+        <td class="py-2.5 px-2.5 text-right font-bold text-slate-200 font-mono">+-1.0R</td>
+        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">🛑 STOP LOSS (-1.0R)</span></td>
+      </tr>
+
+      <tr class="hover:bg-slate-800/40 transition trade-row" data-outcome="WIN" data-date="2026-10-11">
+        <td class="py-2.5 px-2 text-center text-slate-500 font-bold">5</td>
+        <td class="py-2.5 px-2.5 text-slate-300 font-mono text-xs">2026-10-11</td>
+        <td class="py-2.5 px-2.5 text-cyan-300 font-bold font-mono text-xs">23:45</td>
+        <td class="py-2.5 px-2.5 text-amber-300 font-bold font-mono text-xs">07:45</td>
+        <td class="py-2.5 px-2 text-center font-bold text-rose-400">SELL</td>
+        <td class="py-2.5 px-2 text-right text-slate-300 font-mono">1126</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4196.32</td>
+        <td class="py-2.5 px-2.5 text-right text-rose-400 font-mono">$4191.88</td>
+        <td class="py-2.5 px-2.5 text-right text-emerald-400 font-mono">$4018.72</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4191.88</td>
+        <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono text-xs">$0.01</td>
+        <td class="py-2.5 px-3 text-right text-emerald-400 font-bold font-mono">$+7.49</td>
+        <td class="py-2.5 px-2.5 text-right font-bold text-slate-200 font-mono">+1.5R</td>
+        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">🚀 40R TRAIL (+1.5R)</span></td>
+      </tr>
+
+      <tr class="hover:bg-slate-800/40 transition trade-row" data-outcome="LOSS" data-date="2026-10-11">
+        <td class="py-2.5 px-2 text-center text-slate-500 font-bold">6</td>
+        <td class="py-2.5 px-2.5 text-slate-300 font-mono text-xs">2026-10-11</td>
+        <td class="py-2.5 px-2.5 text-cyan-300 font-bold font-mono text-xs">12:45</td>
+        <td class="py-2.5 px-2.5 text-amber-300 font-bold font-mono text-xs">21:45</td>
+        <td class="py-2.5 px-2 text-center font-bold text-rose-400">SELL</td>
+        <td class="py-2.5 px-2 text-right text-slate-300 font-mono">2500</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4192.42</td>
+        <td class="py-2.5 px-2.5 text-right text-rose-400 font-mono">$4194.42</td>
+        <td class="py-2.5 px-2.5 text-right text-emerald-400 font-mono">$4112.42</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4194.42</td>
+        <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono text-xs">$0.01</td>
+        <td class="py-2.5 px-3 text-right text-rose-400 font-bold font-mono">$-5.01</td>
+        <td class="py-2.5 px-2.5 text-right font-bold text-slate-200 font-mono">+-1.0R</td>
+        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">🛑 STOP LOSS (-1.0R)</span></td>
+      </tr>
+
+      <tr class="hover:bg-slate-800/40 transition trade-row" data-outcome="LOSS" data-date="2026-10-12">
+        <td class="py-2.5 px-2 text-center text-slate-500 font-bold">7</td>
+        <td class="py-2.5 px-2.5 text-slate-300 font-mono text-xs">2026-10-12</td>
+        <td class="py-2.5 px-2.5 text-cyan-300 font-bold font-mono text-xs">23:15</td>
+        <td class="py-2.5 px-2.5 text-amber-300 font-bold font-mono text-xs">06:00</td>
+        <td class="py-2.5 px-2 text-center font-bold text-rose-400">SELL</td>
+        <td class="py-2.5 px-2 text-right text-slate-300 font-mono">1333</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4199.42</td>
+        <td class="py-2.5 px-2.5 text-right text-rose-400 font-mono">$4203.17</td>
+        <td class="py-2.5 px-2.5 text-right text-emerald-400 font-mono">$4049.42</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4203.17</td>
+        <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono text-xs">$0.01</td>
+        <td class="py-2.5 px-3 text-right text-rose-400 font-bold font-mono">$-5.01</td>
+        <td class="py-2.5 px-2.5 text-right font-bold text-slate-200 font-mono">+-1.0R</td>
+        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">🛑 STOP LOSS (-1.0R)</span></td>
+      </tr>
+
+      <tr class="hover:bg-slate-800/40 transition trade-row" data-outcome="LOSS" data-date="2026-10-12">
+        <td class="py-2.5 px-2 text-center text-slate-500 font-bold">8</td>
+        <td class="py-2.5 px-2.5 text-slate-300 font-mono text-xs">2026-10-12</td>
+        <td class="py-2.5 px-2.5 text-cyan-300 font-bold font-mono text-xs">11:00</td>
+        <td class="py-2.5 px-2.5 text-amber-300 font-bold font-mono text-xs">11:30</td>
+        <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+        <td class="py-2.5 px-2 text-right text-slate-300 font-mono">1152</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4190.05</td>
+        <td class="py-2.5 px-2.5 text-right text-rose-400 font-mono">$4185.71</td>
+        <td class="py-2.5 px-2.5 text-right text-emerald-400 font-mono">$4363.65</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4185.71</td>
+        <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono text-xs">$0.01</td>
+        <td class="py-2.5 px-3 text-right text-rose-400 font-bold font-mono">$-5.01</td>
+        <td class="py-2.5 px-2.5 text-right font-bold text-slate-200 font-mono">+-1.0R</td>
+        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">🛑 STOP LOSS (-1.0R)</span></td>
+      </tr>
+
+      <tr class="hover:bg-slate-800/40 transition trade-row" data-outcome="LOSS" data-date="2026-10-12">
+        <td class="py-2.5 px-2 text-center text-slate-500 font-bold">9</td>
+        <td class="py-2.5 px-2.5 text-slate-300 font-mono text-xs">2026-10-12</td>
+        <td class="py-2.5 px-2.5 text-cyan-300 font-bold font-mono text-xs">13:45</td>
+        <td class="py-2.5 px-2.5 text-amber-300 font-bold font-mono text-xs">14:15</td>
+        <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+        <td class="py-2.5 px-2 text-right text-slate-300 font-mono">2500</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4178.87</td>
+        <td class="py-2.5 px-2.5 text-right text-rose-400 font-mono">$4176.87</td>
+        <td class="py-2.5 px-2.5 text-right text-emerald-400 font-mono">$4258.87</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4176.87</td>
+        <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono text-xs">$0.01</td>
+        <td class="py-2.5 px-3 text-right text-rose-400 font-bold font-mono">$-5.01</td>
+        <td class="py-2.5 px-2.5 text-right font-bold text-slate-200 font-mono">+-1.0R</td>
+        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">🛑 STOP LOSS (-1.0R)</span></td>
+      </tr>
+
+      <tr class="hover:bg-slate-800/40 transition trade-row" data-outcome="LOSS" data-date="2026-10-12">
+        <td class="py-2.5 px-2 text-center text-slate-500 font-bold">10</td>
+        <td class="py-2.5 px-2.5 text-slate-300 font-mono text-xs">2026-10-12</td>
+        <td class="py-2.5 px-2.5 text-cyan-300 font-bold font-mono text-xs">14:30</td>
+        <td class="py-2.5 px-2.5 text-amber-300 font-bold font-mono text-xs">15:00</td>
+        <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+        <td class="py-2.5 px-2 text-right text-slate-300 font-mono">791</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4180.71</td>
+        <td class="py-2.5 px-2.5 text-right text-rose-400 font-mono">$4174.39</td>
+        <td class="py-2.5 px-2.5 text-right text-emerald-400 font-mono">$4433.51</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4174.39</td>
+        <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono text-xs">$0.01</td>
+        <td class="py-2.5 px-3 text-right text-rose-400 font-bold font-mono">$-5.01</td>
+        <td class="py-2.5 px-2.5 text-right font-bold text-slate-200 font-mono">+-1.0R</td>
+        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">🛑 STOP LOSS (-1.0R)</span></td>
+      </tr>
+
+      <tr class="hover:bg-slate-800/40 transition trade-row" data-outcome="LOSS" data-date="2026-10-12">
+        <td class="py-2.5 px-2 text-center text-slate-500 font-bold">11</td>
+        <td class="py-2.5 px-2.5 text-slate-300 font-mono text-xs">2026-10-12</td>
+        <td class="py-2.5 px-2.5 text-cyan-300 font-bold font-mono text-xs">15:15</td>
+        <td class="py-2.5 px-2.5 text-amber-300 font-bold font-mono text-xs">17:15</td>
+        <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+        <td class="py-2.5 px-2 text-right text-slate-300 font-mono">1316</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4176.67</td>
+        <td class="py-2.5 px-2.5 text-right text-rose-400 font-mono">$4172.87</td>
+        <td class="py-2.5 px-2.5 text-right text-emerald-400 font-mono">$4328.67</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4172.87</td>
+        <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono text-xs">$0.01</td>
+        <td class="py-2.5 px-3 text-right text-rose-400 font-bold font-mono">$-5.01</td>
+        <td class="py-2.5 px-2.5 text-right font-bold text-slate-200 font-mono">+-1.0R</td>
+        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">🛑 STOP LOSS (-1.0R)</span></td>
+      </tr>
+
+      <tr class="hover:bg-slate-800/40 transition trade-row" data-outcome="LOSS" data-date="2026-10-12">
+        <td class="py-2.5 px-2 text-center text-slate-500 font-bold">12</td>
+        <td class="py-2.5 px-2.5 text-slate-300 font-mono text-xs">2026-10-12</td>
+        <td class="py-2.5 px-2.5 text-cyan-300 font-bold font-mono text-xs">17:30</td>
+        <td class="py-2.5 px-2.5 text-amber-300 font-bold font-mono text-xs">17:45</td>
+        <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+        <td class="py-2.5 px-2 text-right text-slate-300 font-mono">828</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4175.17</td>
+        <td class="py-2.5 px-2.5 text-right text-rose-400 font-mono">$4169.13</td>
+        <td class="py-2.5 px-2.5 text-right text-emerald-400 font-mono">$4416.77</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4169.13</td>
+        <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono text-xs">$0.01</td>
+        <td class="py-2.5 px-3 text-right text-rose-400 font-bold font-mono">$-5.01</td>
+        <td class="py-2.5 px-2.5 text-right font-bold text-slate-200 font-mono">+-1.0R</td>
+        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">🛑 STOP LOSS (-1.0R)</span></td>
+      </tr>
+
+      <tr class="hover:bg-slate-800/40 transition trade-row" data-outcome="WIN" data-date="2026-10-12">
+        <td class="py-2.5 px-2 text-center text-slate-500 font-bold">13</td>
+        <td class="py-2.5 px-2.5 text-slate-300 font-mono text-xs">2026-10-12</td>
+        <td class="py-2.5 px-2.5 text-cyan-300 font-bold font-mono text-xs">18:00</td>
+        <td class="py-2.5 px-2.5 text-amber-300 font-bold font-mono text-xs">21:00</td>
+        <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+        <td class="py-2.5 px-2 text-right text-slate-300 font-mono">1229</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4168.68</td>
+        <td class="py-2.5 px-2.5 text-right text-rose-400 font-mono">$4172.75</td>
+        <td class="py-2.5 px-2.5 text-right text-emerald-400 font-mono">$4331.48</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4172.75</td>
+        <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono text-xs">$0.01</td>
+        <td class="py-2.5 px-3 text-right text-emerald-400 font-bold font-mono">$+7.49</td>
+        <td class="py-2.5 px-2.5 text-right font-bold text-slate-200 font-mono">+1.5R</td>
+        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">🚀 40R TRAIL (+1.5R)</span></td>
+      </tr>
+
+      <tr class="hover:bg-slate-800/40 transition trade-row" data-outcome="WIN" data-date="2026-10-13">
+        <td class="py-2.5 px-2 text-center text-slate-500 font-bold">14</td>
+        <td class="py-2.5 px-2.5 text-slate-300 font-mono text-xs">2026-10-13</td>
+        <td class="py-2.5 px-2.5 text-cyan-300 font-bold font-mono text-xs">07:15</td>
+        <td class="py-2.5 px-2.5 text-amber-300 font-bold font-mono text-xs">18:30</td>
+        <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+        <td class="py-2.5 px-2 text-right text-slate-300 font-mono">388</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4168.48</td>
+        <td class="py-2.5 px-2.5 text-right text-rose-400 font-mono">$4181.37</td>
+        <td class="py-2.5 px-2.5 text-right text-emerald-400 font-mono">$4684.08</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4181.37</td>
+        <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono text-xs">$0.01</td>
+        <td class="py-2.5 px-3 text-right text-emerald-400 font-bold font-mono">$+7.49</td>
+        <td class="py-2.5 px-2.5 text-right font-bold text-slate-200 font-mono">+1.5R</td>
+        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">🚀 40R TRAIL (+1.5R)</span></td>
+      </tr>
+
+      <tr class="hover:bg-slate-800/40 transition trade-row" data-outcome="LOSS" data-date="2026-10-13">
+        <td class="py-2.5 px-2 text-center text-slate-500 font-bold">15</td>
+        <td class="py-2.5 px-2.5 text-slate-300 font-mono text-xs">2026-10-13</td>
+        <td class="py-2.5 px-2.5 text-cyan-300 font-bold font-mono text-xs">21:30</td>
+        <td class="py-2.5 px-2.5 text-amber-300 font-bold font-mono text-xs">23:00</td>
+        <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+        <td class="py-2.5 px-2 text-right text-slate-300 font-mono">1323</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4165.13</td>
+        <td class="py-2.5 px-2.5 text-right text-rose-400 font-mono">$4161.35</td>
+        <td class="py-2.5 px-2.5 text-right text-emerald-400 font-mono">$4316.33</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4161.35</td>
+        <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono text-xs">$0.01</td>
+        <td class="py-2.5 px-3 text-right text-rose-400 font-bold font-mono">$-5.01</td>
+        <td class="py-2.5 px-2.5 text-right font-bold text-slate-200 font-mono">+-1.0R</td>
+        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">🛑 STOP LOSS (-1.0R)</span></td>
+      </tr>
+
+      <tr class="hover:bg-slate-800/40 transition trade-row" data-outcome="LOSS" data-date="2026-10-14">
+        <td class="py-2.5 px-2 text-center text-slate-500 font-bold">16</td>
+        <td class="py-2.5 px-2.5 text-slate-300 font-mono text-xs">2026-10-14</td>
+        <td class="py-2.5 px-2.5 text-cyan-300 font-bold font-mono text-xs">23:30</td>
+        <td class="py-2.5 px-2.5 text-amber-300 font-bold font-mono text-xs">07:00</td>
+        <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+        <td class="py-2.5 px-2 text-right text-slate-300 font-mono">417</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4166.29</td>
+        <td class="py-2.5 px-2.5 text-right text-rose-400 font-mono">$4154.30</td>
+        <td class="py-2.5 px-2.5 text-right text-emerald-400 font-mono">$4645.89</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4154.30</td>
+        <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono text-xs">$0.01</td>
+        <td class="py-2.5 px-3 text-right text-rose-400 font-bold font-mono">$-5.01</td>
+        <td class="py-2.5 px-2.5 text-right font-bold text-slate-200 font-mono">+-1.0R</td>
+        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">🛑 STOP LOSS (-1.0R)</span></td>
+      </tr>
+
+      <tr class="hover:bg-slate-800/40 transition trade-row" data-outcome="LOSS" data-date="2026-10-14">
+        <td class="py-2.5 px-2 text-center text-slate-500 font-bold">17</td>
+        <td class="py-2.5 px-2.5 text-slate-300 font-mono text-xs">2026-10-14</td>
+        <td class="py-2.5 px-2.5 text-cyan-300 font-bold font-mono text-xs">07:15</td>
+        <td class="py-2.5 px-2.5 text-amber-300 font-bold font-mono text-xs">12:45</td>
+        <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+        <td class="py-2.5 px-2 text-right text-slate-300 font-mono">530</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4162.08</td>
+        <td class="py-2.5 px-2.5 text-right text-rose-400 font-mono">$4152.65</td>
+        <td class="py-2.5 px-2.5 text-right text-emerald-400 font-mono">$4539.28</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4152.65</td>
+        <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono text-xs">$0.01</td>
+        <td class="py-2.5 px-3 text-right text-rose-400 font-bold font-mono">$-5.01</td>
+        <td class="py-2.5 px-2.5 text-right font-bold text-slate-200 font-mono">+-1.0R</td>
+        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">🛑 STOP LOSS (-1.0R)</span></td>
+      </tr>
+
+      <tr class="hover:bg-slate-800/40 transition trade-row" data-outcome="LOSS" data-date="2026-10-14">
+        <td class="py-2.5 px-2 text-center text-slate-500 font-bold">18</td>
+        <td class="py-2.5 px-2.5 text-slate-300 font-mono text-xs">2026-10-14</td>
+        <td class="py-2.5 px-2.5 text-cyan-300 font-bold font-mono text-xs">13:00</td>
+        <td class="py-2.5 px-2.5 text-amber-300 font-bold font-mono text-xs">14:15</td>
+        <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+        <td class="py-2.5 px-2 text-right text-slate-300 font-mono">879</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4156.98</td>
+        <td class="py-2.5 px-2.5 text-right text-rose-400 font-mono">$4151.29</td>
+        <td class="py-2.5 px-2.5 text-right text-emerald-400 font-mono">$4384.58</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4151.29</td>
+        <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono text-xs">$0.01</td>
+        <td class="py-2.5 px-3 text-right text-rose-400 font-bold font-mono">$-5.01</td>
+        <td class="py-2.5 px-2.5 text-right font-bold text-slate-200 font-mono">+-1.0R</td>
+        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">🛑 STOP LOSS (-1.0R)</span></td>
+      </tr>
+
+      <tr class="hover:bg-slate-800/40 transition trade-row" data-outcome="LOSS" data-date="2026-10-14">
+        <td class="py-2.5 px-2 text-center text-slate-500 font-bold">19</td>
+        <td class="py-2.5 px-2.5 text-slate-300 font-mono text-xs">2026-10-14</td>
+        <td class="py-2.5 px-2.5 text-cyan-300 font-bold font-mono text-xs">14:30</td>
+        <td class="py-2.5 px-2.5 text-amber-300 font-bold font-mono text-xs">15:30</td>
+        <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+        <td class="py-2.5 px-2 text-right text-slate-300 font-mono">1639</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4152.32</td>
+        <td class="py-2.5 px-2.5 text-right text-rose-400 font-mono">$4149.27</td>
+        <td class="py-2.5 px-2.5 text-right text-emerald-400 font-mono">$4274.32</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4149.27</td>
+        <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono text-xs">$0.01</td>
+        <td class="py-2.5 px-3 text-right text-rose-400 font-bold font-mono">$-5.01</td>
+        <td class="py-2.5 px-2.5 text-right font-bold text-slate-200 font-mono">+-1.0R</td>
+        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">🛑 STOP LOSS (-1.0R)</span></td>
+      </tr>
+
+      <tr class="hover:bg-slate-800/40 transition trade-row" data-outcome="WIN" data-date="2026-10-14">
+        <td class="py-2.5 px-2 text-center text-slate-500 font-bold">20</td>
+        <td class="py-2.5 px-2.5 text-slate-300 font-mono text-xs">2026-10-14</td>
+        <td class="py-2.5 px-2.5 text-cyan-300 font-bold font-mono text-xs">17:00</td>
+        <td class="py-2.5 px-2.5 text-amber-300 font-bold font-mono text-xs">17:45</td>
+        <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+        <td class="py-2.5 px-2 text-right text-slate-300 font-mono">1008</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4148.30</td>
+        <td class="py-2.5 px-2.5 text-right text-rose-400 font-mono">$4153.26</td>
+        <td class="py-2.5 px-2.5 text-right text-emerald-400 font-mono">$4346.70</td>
+        <td class="py-2.5 px-2.5 text-right text-slate-200 font-mono">$4153.26</td>
+        <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono text-xs">$0.01</td>
+        <td class="py-2.5 px-3 text-right text-emerald-400 font-bold font-mono">$+9.99</td>
+        <td class="py-2.5 px-2.5 text-right font-bold text-slate-200 font-mono">+1.5R</td>
+        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">🚀 40R TRAIL (+1.5R)</span></td>
+      </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    lucide.createIcons();
+
+    // Chart.js Equity
+    const eqCtx = document.getElementById('equityChart').getContext('2d');
+    new Chart(eqCtx, {
+      type: 'line',
+      data: {
+        labels: ["Oct 08 Start", "T1 (10-08)", "T2 (10-08)", "T3 (10-09)", "T4 (10-09)", "T5 (10-11)", "T6 (10-11)", "T7 (10-12)", "T8 (10-12)", "T9 (10-12)", "T10 (10-12)", "T11 (10-12)", "T12 (10-12)", "T13 (10-12)", "T14 (10-13)", "T15 (10-13)", "T16 (10-14)", "T17 (10-14)", "T18 (10-14)", "T19 (10-14)", "T20 (10-14)"],
+        datasets: [{
+          label: 'Cumulative Balance ($USD)',
+          data: [50.0, 59.99, 69.67, 85.19, 80.18, 87.67, 82.66, 77.65, 72.64, 67.63, 62.62, 57.61, 52.6, 60.09, 67.58, 62.57, 57.56, 52.55, 47.54, 42.53, 52.52],
+          borderColor: '#f59e0b',
+          backgroundColor: 'rgba(245, 158, 11, 0.08)',
+          fill: true,
+          tension: 0.1,
+          pointRadius: 4,
+          pointBackgroundColor: '#f59e0b',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => ` Balance: $${ctx.parsed.y.toFixed(2)}`
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { maxTicksLimit: 10, color: '#64748b', font: { size: 10, family: 'monospace' } },
+            grid: { color: 'rgba(255, 255, 255, 0.03)' }
+          },
+          y: {
+            ticks: {
+              color: '#64748b',
+              font: { size: 10, family: 'monospace' },
+              callback: (v) => '$' + v.toFixed(0)
+            },
+            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+          }
+        }
+      }
+    });
+
+    // Chart.js Hourly
+    const hrCtx = document.getElementById('hourlyChart').getContext('2d');
+    new Chart(hrCtx, {
+      type: 'bar',
+      data: {
+        labels: Array.from({length: 24}, (_, i) => `${String(i).padStart(2, '0')}:00`),
+        datasets: [{
+          label: 'Hourly Net P&L',
+          data: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.48, 0.0, 0.0, 0.0, -5.01, 10.51, -0.03, -0.34, -5.01, 0.0, 4.98, 7.49, 0.0, 0.0, -10.02, 0.0, -2.53],
+          backgroundColor: ["#10b981", "#10b981", "#10b981", "#10b981", "#10b981", "#10b981", "#10b981", "#10b981", "#10b981", "#10b981", "#10b981", "#f43f5e", "#10b981", "#f43f5e", "#f43f5e", "#f43f5e", "#10b981", "#10b981", "#10b981", "#10b981", "#10b981", "#f43f5e", "#10b981", "#f43f5e"],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: {
+            ticks: { maxTicksLimit: 12, color: '#64748b', font: { size: 10, family: 'monospace' } },
+            grid: { display: false }
+          },
+          y: {
+            ticks: {
+              color: '#64748b',
+              font: { size: 10, family: 'monospace' },
+              callback: (v) => '$' + v.toFixed(0)
+            },
+            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+          }
+        }
+      }
+    });
+
+    // Table Filtering
+    let currentOutcome = 'ALL';
+    let currentDate = 'ALL';
+
+    function setOutcomeFilter(filter) {
+      currentOutcome = filter;
+      document.querySelectorAll('#btn-all, #btn-win, #btn-loss').forEach(b => {
+        b.className = 'px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white font-bold';
+      });
+      const targetBtn = document.getElementById(`btn-${filter.toLowerCase()}`);
+      if (targetBtn) {
+        targetBtn.className = 'px-3 py-1.5 rounded-xl bg-amber-500 text-slate-950 font-bold';
+      }
+      filterJournal();
+    }
+
+    function filterByDate(dateStr) {
+      currentDate = dateStr;
+      filterJournal();
+    }
+
+    function filterJournal() {
+      const q = document.getElementById('searchJournal').value.toLowerCase();
+      const rows = document.querySelectorAll('.trade-row');
+      rows.forEach(r => {
+        const rowOutcome = r.getAttribute('data-outcome');
+        const rowDate = r.getAttribute('data-date');
+        const text = r.innerText.toLowerCase();
+
+        const matchOutcome = (currentOutcome === 'ALL' || rowOutcome === currentOutcome);
+        const matchDate = (currentDate === 'ALL' || rowDate === currentDate);
+        const matchSearch = (!q || text.includes(q));
+
+        if (matchOutcome && matchDate && matchSearch) {
+          r.style.display = '';
+        } else {
+          r.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+</html>
