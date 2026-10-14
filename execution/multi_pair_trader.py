@@ -368,6 +368,32 @@ class MultiPairLiveTrader:
             except Exception:
                 pass
 
+        # 2B. Reconcile Delta Exchange Open/Stop Orders (Auto-cancel orphans & obsolete duplicates)
+        if self.is_live_authenticated:
+            try:
+                all_open_orders = self.client.get_open_orders()
+                active_symbols_on_exchange = set(exchange_positions.keys())
+                for o in all_open_orders:
+                    sym = o.get("product_symbol")
+                    oid = o.get("id")
+                    pid = o.get("product_id")
+                    if not oid:
+                        continue
+                    # Case 1: Symbol has 0 position on exchange -> Cancel orphaned resting/stop order
+                    if sym not in active_symbols_on_exchange:
+                        print(f"🧹 [ORPHAN ORDER CLEANUP] Cancelling order {oid} for flat pair {sym} ({o.get('stop_order_type')} @ {o.get('stop_price')})")
+                        self.client.cancel_order(oid, pid)
+                    # Case 2: Symbol has active position -> Cancel obsolete stop-loss orders at older prices
+                    elif sym in self.active_positions:
+                        current_sl = self.active_positions[sym].get("stop_loss")
+                        stype = o.get("stop_order_type")
+                        sprice = float(o.get("stop_price") or 0.0)
+                        if stype == "stop_loss_order" and current_sl and abs(sprice - current_sl) > 0.05:
+                            print(f"🧹 [OBSOLETE STOP CLEANUP] Cancelling old stop loss order {oid} on {sym} @ ${sprice} (Active SL is ${current_sl})")
+                            self.client.cancel_order(oid, pid)
+            except Exception as e:
+                print(f"[ORDER RECONCILIATION NOTICE] {e}")
+
         # 3. Iterate through each symbol independently
         for symbol in ACTIVE_SYMBOLS:
             try:
@@ -516,7 +542,11 @@ class MultiPairLiveTrader:
                     try:
                         close_side = "sell" if side == "BUY" else "buy"
                         rem_lots = pos.get("remaining_lots") or pos.get("lots") or 1
-                        self.client.cancel_all_orders(symbol)
+                        # Cancel existing stop loss orders for this symbol first by ID
+                        open_orders = self.client.get_open_orders(symbol)
+                        for o in open_orders:
+                            if o.get("stop_order_type") == "stop_loss_order":
+                                self.client.cancel_order(o.get("id"), o.get("product_id"))
                         sl_res = self.client.place_stop_order(
                             symbol=symbol,
                             side=close_side,
@@ -544,18 +574,23 @@ class MultiPairLiveTrader:
         # Baseline check: If position is open and authenticated, ensure at least one exchange stop exists
         if symbol not in self.verified_sl_orders and self.is_live_authenticated:
             try:
-                close_side = "sell" if side == "BUY" else "buy"
-                rem_lots = pos.get("remaining_lots") or pos.get("lots") or 1
-                sl_res = self.client.place_stop_order(
-                    symbol=symbol,
-                    side=close_side,
-                    size=rem_lots,
-                    stop_price=pos["stop_loss"],
-                    is_take_profit=False
-                )
-                if sl_res.get("success"):
+                open_orders = self.client.get_open_orders(symbol)
+                has_sl = any(o.get("stop_order_type") == "stop_loss_order" for o in open_orders)
+                if not has_sl:
+                    close_side = "sell" if side == "BUY" else "buy"
+                    rem_lots = pos.get("remaining_lots") or pos.get("lots") or 1
+                    sl_res = self.client.place_stop_order(
+                        symbol=symbol,
+                        side=close_side,
+                        size=rem_lots,
+                        stop_price=pos["stop_loss"],
+                        is_take_profit=False
+                    )
+                    if sl_res.get("success"):
+                        self.verified_sl_orders.add(symbol)
+                        print(f"🛡️ [DELTA EXCHANGE SL VERIFIED] {symbol} {close_side.upper()} Stop placed on Delta @ ${pos['stop_loss']}")
+                else:
                     self.verified_sl_orders.add(symbol)
-                    print(f"🛡️ [DELTA EXCHANGE SL VERIFIED] {symbol} {close_side.upper()} Stop placed on Delta @ ${pos['stop_loss']}")
             except Exception as e:
                 print(f"[DELTA BASELINE SL NOTICE] {e}")
 

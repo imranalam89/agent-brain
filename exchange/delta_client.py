@@ -350,10 +350,40 @@ class DeltaExchangeClient:
         }
         return self._request("POST", "/v2/orders", data=payload, auth=True)
 
+    def cancel_order(self, order_id: int, product_id: Optional[int] = None) -> Dict[str, Any]:
+        """Cancels a specific resting or conditional stop order by ID."""
+        payload: Dict[str, Any] = {"id": int(order_id)}
+        if product_id:
+            payload["product_id"] = int(product_id)
+        return self._request("DELETE", "/v2/orders", data=payload, auth=True)
+
     def cancel_all_orders(self, symbol: Optional[str] = None) -> Dict[str, Any]:
-        """Emergency kill switch - cancels all open resting orders."""
-        params = {"product_symbol": symbol} if symbol else None
-        return self._request("DELETE", "/v2/orders/all", params=params, auth=True)
+        """Emergency kill switch / cleanup - cancels all open resting and stop orders for a symbol or account."""
+        cancelled = []
+        try:
+            open_orders = self.get_open_orders(symbol)
+            for o in open_orders:
+                oid = o.get("id")
+                pid = o.get("product_id")
+                if oid:
+                    res = self.cancel_order(oid, pid)
+                    cancelled.append({"id": oid, "success": res.get("success", False)})
+        except Exception as e:
+            print(f"[CANCEL ALL ERROR] {e}")
+
+        # Also attempt bulk endpoint with product_id if available
+        try:
+            if symbol:
+                spec = self.get_product_spec(symbol)
+                pid = spec.get("id")
+                if pid:
+                    self._request("DELETE", "/v2/orders/all", data={"product_id": int(pid)}, auth=True)
+            else:
+                self._request("DELETE", "/v2/orders/all", auth=True)
+        except Exception:
+            pass
+
+        return {"success": True, "cancelled": cancelled}
 
     def get_open_orders(self, symbol: Optional[str] = None) -> List[Dict[str, Any]]:
         """Fetches resting / open orders (including conditional stop orders)."""
