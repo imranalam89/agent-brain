@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Brain | 🥇 Gold (XAUTUSD) DOM Backtest Report &amp; Journal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { background-color: #07090e; color: #f1f5f9; font-family: system-ui, -apple-system, sans-serif; }
+    .glass-card { background: rgba(13, 17, 28, 0.94); backdrop-filter: blur(14px); border: 1px solid #1a233a; }
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #0a0d14; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #1f2a44; border-radius: 4px; }
+    .badge-win { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-loss { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-be { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+    .badge-trail { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .badge-lock { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .badge-cut { background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); }
+    .cal-day-active { border-color: #10b981 !important; box-shadow: 0 0 14px rgba(16, 185, 129, 0.5); }
+  </style>
+</head>
+<body class="min-h-screen p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto custom-scroll">
+
+  <!-- TOP HEADER -->
+  <header class="flex flex-col md:flex-row items-center justify-between gap-4 border-b border-slate-800 pb-5">
+    <div class="flex items-center gap-3">
+      <div class="h-12 w-12 rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 flex items-center justify-center font-bold text-white text-2xl shadow-xl shadow-amber-500/20">
+        🥇
+      </div>
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white uppercase">Gold (XAUTUSD) DOM Backtest Report</h1>
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border-amber-500/30">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            100% PURE MATHEMATICAL EXECUTION • OCT 08 - OCT 13, 2026
+          </span>
+        </div>
+        <p class="text-xs text-slate-400 font-mono mt-0.5">
+          Orderbook Engine: <span class="text-cyan-400 font-bold">589,000+ Snapshots</span> • Risk Rule: <span class="text-amber-400 font-bold">Strictly $5.00/Trade</span> • Capital: <span class="text-emerald-400 font-bold">$50.00 Base</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- QUICK NAV LINKS -->
+    <div class="flex items-center gap-2 flex-wrap text-xs font-mono">
+      
+      <a href="dom_master_analytics_report.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
+        <span>🎯 Master Report</span>
+      </a>
+      <a href="dom_gold_backtest_report.html" class="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow font-bold transition flex items-center gap-1.5">
+        <span>🥇 Gold</span>
+      </a>
+      <a href="dom_silver_backtest_report.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
+        <span>🥈 Silver</span>
+      </a>
+      <a href="dom_btc_backtest_report.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
+        <span>₿ BTC</span>
+      </a>
+      <a href="dom_eth_backtest_report.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
+        <span>Ξ ETH</span>
+      </a>
+      <a href="dom_heatmap.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
+        <i data-lucide="layers" class="w-3.5 h-3.5 text-emerald-400"></i>
+        <span>DOM Heatmap</span>
+      </a>
+      <a href="live_journal.html" class="px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 font-bold transition flex items-center gap-1.5 shadow">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>⚡ Live Journal</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- STRATEGY PHILOSOPHY & PARAMETER BANNER -->
+  <section class="glass-card rounded-2xl p-4 border-l-4 border-l-emerald-500 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 font-mono text-xs">
+    <div class="space-y-1">
+      <div class="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+        <i data-lucide="shield-check" class="w-4 h-4"></i>
+        <span>Gold Strategy Profile: Institutional DOM Order Flow & Wall Defense</span>
+      </div>
+      <p class="text-slate-400 text-[11px]">
+        Mode: <span class="text-white font-bold">ABSORPTION_FADE / PRICE ACTION L2</span> • Min Imbalance: <span class="text-cyan-400 font-bold">2.4x / 1.5x</span> • TP: <span class="text-emerald-400 font-bold">1.5% - 2.0%</span> • SL: <span class="text-rose-400 font-bold">0.30% - 0.40%</span> • Cooldown: <span class="text-amber-300 font-bold">15 mins (360 snapshots)</span> • Breakeven Lock: <span class="text-indigo-400 font-bold">+0.70R (+0.50R Guaranteed Lock)</span>
+      </p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">Ratchet Breathing Trailing (1.35x)</span>
+      <span class="px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold">$0.001 / contract (100x Leverage)</span>
+    </div>
+  </section>
+
+  <!-- KEY PERFORMANCE METRICS ROW -->
+  <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="glass-card rounded-2xl p-4">
+      <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Verified Trades</div>
+      <div class="text-3xl font-black text-white mt-1">14 Trades</div>
+      <div class="text-xs text-slate-400 mt-1">8 Wins / 6 Losses (57.1% Win Rate)</div>
+    </div>
+    <div class="glass-card rounded-2xl p-4">
+      <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Net Realized P&amp;L (USD)</div>
+      <div class="text-3xl font-black text-emerald-400 mt-1">$+27.72 USD</div>
+      <div class="text-xs text-emerald-400/80 font-bold mt-1">+₹+2,494.80 INR (+55.4% on $50)</div>
+    </div>
+    <div class="glass-card rounded-2xl p-4">
+      <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Profit Factor</div>
+      <div class="text-3xl font-black text-cyan-400 mt-1">2.4</div>
+      <div class="text-xs text-slate-400 mt-1">Avg Win: $+7.09 | Avg Loss: $-4.84</div>
+    </div>
+    <div class="glass-card rounded-2xl p-4">
+      <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Delta Fees &amp; GST</div>
+      <div class="text-3xl font-black text-amber-400 mt-1">$7.78 USD</div>
+      <div class="text-xs text-slate-400 mt-1">Max Drawdown: $23.14 USD (18% GST incl.)</div>
+    </div>
+  </section>
+
+  <!-- HOURLY & DAY OF WEEK EDGE CARDS (SIDE BY SIDE) -->
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    
+    <!-- LEFT CARD: HOURLY PROFITABILITY BREAKDOWN (IST) -->
+    <div class="glass-card rounded-2xl p-5 space-y-4 border border-slate-800">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-lg">⏰</span>
+            <h2 class="text-base font-black text-white tracking-tight">Gold Hourly Profitability Breakdown (IST)</h2>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">
+            Net P&amp;L performance by execution hour across all 14 XAUTUSD verified trades
+          </p>
+        </div>
+        <div class="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-right shrink-0">
+          <div class="text-[10px] text-emerald-400 uppercase font-mono font-bold">Best Hour: 23:00 IST</div>
+          <div class="text-xs font-black text-emerald-300 font-mono">($+35.66)</div>
+        </div>
+      </div>
+
+      <!-- Chart Container -->
+      <div class="h-60 w-full pt-2">
+        <canvas id="hourlyChart"></canvas>
+      </div>
+
+      <!-- Footer Legend -->
+      <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+        <div class="flex items-center gap-3">
+          <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 font-bold">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Green = Profitable Hour
+          </span>
+          <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-950/40 border border-rose-500/30 text-rose-400 font-bold">
+            <span class="w-2 h-2 rounded-full bg-rose-400"></span> Red = Loss Hour
+          </span>
+        </div>
+        <span class="px-2.5 py-1 rounded-lg bg-slate-800/80 text-amber-400 border border-slate-700 flex items-center gap-1 font-bold">
+          ⚡ Institutional Session: 13:30 - 23:30 IST
+        </span>
+      </div>
+    </div>
+
+    <!-- RIGHT CARD: DAY OF THE WEEK EDGE -->
+    <div class="glass-card rounded-2xl p-5 space-y-4 border border-slate-800">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-lg">📅</span>
+            <h2 class="text-base font-black text-white tracking-tight">Gold Day of the Week Edge</h2>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">
+            Institutional win rate and profitability per trading day for XAUTUSD
+          </p>
+        </div>
+        <div class="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-right shrink-0">
+          <div class="text-[10px] text-emerald-400 uppercase font-mono font-bold">Best Day: Thu</div>
+          <div class="text-xs font-black text-emerald-300 font-mono">($+40.92)</div>
+        </div>
+      </div>
+
+      <!-- Chart Container -->
+      <div class="h-60 w-full pt-2">
+        <canvas id="dowChart"></canvas>
+      </div>
+
+      <!-- Day Tiles Row -->
+      <div class="grid grid-cols-7 gap-1.5 pt-2 border-t border-slate-800 text-center font-mono">
+        
+        <div class="p-2 rounded-xl bg-slate-900/90 border border-slate-800 space-y-0.5">
+          <div class="text-[11px] font-bold text-slate-400">Mon</div>
+          <div class="text-xs font-black text-rose-400">$-22.7</div>
+          <div class="text-[9px] text-slate-500">20% (5t)</div>
+        </div>
+
+        <div class="p-2 rounded-xl bg-slate-900/90 border border-slate-800 space-y-0.5">
+          <div class="text-[11px] font-bold text-slate-400">Tue</div>
+          <div class="text-xs font-black text-emerald-400">$+9.5</div>
+          <div class="text-[9px] text-slate-500">67% (3t)</div>
+        </div>
+
+        <div class="p-2 rounded-xl bg-slate-900/90 border border-slate-800 space-y-0.5">
+          <div class="text-[11px] font-bold text-slate-400">Wed</div>
+          <div class="text-xs font-black text-emerald-400">$+0.0</div>
+          <div class="text-[9px] text-slate-500">0% (0t)</div>
+        </div>
+
+        <div class="p-2 rounded-xl bg-slate-900/90 border border-slate-800 space-y-0.5">
+          <div class="text-[11px] font-bold text-slate-400">Thu</div>
+          <div class="text-xs font-black text-emerald-400">$+40.9</div>
+          <div class="text-[9px] text-slate-500">83% (6t)</div>
+        </div>
+
+        <div class="p-2 rounded-xl bg-slate-900/90 border border-slate-800 space-y-0.5">
+          <div class="text-[11px] font-bold text-slate-400">Fri</div>
+          <div class="text-xs font-black text-emerald-400">$+0.0</div>
+          <div class="text-[9px] text-slate-500">0% (0t)</div>
+        </div>
+
+        <div class="p-2 rounded-xl bg-slate-900/90 border border-slate-800 space-y-0.5">
+          <div class="text-[11px] font-bold text-slate-400">Sat</div>
+          <div class="text-xs font-black text-emerald-400">$+0.0</div>
+          <div class="text-[9px] text-slate-500">0% (0t)</div>
+        </div>
+
+        <div class="p-2 rounded-xl bg-slate-900/90 border border-slate-800 space-y-0.5">
+          <div class="text-[11px] font-bold text-slate-400">Sun</div>
+          <div class="text-xs font-black text-emerald-400">$+0.0</div>
+          <div class="text-[9px] text-slate-500">0% (0t)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INTERACTIVE OCTOBER 2026 P&L CALENDAR HEATMAP -->
+  <section class="glass-card rounded-2xl p-6 border-slate-800 space-y-5">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      <div>
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="calendar" class="w-5 h-5 text-emerald-400"></i>
+          Interactive October 2026 P&amp;L Calendar (Gold Cycle: Oct 8 - Oct 13)
+        </h2>
+        <p class="text-xs text-slate-400 mt-0.5 font-mono">
+          Click any active calendar tile to filter the execution ledger for that exact calendar day!
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="resetCalFilterBtn" onclick="resetCalendarFilter()" class="hidden px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs font-mono transition flex items-center gap-1.5 shadow-lg shadow-emerald-500/20">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+          <span>Reset Filter (Show All 14 Trades)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Calendar Month Header & Days Grid -->
+    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800">
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-base font-black text-white font-mono tracking-wider">OCTOBER 2026</span>
+        <span class="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/30 font-bold">
+          Active Records: Oct 8, 9, 10, 11, 12 &amp; 13
+        </span>
+      </div>
+
+      <div class="grid grid-cols-7 gap-2 mb-2 text-center text-[11px] font-bold uppercase font-mono text-slate-500">
+        <div>Sun</div>
+        <div>Mon</div>
+        <div>Tue</div>
+        <div>Wed</div>
+        <div>Thu</div>
+        <div>Fri</div>
+        <div>Sat</div>
+      </div>
+
+      <div id="calendarDaysGrid" class="grid grid-cols-7 gap-2 text-xs font-mono">
+        <!-- Rendered dynamically via JavaScript -->
+      </div>
+    </div>
+
+    <!-- CALENDAR SELECTED DAY PERFORMANCE SCORECARD -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono">
+      <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 border-l-4 border-l-emerald-500">
+        <span class="text-[11px] text-slate-400 block">Filtered Net P&amp;L</span>
+        <span id="calCardPnl" class="text-lg font-black text-emerald-400">$+27.72 USD</span>
+        <span id="calCardPnlInr" class="text-[10px] text-slate-400 block mt-0.5">(All 14 Trades)</span>
+      </div>
+      <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 border-l-4 border-l-cyan-500">
+        <span class="text-[11px] text-slate-400 block">Win Rate</span>
+        <span id="calCardWr" class="text-lg font-black text-cyan-400">57.1%</span>
+        <span id="calCardWinLoss" class="text-[10px] text-slate-400 block mt-0.5">8W / 6L</span>
+      </div>
+      <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 border-l-4 border-l-purple-500">
+        <span class="text-[11px] text-slate-400 block">Execution Day Status</span>
+        <span id="calCardStatus" class="text-sm font-black text-purple-300">Showing All</span>
+        <span class="text-[10px] text-slate-400 block mt-0.5">Oct 8 - Oct 13, 2026</span>
+      </div>
+      <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 border-l-4 border-l-amber-500">
+        <span class="text-[11px] text-slate-400 block">Total Delta Fees</span>
+        <span id="calCardFees" class="text-lg font-black text-amber-400">$7.78 USD</span>
+        <span class="text-[10px] text-slate-400 block mt-0.5">100% Exchange Fees</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- RUNNING EQUITY CURVE SECTION -->
+  <section class="glass-card rounded-2xl p-5 border border-slate-800 space-y-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-base font-black text-white flex items-center gap-2">
+          <i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i>
+          Gold Cumulative Equity Progression ($50.00 Base)
+        </h2>
+        <p class="text-xs text-slate-400 mt-0.5">
+          Step-by-step account balance after each closed trade, factoring 100% exchange execution fees &amp; GST
+        </p>
+      </div>
+      <span class="px-3 py-1 rounded-xl bg-emerald-500/10 text-emerald-400 font-mono font-bold text-xs border border-emerald-500/30">
+        Peak: $90.92 USD
+      </span>
+    </div>
+    <div class="h-64 sm:h-72 w-full pt-2">
+      <canvas id="equityChart"></canvas>
+    </div>
+  </section>
+
+  <!-- COMPREHENSIVE TRADE JOURNAL TABLE -->
+  <section class="glass-card rounded-2xl p-5 border border-slate-800 space-y-4">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div>
+        <h2 class="text-base font-black text-white flex items-center gap-2">
+          <i data-lucide="book-open" class="w-4 h-4 text-emerald-400"></i>
+          Gold (XAUTUSD) Execution Journal (14 Trades)
+        </h2>
+        <p class="text-xs text-slate-400 mt-0.5">
+          Columns: # • DATE • ENTRY TIME (IST) • EXIT TIME (IST) • PAIR • SIDE • CONVICTION • LOTS • ENTRY PRICE • SL PRICE • TP PRICE • EXIT PRICE • GROSS PNL • DELTA FEE • REAL NET PNL • R:R • EXIT REASON
+        </p>
+      </div>
+
+      <!-- FILTER CONTROLS -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <select id="outcomeFilter" onchange="filterTable()" class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-300 font-bold focus:outline-none">
+          <option value="ALL">All Outcomes (14)</option>
+          <option value="WIN">Wins Only (8)</option>
+          <option value="LOSS">Losses Only (6)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="overflow-x-auto rounded-xl border border-slate-800 custom-scroll">
+      <table class="w-full text-left text-[11px] font-mono whitespace-nowrap">
+        <thead class="bg-[#0b0e17] text-slate-400 border-b border-slate-800 uppercase tracking-wider text-[10px]">
+          <tr>
+            <th class="py-3 px-2 text-center">#</th>
+            <th class="py-3 px-2.5">DATE</th>
+            <th class="py-3 px-2.5 text-cyan-400 font-bold">ENTRY TIME (IST)</th>
+            <th class="py-3 px-2.5 text-amber-400 font-bold">EXIT TIME (IST)</th>
+            <th class="py-3 px-2.5">PAIR</th>
+            <th class="py-3 px-2 text-center">SIDE</th>
+            <th class="py-3 px-2.5 text-amber-300 font-bold text-center">CONVICTION</th>
+            <th class="py-3 px-2 text-right">LOTS</th>
+            <th class="py-3 px-2.5 text-right">ENTRY PRICE</th>
+            <th class="py-3 px-2.5 text-right text-rose-400 font-bold">SL PRICE</th>
+            <th class="py-3 px-2.5 text-right text-emerald-400 font-bold">TP PRICE</th>
+            <th class="py-3 px-2.5 text-right text-slate-200">EXIT PRICE</th>
+            <th class="py-3 px-2.5 text-right text-slate-300">GROSS PNL</th>
+            <th class="py-3 px-2.5 text-right text-amber-400 font-bold">DELTA FEE</th>
+            <th class="py-3 px-3 text-right text-white font-black">REAL NET PNL</th>
+            <th class="py-3 px-2.5 text-right font-bold">R:R</th>
+            <th class="py-3 px-3 text-left">EXIT REASON</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800/60" id="tradeTableBody">
+
+          <tr class="hover:bg-slate-800/40 transition trade-row" data-symbol="XAUTUSD" data-outcome="WIN" data-date="2026-10-08">
+            <td class="py-2.5 px-2 text-center text-slate-500 font-bold">1</td>
+            <td class="py-2.5 px-2.5 text-slate-300">2026-10-08</td>
+            <td class="py-2.5 px-2.5 text-cyan-300 font-bold">11:57:24</td>
+            <td class="py-2.5 px-2.5 text-amber-300 font-bold">15:56:02</td>
+            <td class="py-2.5 px-2.5 font-bold text-white">XAUTUSD</td>
+            <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+            <td class="py-2.5 px-2.5 text-center text-amber-300">⭐⭐⭐</td>
+            <td class="py-2.5 px-2 text-right text-slate-300">485</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,123.06</td>
+            <td class="py-2.5 px-2.5 text-right text-rose-400">$4,112.75</td>
+            <td class="py-2.5 px-2.5 text-right text-emerald-400">$4,197.28</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,125.03</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-300">$+0.96</td>
+            <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono">$0.47</td>
+            <td class="py-2.5 px-3 text-right text-emerald-400 font-bold font-mono">$+0.49</td>
+            <td class="py-2.5 px-2.5 text-right font-bold text-slate-200">+0.19R</td>
+            <td class="py-2.5 px-3 space-x-1.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold badge-be">🛡️ BREAKEVEN</span>
+              <span class="text-slate-400 text-[10px]">BREAKEVEN</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-800/40 transition trade-row" data-symbol="XAUTUSD" data-outcome="WIN" data-date="2026-10-08">
+            <td class="py-2.5 px-2 text-center text-slate-500 font-bold">2</td>
+            <td class="py-2.5 px-2.5 text-slate-300">2026-10-08</td>
+            <td class="py-2.5 px-2.5 text-cyan-300 font-bold">16:08:39</td>
+            <td class="py-2.5 px-2.5 text-amber-300 font-bold">18:21:34</td>
+            <td class="py-2.5 px-2.5 font-bold text-white">XAUTUSD</td>
+            <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+            <td class="py-2.5 px-2.5 text-center text-amber-300">⭐⭐⭐</td>
+            <td class="py-2.5 px-2 text-right text-slate-300">485</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,119.98</td>
+            <td class="py-2.5 px-2.5 text-right text-rose-400">$4,109.69</td>
+            <td class="py-2.5 px-2.5 text-right text-emerald-400">$4,194.14</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,122.03</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-300">$+0.99</td>
+            <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono">$0.47</td>
+            <td class="py-2.5 px-3 text-right text-emerald-400 font-bold font-mono">$+0.52</td>
+            <td class="py-2.5 px-2.5 text-right font-bold text-slate-200">+0.20R</td>
+            <td class="py-2.5 px-3 space-x-1.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold badge-be">🛡️ BREAKEVEN</span>
+              <span class="text-slate-400 text-[10px]">BREAKEVEN</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-800/40 transition trade-row" data-symbol="XAUTUSD" data-outcome="WIN" data-date="2026-10-08">
+            <td class="py-2.5 px-2 text-center text-slate-500 font-bold">3</td>
+            <td class="py-2.5 px-2.5 text-slate-300">2026-10-08</td>
+            <td class="py-2.5 px-2.5 text-cyan-300 font-bold">18:35:02</td>
+            <td class="py-2.5 px-2.5 text-amber-300 font-bold">20:31:36</td>
+            <td class="py-2.5 px-2.5 font-bold text-white">XAUTUSD</td>
+            <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+            <td class="py-2.5 px-2.5 text-center text-amber-300">⭐⭐⭐</td>
+            <td class="py-2.5 px-2 text-right text-slate-300">485</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,125.52</td>
+            <td class="py-2.5 px-2.5 text-right text-rose-400">$4,115.21</td>
+            <td class="py-2.5 px-2.5 text-right text-emerald-400">$4,199.78</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,127.56</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-300">$+0.99</td>
+            <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono">$0.47</td>
+            <td class="py-2.5 px-3 text-right text-emerald-400 font-bold font-mono">$+0.52</td>
+            <td class="py-2.5 px-2.5 text-right font-bold text-slate-200">+0.20R</td>
+            <td class="py-2.5 px-3 space-x-1.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold badge-be">🛡️ BREAKEVEN</span>
+              <span class="text-slate-400 text-[10px]">BREAKEVEN</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-800/40 transition trade-row" data-symbol="XAUTUSD" data-outcome="LOSS" data-date="2026-10-08">
+            <td class="py-2.5 px-2 text-center text-slate-500 font-bold">4</td>
+            <td class="py-2.5 px-2.5 text-slate-300">2026-10-08</td>
+            <td class="py-2.5 px-2.5 text-cyan-300 font-bold">20:44:10</td>
+            <td class="py-2.5 px-2.5 text-amber-300 font-bold">21:31:42</td>
+            <td class="py-2.5 px-2.5 font-bold text-white">XAUTUSD</td>
+            <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+            <td class="py-2.5 px-2.5 text-center text-amber-300">⭐⭐⭐</td>
+            <td class="py-2.5 px-2 text-right text-slate-300">485</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,123.63</td>
+            <td class="py-2.5 px-2.5 text-right text-rose-400">$4,113.32</td>
+            <td class="py-2.5 px-2.5 text-right text-emerald-400">$4,197.86</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,113.31</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-300">$-5.00</td>
+            <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono">$0.71</td>
+            <td class="py-2.5 px-3 text-right text-rose-400 font-bold font-mono">$-5.71</td>
+            <td class="py-2.5 px-2.5 text-right font-bold text-slate-200">-1.00R</td>
+            <td class="py-2.5 px-3 space-x-1.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold badge-loss">🛑 STOP LOSS</span>
+              <span class="text-slate-400 text-[10px]">STOP_LOSS</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-800/40 transition trade-row" data-symbol="XAUTUSD" data-outcome="WIN" data-date="2026-10-08">
+            <td class="py-2.5 px-2 text-center text-slate-500 font-bold">5</td>
+            <td class="py-2.5 px-2.5 text-slate-300">2026-10-08</td>
+            <td class="py-2.5 px-2.5 text-cyan-300 font-bold">21:44:48</td>
+            <td class="py-2.5 px-2.5 text-amber-300 font-bold">22:56:01</td>
+            <td class="py-2.5 px-2.5 font-bold text-white">XAUTUSD</td>
+            <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+            <td class="py-2.5 px-2.5 text-center text-amber-300">⭐⭐⭐</td>
+            <td class="py-2.5 px-2 text-right text-slate-300">486</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,116.77</td>
+            <td class="py-2.5 px-2.5 text-right text-rose-400">$4,106.48</td>
+            <td class="py-2.5 px-2.5 text-right text-emerald-400">$4,190.87</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,137.17</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-300">$+9.91</td>
+            <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono">$0.47</td>
+            <td class="py-2.5 px-3 text-right text-emerald-400 font-bold font-mono">$+9.44</td>
+            <td class="py-2.5 px-2.5 text-right font-bold text-slate-200">+1.98R</td>
+            <td class="py-2.5 px-3 space-x-1.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold badge-trail">🚀 TRAIL RUNNER</span>
+              <span class="text-slate-400 text-[10px]">TRAILING_STOP</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-800/40 transition trade-row" data-symbol="XAUTUSD" data-outcome="WIN" data-date="2026-10-08">
+            <td class="py-2.5 px-2 text-center text-slate-500 font-bold">6</td>
+            <td class="py-2.5 px-2.5 text-slate-300">2026-10-08</td>
+            <td class="py-2.5 px-2.5 text-cyan-300 font-bold">23:09:02</td>
+            <td class="py-2.5 px-2.5 text-amber-300 font-bold">05:52:21</td>
+            <td class="py-2.5 px-2.5 font-bold text-white">XAUTUSD</td>
+            <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+            <td class="py-2.5 px-2.5 text-center text-amber-300">⭐⭐⭐</td>
+            <td class="py-2.5 px-2 text-right text-slate-300">484</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,134.70</td>
+            <td class="py-2.5 px-2.5 text-right text-rose-400">$4,124.36</td>
+            <td class="py-2.5 px-2.5 text-right text-emerald-400">$4,209.12</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,209.36</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-300">$+36.14</td>
+            <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono">$0.47</td>
+            <td class="py-2.5 px-3 text-right text-emerald-400 font-bold font-mono">$+35.66</td>
+            <td class="py-2.5 px-2.5 text-right font-bold text-slate-200">+7.22R</td>
+            <td class="py-2.5 px-3 space-x-1.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold badge-win">🎯 TAKE PROFIT</span>
+              <span class="text-slate-400 text-[10px]">TAKE_PROFIT</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-800/40 transition trade-row" data-symbol="XAUTUSD" data-outcome="LOSS" data-date="2026-10-12">
+            <td class="py-2.5 px-2 text-center text-slate-500 font-bold">7</td>
+            <td class="py-2.5 px-2.5 text-slate-300">2026-10-12</td>
+            <td class="py-2.5 px-2.5 text-cyan-300 font-bold">06:05:11</td>
+            <td class="py-2.5 px-2.5 text-amber-300 font-bold">10:23:12</td>
+            <td class="py-2.5 px-2.5 font-bold text-white">XAUTUSD</td>
+            <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+            <td class="py-2.5 px-2.5 text-center text-amber-300">⭐⭐⭐</td>
+            <td class="py-2.5 px-2 text-right text-slate-300">475</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,207.52</td>
+            <td class="py-2.5 px-2.5 text-right text-rose-400">$4,197.01</td>
+            <td class="py-2.5 px-2.5 text-right text-emerald-400">$4,283.26</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,196.93</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-300">$-5.03</td>
+            <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono">$0.71</td>
+            <td class="py-2.5 px-3 text-right text-rose-400 font-bold font-mono">$-5.74</td>
+            <td class="py-2.5 px-2.5 text-right font-bold text-slate-200">-1.01R</td>
+            <td class="py-2.5 px-3 space-x-1.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold badge-loss">🛑 STOP LOSS</span>
+              <span class="text-slate-400 text-[10px]">STOP_LOSS</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-800/40 transition trade-row" data-symbol="XAUTUSD" data-outcome="LOSS" data-date="2026-10-12">
+            <td class="py-2.5 px-2 text-center text-slate-500 font-bold">8</td>
+            <td class="py-2.5 px-2.5 text-slate-300">2026-10-12</td>
+            <td class="py-2.5 px-2.5 text-cyan-300 font-bold">10:35:43</td>
+            <td class="py-2.5 px-2.5 text-amber-300 font-bold">11:01:56</td>
+            <td class="py-2.5 px-2.5 font-bold text-white">XAUTUSD</td>
+            <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+            <td class="py-2.5 px-2.5 text-center text-amber-300">⭐⭐⭐</td>
+            <td class="py-2.5 px-2 text-right text-slate-300">477</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,194.27</td>
+            <td class="py-2.5 px-2.5 text-right text-rose-400">$4,183.79</td>
+            <td class="py-2.5 px-2.5 text-right text-emerald-400">$4,269.77</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,183.44</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-300">$-5.17</td>
+            <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono">$0.71</td>
+            <td class="py-2.5 px-3 text-right text-rose-400 font-bold font-mono">$-5.88</td>
+            <td class="py-2.5 px-2.5 text-right font-bold text-slate-200">-1.03R</td>
+            <td class="py-2.5 px-3 space-x-1.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold badge-loss">🛑 STOP LOSS</span>
+              <span class="text-slate-400 text-[10px]">STOP_LOSS</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-800/40 transition trade-row" data-symbol="XAUTUSD" data-outcome="LOSS" data-date="2026-10-12">
+            <td class="py-2.5 px-2 text-center text-slate-500 font-bold">9</td>
+            <td class="py-2.5 px-2.5 text-slate-300">2026-10-12</td>
+            <td class="py-2.5 px-2.5 text-cyan-300 font-bold">11:14:26</td>
+            <td class="py-2.5 px-2.5 text-amber-300 font-bold">13:40:04</td>
+            <td class="py-2.5 px-2.5 font-bold text-white">XAUTUSD</td>
+            <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+            <td class="py-2.5 px-2.5 text-center text-amber-300">⭐⭐⭐</td>
+            <td class="py-2.5 px-2 text-right text-slate-300">477</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,190.27</td>
+            <td class="py-2.5 px-2.5 text-right text-rose-400">$4,179.79</td>
+            <td class="py-2.5 px-2.5 text-right text-emerald-400">$4,265.69</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,179.73</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-300">$-5.03</td>
+            <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono">$0.71</td>
+            <td class="py-2.5 px-3 text-right text-rose-400 font-bold font-mono">$-5.73</td>
+            <td class="py-2.5 px-2.5 text-right font-bold text-slate-200">-1.01R</td>
+            <td class="py-2.5 px-3 space-x-1.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold badge-loss">🛑 STOP LOSS</span>
+              <span class="text-slate-400 text-[10px]">STOP_LOSS</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-800/40 transition trade-row" data-symbol="XAUTUSD" data-outcome="LOSS" data-date="2026-10-12">
+            <td class="py-2.5 px-2 text-center text-slate-500 font-bold">10</td>
+            <td class="py-2.5 px-2.5 text-slate-300">2026-10-12</td>
+            <td class="py-2.5 px-2.5 text-cyan-300 font-bold">13:52:41</td>
+            <td class="py-2.5 px-2.5 text-amber-300 font-bold">17:51:25</td>
+            <td class="py-2.5 px-2.5 font-bold text-white">XAUTUSD</td>
+            <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+            <td class="py-2.5 px-2.5 text-center text-amber-300">⭐⭐⭐</td>
+            <td class="py-2.5 px-2 text-right text-slate-300">479</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,177.97</td>
+            <td class="py-2.5 px-2.5 text-right text-rose-400">$4,167.52</td>
+            <td class="py-2.5 px-2.5 text-right text-emerald-400">$4,253.17</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,167.36</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-300">$-5.08</td>
+            <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono">$0.71</td>
+            <td class="py-2.5 px-3 text-right text-rose-400 font-bold font-mono">$-5.79</td>
+            <td class="py-2.5 px-2.5 text-right font-bold text-slate-200">-1.01R</td>
+            <td class="py-2.5 px-3 space-x-1.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold badge-loss">🛑 STOP LOSS</span>
+              <span class="text-slate-400 text-[10px]">STOP_LOSS</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-800/40 transition trade-row" data-symbol="XAUTUSD" data-outcome="WIN" data-date="2026-10-12">
+            <td class="py-2.5 px-2 text-center text-slate-500 font-bold">11</td>
+            <td class="py-2.5 px-2.5 text-slate-300">2026-10-12</td>
+            <td class="py-2.5 px-2.5 text-cyan-300 font-bold">18:05:28</td>
+            <td class="py-2.5 px-2.5 text-amber-300 font-bold">06:15:10</td>
+            <td class="py-2.5 px-2.5 font-bold text-white">XAUTUSD</td>
+            <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+            <td class="py-2.5 px-2.5 text-center text-amber-300">⭐⭐⭐</td>
+            <td class="py-2.5 px-2 text-right text-slate-300">481</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,160.85</td>
+            <td class="py-2.5 px-2.5 text-right text-rose-400">$4,150.45</td>
+            <td class="py-2.5 px-2.5 text-right text-emerald-400">$4,235.75</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,162.80</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-300">$+0.94</td>
+            <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono">$0.47</td>
+            <td class="py-2.5 px-3 text-right text-emerald-400 font-bold font-mono">$+0.46</td>
+            <td class="py-2.5 px-2.5 text-right font-bold text-slate-200">+0.19R</td>
+            <td class="py-2.5 px-3 space-x-1.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold badge-be">🛡️ BREAKEVEN</span>
+              <span class="text-slate-400 text-[10px]">BREAKEVEN</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-800/40 transition trade-row" data-symbol="XAUTUSD" data-outcome="LOSS" data-date="2026-10-13">
+            <td class="py-2.5 px-2 text-center text-slate-500 font-bold">12</td>
+            <td class="py-2.5 px-2.5 text-slate-300">2026-10-13</td>
+            <td class="py-2.5 px-2.5 text-cyan-300 font-bold">06:27:44</td>
+            <td class="py-2.5 px-2.5 text-amber-300 font-bold">06:54:54</td>
+            <td class="py-2.5 px-2.5 font-bold text-white">XAUTUSD</td>
+            <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+            <td class="py-2.5 px-2.5 text-center text-amber-300">⭐⭐⭐</td>
+            <td class="py-2.5 px-2 text-right text-slate-300">481</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,159.06</td>
+            <td class="py-2.5 px-2.5 text-right text-rose-400">$4,148.67</td>
+            <td class="py-2.5 px-2.5 text-right text-emerald-400">$4,233.93</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,159.70</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-300">$+0.31</td>
+            <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono">$0.47</td>
+            <td class="py-2.5 px-3 text-right text-rose-400 font-bold font-mono">$-0.17</td>
+            <td class="py-2.5 px-2.5 text-right font-bold text-slate-200">+0.06R</td>
+            <td class="py-2.5 px-3 space-x-1.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold badge-be">🛡️ BREAKEVEN</span>
+              <span class="text-slate-400 text-[10px]">BREAKEVEN</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-800/40 transition trade-row" data-symbol="XAUTUSD" data-outcome="WIN" data-date="2026-10-13">
+            <td class="py-2.5 px-2 text-center text-slate-500 font-bold">13</td>
+            <td class="py-2.5 px-2.5 text-slate-300">2026-10-13</td>
+            <td class="py-2.5 px-2.5 text-cyan-300 font-bold">07:07:24</td>
+            <td class="py-2.5 px-2.5 text-amber-300 font-bold">18:30:58</td>
+            <td class="py-2.5 px-2.5 font-bold text-white">XAUTUSD</td>
+            <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+            <td class="py-2.5 px-2.5 text-center text-amber-300">⭐⭐⭐</td>
+            <td class="py-2.5 px-2 text-right text-slate-300">481</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,160.10</td>
+            <td class="py-2.5 px-2.5 text-right text-rose-400">$4,149.69</td>
+            <td class="py-2.5 px-2.5 text-right text-emerald-400">$4,234.98</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,180.60</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-300">$+9.86</td>
+            <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono">$0.47</td>
+            <td class="py-2.5 px-3 text-right text-emerald-400 font-bold font-mono">$+9.39</td>
+            <td class="py-2.5 px-2.5 text-right font-bold text-slate-200">+1.97R</td>
+            <td class="py-2.5 px-3 space-x-1.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold badge-trail">🚀 TRAIL RUNNER</span>
+              <span class="text-slate-400 text-[10px]">TRAILING_STOP</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-800/40 transition trade-row" data-symbol="XAUTUSD" data-outcome="WIN" data-date="2026-10-13">
+            <td class="py-2.5 px-2 text-center text-slate-500 font-bold">14</td>
+            <td class="py-2.5 px-2.5 text-slate-300">2026-10-13</td>
+            <td class="py-2.5 px-2.5 text-cyan-300 font-bold">18:43:43</td>
+            <td class="py-2.5 px-2.5 text-amber-300 font-bold">19:14:28</td>
+            <td class="py-2.5 px-2.5 font-bold text-white">XAUTUSD</td>
+            <td class="py-2.5 px-2 text-center font-bold text-emerald-400">BUY</td>
+            <td class="py-2.5 px-2.5 text-center text-amber-300">⭐⭐⭐</td>
+            <td class="py-2.5 px-2 text-right text-slate-300">478</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,180.53</td>
+            <td class="py-2.5 px-2.5 text-right text-rose-400">$4,170.08</td>
+            <td class="py-2.5 px-2.5 text-right text-emerald-400">$4,255.78</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-200">$4,182.06</td>
+            <td class="py-2.5 px-2.5 text-right text-slate-300">$+0.73</td>
+            <td class="py-2.5 px-2.5 text-right text-amber-400 font-mono">$0.47</td>
+            <td class="py-2.5 px-3 text-right text-emerald-400 font-bold font-mono">$+0.26</td>
+            <td class="py-2.5 px-2.5 text-right font-bold text-slate-200">+0.15R</td>
+            <td class="py-2.5 px-3 space-x-1.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold badge-be">🛡️ BREAKEVEN</span>
+              <span class="text-slate-400 text-[10px]">BREAKEVEN</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- JAVASCRIPT FOR CHARTS, CALENDAR & FILTERS -->
+  <script>
+    lucide.createIcons();
+
+    const CALENDAR_DATA = [{"date": "2026-10-08", "trades_count": 6, "wins": 5, "losses": 1, "win_rate": 83.3, "net_pnl": 40.92, "fees": 3.06}, {"date": "2026-10-12", "trades_count": 5, "wins": 1, "losses": 4, "win_rate": 20.0, "net_pnl": -22.68, "fees": 3.31}, {"date": "2026-10-13", "trades_count": 3, "wins": 2, "losses": 1, "win_rate": 66.7, "net_pnl": 9.48, "fees": 1.41}];
+    let selectedCalDate = null;
+
+    // 1. Hourly Chart
+    const hourlyLabels = ["00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"];
+    const hourlyNetData = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -5.91, 9.39, 0.0, 0.0, -5.88, -5.24, 0.0, -5.79, 0.0, 0.0, 0.52, 0.0, 1.24, 0.0, -5.71, 9.44, 0.0, 35.66];
+    const hourlyBarColors = hourlyNetData.map(val => val >= 0 ? '#10b981' : '#f43f5e');
+
+    const ctxH = document.getElementById('hourlyChart').getContext('2d');
+    new Chart(ctxH, {
+      type: 'bar',
+      data: {
+        labels: hourlyLabels,
+        datasets: [{
+          label: 'Net P&L ($)',
+          data: hourlyNetData,
+          backgroundColor: hourlyBarColors,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                return ' ' + ctx.label + ' IST: $' + ctx.parsed.y.toFixed(2) + ' USD';
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(255, 255, 255, 0.04)' },
+            ticks: { color: '#64748b', font: { family: 'monospace', size: 9 } }
+          },
+          y: {
+            grid: { color: 'rgba(255, 255, 255, 0.04)' },
+            ticks: {
+              color: '#64748b',
+              font: { family: 'monospace', size: 10 },
+              callback: function(v) { return '$' + v; }
+            }
+          }
+        }
+      }
+    });
+
+    // 2. Day of the Week Chart
+    const dowLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const dowNetData = [-22.68, 9.48, 0.0, 40.92, 0.0, 0.0, 0.0];
+    const dowBarColors = dowNetData.map(val => val >= 0 ? '#10b981' : '#f43f5e');
+
+    const ctxD = document.getElementById('dowChart').getContext('2d');
+    new Chart(ctxD, {
+      type: 'bar',
+      data: {
+        labels: dowLabels,
+        datasets: [{
+          label: 'Net P&L ($)',
+          data: dowNetData,
+          backgroundColor: dowBarColors,
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                return ' ' + ctx.label + ': $' + ctx.parsed.y.toFixed(2) + ' USD';
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(255, 255, 255, 0.04)' },
+            ticks: { color: '#64748b', font: { family: 'monospace', size: 11 } }
+          },
+          y: {
+            grid: { color: 'rgba(255, 255, 255, 0.04)' },
+            ticks: {
+              color: '#64748b',
+              font: { family: 'monospace', size: 10 },
+              callback: function(v) { return '$' + v; }
+            }
+          }
+        }
+      }
+    });
+
+    // 3. Equity Curve Chart
+    const ctxE = document.getElementById('equityChart').getContext('2d');
+    new Chart(ctxE, {
+      type: 'line',
+      data: {
+        labels: ["Start", "T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12", "T13", "T14"],
+        datasets: [{
+          label: 'Gold Equity (USD)',
+          data: [50.0, 50.49, 51.01, 51.53, 45.82, 55.26, 90.92, 85.18, 79.3, 73.57, 67.78, 68.24, 68.07, 77.46, 77.72],
+          borderColor: '#f59e0b',
+          backgroundColor: 'rgba(245, 158, 11, 0.12)',
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.25,
+          pointRadius: 3,
+          pointHoverRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return '$' + context.parsed.y.toFixed(2) + ' USD (₹' + (context.parsed.y * 90).toFixed(0) + ' INR)';
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(255, 255, 255, 0.04)' },
+            ticks: { color: '#64748b', maxTicksLimit: 15 }
+          },
+          y: {
+            grid: { color: 'rgba(255, 255, 255, 0.04)' },
+            ticks: {
+              color: '#64748b',
+              callback: function(val) { return '$' + val; }
+            }
+          }
+        }
+      }
+    });
+
+    // 4. Interactive Calendar Grid Render
+    function renderCalendar() {
+      const grid = document.getElementById('calendarDaysGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const startDayOffset = 4; // Oct 1, 2026 = Thursday
+      const totalDaysInMonth = 31;
+
+      for (let i = 0; i < startDayOffset; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'h-24 rounded-xl border border-slate-900 bg-slate-950/20 opacity-30';
+        grid.appendChild(empty);
+      }
+
+      const dataByDate = {};
+      CALENDAR_DATA.forEach(d => { dataByDate[d.date] = d; });
+
+      for (let day = 1; day <= totalDaysInMonth; day++) {
+        const dStr = `2026-10-${String(day).padStart(2, '0')}`;
+        const tile = document.createElement('div');
+        const dayData = dataByDate[dStr];
+        const isSelected = (selectedCalDate === dStr);
+
+        let borderBg = 'border-slate-800 bg-slate-900/40 text-slate-500';
+        let pnlBadge = '';
+
+        if (dayData) {
+          if (dayData.trades_count > 0 && dayData.net_pnl >= 0) {
+            borderBg = 'border-emerald-500/40 bg-emerald-950/20 text-white cursor-pointer hover:border-emerald-400';
+            pnlBadge = `
+              <div class="text-[12px] font-black text-emerald-400">+${dayData.net_pnl.toFixed(2)}</div>
+              <div class="text-[10px] text-emerald-300/80 font-bold">${dayData.trades_count} trades (${dayData.win_rate}%)</div>
+            `;
+            tile.onclick = () => filterLedgerByDate(dStr);
+          } else if (dayData.trades_count > 0 && dayData.net_pnl < 0) {
+            borderBg = 'border-rose-500/40 bg-rose-950/20 text-white cursor-pointer hover:border-rose-400';
+            pnlBadge = `
+              <div class="text-[12px] font-black text-rose-400">${dayData.net_pnl.toFixed(2)}</div>
+              <div class="text-[10px] text-rose-300/80 font-bold">${dayData.trades_count} trades (${dayData.win_rate}%)</div>
+            `;
+            tile.onclick = () => filterLedgerByDate(dStr);
+          }
+        } else {
+          pnlBadge = '<div class="text-[9px] text-slate-600 mt-2">No Trades</div>';
+        }
+
+        if (isSelected) {
+          borderBg += ' cal-day-active ring-2 ring-emerald-400';
+        }
+
+        tile.className = `h-24 p-2 rounded-xl border flex flex-col justify-between transition ${borderBg}`;
+        tile.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold">${day}</span>
+            ${dayData ? '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>' : ''}
+          </div>
+          <div>${pnlBadge}</div>
+        `;
+        grid.appendChild(tile);
+      }
+    }
+
+    function filterLedgerByDate(dateStr) {
+      selectedCalDate = (selectedCalDate === dateStr) ? null : dateStr;
+      renderCalendar();
+
+      const btnReset = document.getElementById('resetCalFilterBtn');
+      if (selectedCalDate) {
+        btnReset.classList.remove('hidden');
+        btnReset.querySelector('span').textContent = `Reset Filter (${selectedCalDate})`;
+
+        const dData = CALENDAR_DATA.find(d => d.date === selectedCalDate);
+        if (dData) {
+          document.getElementById('calCardPnl').textContent = `$${dData.net_pnl.toFixed(2)} USD`;
+          document.getElementById('calCardPnlInr').textContent = `(₹${(dData.net_pnl * 90).toFixed(0)} INR on ${selectedCalDate})`;
+          document.getElementById('calCardWr').textContent = `${dData.win_rate}%`;
+          document.getElementById('calCardWinLoss').textContent = `${dData.wins}W / ${dData.losses}L`;
+          document.getElementById('calCardStatus').textContent = `Filtered: ${selectedCalDate}`;
+          document.getElementById('calCardFees').textContent = `$${dData.fees.toFixed(2)} USD`;
+        }
+      } else {
+        resetCalendarFilter();
+      }
+      filterTable();
+    }
+
+    function resetCalendarFilter() {
+      selectedCalDate = null;
+      document.getElementById('resetCalFilterBtn').classList.add('hidden');
+      document.getElementById('calCardPnl').textContent = '$+27.72 USD';
+      document.getElementById('calCardPnlInr').textContent = '(All 14 Trades)';
+      document.getElementById('calCardWr').textContent = '57.1%';
+      document.getElementById('calCardWinLoss').textContent = '8W / 6L';
+      document.getElementById('calCardStatus').textContent = 'Showing All';
+      document.getElementById('calCardFees').textContent = '$7.78 USD';
+      renderCalendar();
+      filterTable();
+    }
+
+    function filterTable() {
+      const out = document.getElementById('outcomeFilter').value;
+      const rows = document.querySelectorAll('.trade-row');
+
+      rows.forEach(row => {
+        const rowOut = row.getAttribute('data-outcome');
+        const rowDate = row.getAttribute('data-date');
+
+        let showDate = (!selectedCalDate || rowDate === selectedCalDate);
+        let showOut = (out === 'ALL' || rowOut === out);
+
+        if (showOut && showDate) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    renderCalendar();
+  </script>
+</body>
+</html>
