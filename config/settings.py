@@ -165,13 +165,18 @@ CSV_IMPORTS_DIR = BASE_DIR / "data" / "csv_imports"
 # 7. CHAMPION PRODUCTION ENGINE: GOLD (XAUTUSD)
 # ==========================================
 # Proven across 119 backtest simulations (Oct 08 - Oct 15, 2026):
-# 77.8% Win Rate | +$62.36 USD (+₹5,612 INR) | 5.33 Profit Factor | $8.69 Max DD
+# 77.8% Win Rate | +$67.86 USD (+₹6,107 INR) | 8.62 Profit Factor | $5.94 Max DD
 CHAMPION_CONFIG = {
     "strategy_name": "⚡ Hybrid A (Session Breakout + CVD Order Flow Absorption)",
     "symbol": "XAUTUSD",
     "sizing_mode": "RAW_GROSS_RISK",     # $5.00 Gross Risk per trade
     "risk_per_trade_usd": 5.0,          # Strict $5.00 fixed initial risk
     "partial_cut_pct": 0.0,             # 100% Position Intact (Zero 50% or 60% partial cuts)
+    "reversal_cut": {
+        "enabled": True,                # Emergency full cut on opposing DOM absorption wall
+        "cut_r": -0.45,                 # Exit at -0.45R rather than full -1.0R SL
+        "min_wall_imbalance": 2.2       # Opposing wall imbalance threshold
+    },
     "be_trigger_r": 1.9,                # Move SL to Breakeven once price reaches +1.9R
     "be_lock_r": 0.40,                  # Lock +0.40R profit at Breakeven (guarantees +$2.00 gross gain)
     "trail_mode": "HYBRID_RUNNER",      # Step ratchet locks up to 40R
