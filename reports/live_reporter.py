@@ -919,7 +919,7 @@ def generate_live_journal_html(
       const container = document.getElementById("openPositionsContainer");
       const activeCount = positions ? Object.keys(positions).length : 0;
       document.getElementById("activeBadgeCount").innerText = `${{activeCount}} Open`;
-      document.getElementById("statOpenCount").innerText = `${{activeCount}} / 4`;
+      document.getElementById("statOpenCount").innerText = `${{activeCount}} / 3`;
 
       if (!positions || activeCount === 0) {{
         container.innerHTML = `
