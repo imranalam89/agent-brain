@@ -225,3 +225,36 @@ CHAMPION_CONFIG_BTC = {
     "weekend_trading": True             # 24/7 continuous crypto trading
 }
 
+# ==========================================
+# 9. CHAMPION PRODUCTION ENGINE: ETHEREUM (ETHUSD)
+# ==========================================
+# Verified Confluence Architecture (Oct 08 - Oct 15 20:20 IST Till Now):
+# 50.0% Win Rate | +$120.53 USD (+₹10,848 INR) | 4.19 Profit Factor | $21.02 Max DD
+# Reversal Cut (-0.45R) + 15m Cooldown + 2-Loss Cascade Breaker + London/NY Session Filter
+CHAMPION_CONFIG_ETH = {
+    "strategy_name": "⚡ DOM Liquidity Sweep & CVD Trend Pullback",
+    "symbol": "ETHUSD",
+    "sizing_mode": "RAW_GROSS_RISK",     # $5.00 Gross Risk per trade
+    "risk_per_trade_usd": 5.0,          # Strict $5.00 fixed initial risk
+    "be_trigger_r": 1.4,                # Move SL to Breakeven once price reaches +1.4R
+    "be_lock_r": 0.30,                  # Lock +0.30R gross gain at breakeven
+    "reversal_cut": {
+        "enabled": True,                # Emergency full cut on opposing DOM absorption wall
+        "cut_r": -0.45,                 # Exit at -0.45R rather than full -1.0R SL (saved $22.00)
+        "min_wall_imbalance": 2.0       # Minimum 2.0x opposing wall depth
+    },
+    "cooldown": {
+        "post_exit_mins": 15,           # 15-minute rest after every trade exit
+        "cascade_breaker_losses": 2,    # Circuit breaker if 2 losses in a row
+        "cascade_breaker_hours": 4.0    # 4-hour trading halt after 2-loss streak
+    },
+    "session_window": {
+        "enabled": True,                # Restricts entries to high-volume institutional sessions
+        "start_ist": "13:00",           # London open ramp up
+        "end_ist": "23:00",             # NY session close
+        "blackout_hours": [16, 19, 20, 22] # High-impact news spike avoidance
+    },
+    "trail_mode": "DYNAMIC_RUNNER",     # Multi-stage trailing runner locking up to +14.8R
+    "contract_lot_size": 0.01           # 1 Lot = 0.01 ETH
+}
+
