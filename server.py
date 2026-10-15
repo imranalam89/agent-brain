@@ -6,6 +6,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, Optional
 from pathlib import Path
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
+import subprocess
 
 IST = timezone(timedelta(hours=5, minutes=30))
 
@@ -609,6 +610,22 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             # Recent AI thoughts
             thoughts = db.get_recent_thoughts(limit=25)
 
+            # Query Linux systemd service states & self-heal trading-brain if stopped
+            services = {}
+            for srv in ["trading-brain", "trading-dom-recorder", "trading-dashboard"]:
+                try:
+                    res = subprocess.run(["systemctl", "is-active", srv], capture_output=True, text=True, timeout=2)
+                    services[srv] = res.stdout.strip()
+                except Exception:
+                    services[srv] = "unknown"
+
+            if services.get("trading-brain") not in ("active", "activating") and os.path.exists("/etc/systemd/system/trading-brain.service"):
+                try:
+                    subprocess.run(["systemctl", "restart", "trading-brain"], timeout=5)
+                    services["trading-brain"] = "restarting"
+                except Exception:
+                    pass
+
             self._send_json({
                 "success": True,
                 "timestamp": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S"),
@@ -629,7 +646,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 "delta_positions": delta_pos,
                 "open_orders": open_orders,
                 "closed_trades": closed_trades,
-                "thoughts": thoughts
+                "thoughts": thoughts,
+                "services": services
             })
         except Exception as e:
             self._send_json({"success": False, "error": str(e)})
