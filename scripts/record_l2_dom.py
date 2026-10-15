@@ -181,7 +181,7 @@ class L2DOMRecorder:
 
 def main():
     parser = argparse.ArgumentParser(description="Delta Exchange 24/7 Ultra-High-Frequency (1s) L2 DOM Orderbook Recorder")
-    parser.add_argument("--symbols", type=str, default="", help="Comma-separated symbols (e.g. BTCUSD,ETHUSD,XAUTUSD,SLVONUSD,PAXGUSD,UNIUSD)")
+    parser.add_argument("--symbols", type=str, default="", help="Comma-separated symbols (default: BTCUSD,ETHUSD,XAUTUSD)")
     parser.add_argument("--interval", type=float, default=1.0, help="Poll interval in seconds (default: 1.0s)")
     parser.add_argument("--depth", type=int, default=50, help="Orderbook depth per side (default: 50)")
     args = parser.parse_args()

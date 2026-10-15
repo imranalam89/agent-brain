@@ -46,9 +46,6 @@ DOM_RECORDER_SYMBOLS = [
     "BTCUSD",     # Bitcoin Perpetual (100x Isolated, 1 Lot = 0.001 BTC)
     "ETHUSD",     # Ethereum Perpetual (100x Isolated, 1 Lot = 0.01 ETH)
     "XAUTUSD",    # Tether Gold Token Perpetual (100x Isolated, 1 Lot = 0.001 XAUT)
-    "SLVONUSD",   # iShares Silver Trust ONDO Perpetual (50x Isolated, 1 Lot = 0.1 SLVON)
-    "PAXGUSD",    # PAX Gold Token Perpetual (100x Isolated, 1 Lot = 0.001 PAXG)
-    "UNIUSD"      # Uniswap Perpetual (50x Isolated, 1 Lot = 1.0 UNI)
 ]
 
 # Delta Exchange Fee & Contract Specifications:
