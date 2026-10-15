@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agent Brain | 🥇 Gold (XAUTUSD) Refined Exit Engine & DOM Confirmation Report</title>
+  <title>Agent Brain | 🥇 Gold (XAUTUSD) 100% Position Trailing Report (No Partial Cuts)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -25,14 +25,14 @@
       </div>
       <div>
         <div class="flex items-center gap-2 flex-wrap">
-          <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white uppercase">Gold (XAUTUSD) Refined Exit Engine + DOM Confirmation</h1>
+          <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white uppercase">Gold (XAUTUSD) 100% Position Trailing Report</h1>
           <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-            80.0% WIN RATE • 4.76 PROFIT FACTOR • OCT 08 - OCT 15, 2026 (TILL NOW)
+            ZERO PARTIAL CUTS • 100% LOTS RUNNING • OCT 08 - OCT 15, 2026 (TILL NOW)
           </span>
         </div>
         <p class="text-xs text-slate-400 font-mono mt-0.5">
-          Exit Logic: <span class="text-emerald-400 font-bold">TP1 @ +1.8R (Book 60%) + Breakeven Lock (+0.2R) + 40R Runner Trailing</span> • SL Protection: <span class="text-amber-400 font-bold">London/NY Session Filter (Saves 70% SLs)</span>
+          Exit Execution: <span class="text-emerald-400 font-bold">100% Breathing Trailing (BE @ 1.8R + 1.15x Trail)</span> • Risk Control: <span class="text-amber-400 font-bold">Strictly $5.00/Trade</span> • Fees: <span class="text-cyan-400 font-bold">Real Delta Exchange Maker/Taker + 18% GST</span>
         </p>
       </div>
     </div>
@@ -43,7 +43,7 @@
         <span>🎯 Master Report</span>
       </a>
       <a href="dom_gold_backtest_report.html" class="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow font-bold transition flex items-center gap-1.5">
-        <span>🥇 Gold (Refined Report)</span>
+        <span>🥇 Gold (100% Trailing)</span>
       </a>
       <a href="dom_silver_backtest_report.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
         <span>🥈 Silver</span>
@@ -69,52 +69,54 @@
   <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
     <div class="glass-card rounded-2xl p-4 border-l-4 border-l-emerald-500">
       <div class="text-[11px] text-slate-400 uppercase tracking-wider font-mono">Net P&L (USD)</div>
-      <div class="text-2xl font-black text-emerald-400 mt-1 font-mono">+$54.19</div>
-      <div class="text-[10px] text-emerald-500 font-mono mt-0.5">+108.4% account gain on $50 base</div>
+      <div class="text-2xl font-black text-emerald-400 mt-1 font-mono">+$46.84</div>
+      <div class="text-[10px] text-emerald-500 font-mono mt-0.5">+93.7% return on $50 base</div>
     </div>
     <div class="glass-card rounded-2xl p-4 border-l-4 border-l-emerald-400">
       <div class="text-[11px] text-slate-400 uppercase tracking-wider font-mono">Net P&L (INR)</div>
-      <div class="text-2xl font-black text-emerald-400 mt-1 font-mono">+₹4,877</div>
+      <div class="text-2xl font-black text-emerald-400 mt-1 font-mono">+₹4,216</div>
       <div class="text-[10px] text-slate-400 font-mono mt-0.5">@ ₹90 / USD conversion</div>
     </div>
     <div class="glass-card rounded-2xl p-4 border-l-4 border-l-cyan-500">
       <div class="text-[11px] text-slate-400 uppercase tracking-wider font-mono">Win Rate</div>
-      <div class="text-2xl font-black text-cyan-400 mt-1 font-mono">80.0%</div>
-      <div class="text-[10px] text-slate-400 font-mono mt-0.5">8 Wins / 2 Losses (Only 2 Losses!)</div>
+      <div class="text-2xl font-black text-cyan-400 mt-1 font-mono">75.0%</div>
+      <div class="text-[10px] text-slate-400 font-mono mt-0.5">9 Wins / 3 Losses</div>
     </div>
     <div class="glass-card rounded-2xl p-4 border-l-4 border-l-amber-500">
       <div class="text-[11px] text-slate-400 uppercase tracking-wider font-mono">Profit Factor</div>
-      <div class="text-2xl font-black text-amber-400 mt-1 font-mono">4.76</div>
-      <div class="text-[10px] text-slate-400 font-mono mt-0.5">Gross Wins: $68.60 / Losses: $14.41</div>
+      <div class="text-2xl font-black text-amber-400 mt-1 font-mono">3.35</div>
+      <div class="text-[10px] text-slate-400 font-mono mt-0.5">High payoff ratio</div>
     </div>
     <div class="glass-card rounded-2xl p-4 border-l-4 border-l-rose-500">
       <div class="text-[11px] text-slate-400 uppercase tracking-wider font-mono">Max Drawdown</div>
-      <div class="text-2xl font-black text-rose-400 mt-1 font-mono">$14.41</div>
-      <div class="text-[10px] text-slate-400 font-mono mt-0.5">Ultra-low drawdown</div>
+      <div class="text-2xl font-black text-rose-400 mt-1 font-mono">$7.23</div>
+      <div class="text-[10px] text-slate-400 font-mono mt-0.5">Tight drawdown ($7.23)</div>
     </div>
     <div class="glass-card rounded-2xl p-4 border-l-4 border-l-purple-500">
       <div class="text-[11px] text-slate-400 uppercase tracking-wider font-mono">Fees Deducted</div>
-      <div class="text-2xl font-black text-purple-400 mt-1 font-mono">$15.64</div>
+      <div class="text-2xl font-black text-purple-400 mt-1 font-mono">$15.70</div>
       <div class="text-[10px] text-slate-400 font-mono mt-0.5">Maker 0.01% / Taker 0.02% + GST</div>
     </div>
   </section>
 
-  <!-- STRATEGY PHILOSOPHY & DISCOVERY BANNER -->
-  <section class="glass-card rounded-2xl p-5 border-l-4 border-l-cyan-500 space-y-3 font-mono text-xs">
-    <div class="flex items-center gap-2 text-cyan-400 font-bold text-sm">
-      <i data-lucide="shield-check" class="w-5 h-5"></i>
-      <span>Refined Exit Engine & Capital Preservation Architecture</span>
+  <!-- STRATEGY PHILOSOPHY BANNER -->
+  <section class="glass-card rounded-2xl p-5 border-l-4 border-l-emerald-500 space-y-3 font-mono text-xs">
+    <div class="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+      <i data-lucide="zap" class="w-5 h-5"></i>
+      <span>Pure 100% Position Trailing Architecture (Zero Partial Scaling Out)</span>
     </div>
     <p class="text-slate-300 leading-relaxed text-[12px]">
-      <strong>1. How We Saved 70% of Full Stop Losses:</strong>
-      <br>
-      Detailed post-trade analysis revealed that 7 out of 9 full stop losses occurred during low-liquidity Asian morning hours (00:00 to 12:00 IST) and weekend drift. By enforcing the <strong class="text-amber-400">London & NY Institutional Gate (13:00 - 23:00 IST)</strong> with <strong class="text-cyan-300">Level 2 DOM Wall Confirmation</strong>, we eliminated 7 full stop losses before they could ever execute! Losses dropped from 9 down to <strong class="text-emerald-400">only 2 losses across the entire week</strong>.
+      Per your direct requirement: <strong class="text-amber-400">Zero partial scaling out (no 50% or 60% cuts)</strong>. 
       <br><br>
-      <strong>2. Right-Time Profit Booking (+1.8R @ 60% + Breakeven Lock):</strong>
+      • <strong class="text-emerald-400">100% Position Intact:</strong> 100% of the trade lots stay open from entry to exit.
       <br>
-      Instead of waiting for +2.0R or +2.5R to book profit, the refined engine books <strong class="text-emerald-400">60% of lots via Limit Maker Order at +1.8R</strong>, simultaneously ratcheting Stop Loss to <strong class="text-cyan-300">Breakeven (+0.20R cushion)</strong>. This guarantees that 60% profit is secured into balance, and the remaining 40% runner has zero downside risk as it trails up to the <strong class="text-amber-300">40R progressive runner milestone</strong>.
+      • <strong class="text-cyan-300">Capital Protection at +1.8R:</strong> When price hits +1.8R, Stop Loss is moved to <strong class="text-emerald-400">Breakeven (+0.30R cushion)</strong>, locking in capital security without taking off any lots.
+      <br>
+      • <strong class="text-amber-300">Breathing Dynamic Trailing:</strong> Stop loss then trails behind price at 1.15x distance, allowing 100% of the lots to capture extended multi-R runs.
+      <br>
+      • <strong class="text-purple-300">SL Saving:</strong> Filtering to the London & NY session with Level 2 DOM wall confirmation saves 70% of full stop losses before they can execute.
       <br><br>
-      <strong>Result:</strong> Win Rate surged to <strong class="text-cyan-300">80.0%</strong>, Profit Factor skyrocketed to <strong class="text-emerald-400">4.76</strong>, and Net P&L reached <strong class="text-emerald-400">+$54.19 USD (+₹4,877 INR)</strong> after paying all Delta Exchange fees!
+      <strong>Performance:</strong> 12 Trades • <strong class="text-cyan-300">75.0% Win Rate</strong> • <strong class="text-emerald-400">+$46.84 USD (+₹4,216 INR)</strong> Net Profit • <strong class="text-amber-400">3.35 Profit Factor</strong> • Only <strong class="text-rose-400">$7.23 Max Drawdown</strong>!
     </p>
   </section>
 
@@ -127,7 +129,7 @@
           <i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i>
           <span>Account Equity Curve ($50 Base Capital)</span>
         </h3>
-        <span class="text-xs font-mono text-emerald-400 font-bold">Final Equity: $104.19 (+108.4%)</span>
+        <span class="text-xs font-mono text-emerald-400 font-bold">Final Equity: $96.84 (+93.7%)</span>
       </div>
       <div class="h-64 sm:h-72">
         <canvas id="equityChart"></canvas>
@@ -145,37 +147,37 @@
     <div class="glass-card rounded-xl p-3 border border-emerald-500/30 space-y-1 font-mono">
       <div class="flex justify-between items-center text-xs">
         <span class="text-slate-300 font-bold">2026-10-08</span>
-        <span class="text-emerald-400 font-bold">$+14.85</span>
+        <span class="text-emerald-400 font-bold">$+14.66</span>
       </div>
       <div class="text-[11px] text-slate-400 flex justify-between">
         <span>2 Trades (2W / 0L)</span>
         <span class="text-cyan-400 font-bold">100% WR</span>
       </div>
       <div class="text-[10px] text-slate-500 flex justify-between pt-1 border-t border-slate-800">
-        <span>Fees: $2.35</span>
-        <span class="text-emerald-400 font-bold">₹+1336</span>
+        <span>Fees: $1.86</span>
+        <span class="text-emerald-400 font-bold">₹+1319</span>
       </div>
     </div>
     
     <div class="glass-card rounded-xl p-3 border border-emerald-500/30 space-y-1 font-mono">
       <div class="flex justify-between items-center text-xs">
         <span class="text-slate-300 font-bold">2026-10-09</span>
-        <span class="text-emerald-400 font-bold">$+9.66</span>
+        <span class="text-emerald-400 font-bold">$+11.63</span>
       </div>
       <div class="text-[11px] text-slate-400 flex justify-between">
         <span>1 Trades (1W / 0L)</span>
         <span class="text-cyan-400 font-bold">100% WR</span>
       </div>
       <div class="text-[10px] text-slate-500 flex justify-between pt-1 border-t border-slate-800">
-        <span>Fees: $1.73</span>
-        <span class="text-emerald-400 font-bold">₹+869</span>
+        <span>Fees: $1.08</span>
+        <span class="text-emerald-400 font-bold">₹+1047</span>
       </div>
     </div>
     
     <div class="glass-card rounded-xl p-3 border border-emerald-500/30 space-y-1 font-mono">
       <div class="flex justify-between items-center text-xs">
         <span class="text-slate-300 font-bold">2026-10-10</span>
-        <span class="text-emerald-400 font-bold">$+3.33</span>
+        <span class="text-emerald-400 font-bold">$+1.25</span>
       </div>
       <div class="text-[11px] text-slate-400 flex justify-between">
         <span>1 Trades (1W / 0L)</span>
@@ -183,14 +185,14 @@
       </div>
       <div class="text-[10px] text-slate-500 flex justify-between pt-1 border-t border-slate-800">
         <span>Fees: $2.47</span>
-        <span class="text-emerald-400 font-bold">₹+300</span>
+        <span class="text-emerald-400 font-bold">₹+112</span>
       </div>
     </div>
     
     <div class="glass-card rounded-xl p-3 border border-emerald-500/30 space-y-1 font-mono">
       <div class="flex justify-between items-center text-xs">
         <span class="text-slate-300 font-bold">2026-10-11</span>
-        <span class="text-emerald-400 font-bold">$+8.93</span>
+        <span class="text-emerald-400 font-bold">$+2.18</span>
       </div>
       <div class="text-[11px] text-slate-400 flex justify-between">
         <span>1 Trades (1W / 0L)</span>
@@ -198,37 +200,37 @@
       </div>
       <div class="text-[10px] text-slate-500 flex justify-between pt-1 border-t border-slate-800">
         <span>Fees: $2.47</span>
-        <span class="text-emerald-400 font-bold">₹+804</span>
+        <span class="text-emerald-400 font-bold">₹+196</span>
       </div>
     </div>
     
     <div class="glass-card rounded-xl p-3 border border-emerald-500/30 space-y-1 font-mono">
       <div class="flex justify-between items-center text-xs">
         <span class="text-slate-300 font-bold">2026-10-12</span>
-        <span class="text-emerald-400 font-bold">$+3.40</span>
+        <span class="text-emerald-400 font-bold">$+3.58</span>
       </div>
       <div class="text-[11px] text-slate-400 flex justify-between">
         <span>3 Trades (2W / 1L)</span>
         <span class="text-cyan-400 font-bold">67% WR</span>
       </div>
       <div class="text-[10px] text-slate-500 flex justify-between pt-1 border-t border-slate-800">
-        <span>Fees: $5.21</span>
-        <span class="text-emerald-400 font-bold">₹+306</span>
+        <span>Fees: $3.48</span>
+        <span class="text-emerald-400 font-bold">₹+322</span>
       </div>
     </div>
     
     <div class="glass-card rounded-xl p-3 border border-emerald-500/30 space-y-1 font-mono">
       <div class="flex justify-between items-center text-xs">
         <span class="text-slate-300 font-bold">2026-10-13</span>
-        <span class="text-emerald-400 font-bold">$+19.74</span>
+        <span class="text-emerald-400 font-bold">$+19.26</span>
       </div>
       <div class="text-[11px] text-slate-400 flex justify-between">
-        <span>1 Trades (1W / 0L)</span>
-        <span class="text-cyan-400 font-bold">100% WR</span>
+        <span>3 Trades (2W / 1L)</span>
+        <span class="text-cyan-400 font-bold">67% WR</span>
       </div>
       <div class="text-[10px] text-slate-500 flex justify-between pt-1 border-t border-slate-800">
-        <span>Fees: $0.69</span>
-        <span class="text-emerald-400 font-bold">₹+1777</span>
+        <span>Fees: $3.62</span>
+        <span class="text-emerald-400 font-bold">₹+1733</span>
       </div>
     </div>
     
@@ -251,18 +253,18 @@
     </div>
   </section>
 
-  <!-- COMPLETE TRADE JOURNAL (10 EXECUTIONS) -->
+  <!-- COMPLETE TRADE JOURNAL (12 EXECUTIONS) -->
   <section class="glass-card rounded-2xl p-5 space-y-4">
     <div class="flex items-center justify-between">
       <div>
         <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
           <i data-lucide="book-open" class="w-4 h-4 text-emerald-400"></i>
-          <span>Refined Champion Trade Journal (10 Executions)</span>
+          <span>100% Full-Position Trade Journal (12 Executions)</span>
         </h3>
         <p class="text-xs text-slate-400 font-mono mt-0.5">Every execution audited with $5.00 fixed risk & real Delta Exchange India fees (Maker 0.01% / Taker 0.02% + 18% GST)</p>
       </div>
       <span class="px-3 py-1 rounded-xl bg-slate-800 text-slate-300 font-mono text-xs border border-slate-700">
-        10 Executions (8W / 2L)
+        12 Executions (9W / 3L)
       </span>
     </div>
 
@@ -291,18 +293,18 @@
     <tr class="border-b border-slate-800/60 hover:bg-slate-800/30 transition font-mono text-xs">
       <td class="py-2.5 px-3 text-slate-400">#01</td>
       <td class="py-2.5 px-3 text-slate-300">10-08 13:45</td>
-      <td class="py-2.5 px-3 text-slate-400">10-08 17:00</td>
+      <td class="py-2.5 px-3 text-slate-400">10-08 15:45</td>
       <td class="py-2.5 px-3 font-bold text-rose-400">SELL</td>
       <td class="py-2.5 px-3 text-slate-200">$4,135.31</td>
-      <td class="py-2.5 px-3 text-slate-200">$4,134.37</td>
-      <td class="py-2.5 px-3 text-slate-400">$4,134.37</td>
-      <td class="py-2.5 px-3 text-cyan-400">1059 lots</td>
-      <td class="py-2.5 px-3 text-amber-400/90">$1.0334</td>
-      <td class="py-2.5 px-3 text-emerald-400 font-bold">$+4.76</td>
-      <td class="py-2.5 px-3 text-emerald-400 font-bold">₹+428</td>
+      <td class="py-2.5 px-3 text-slate-200">$4,129.83</td>
+      <td class="py-2.5 px-3 text-slate-400">$4,129.83</td>
+      <td class="py-2.5 px-3 text-cyan-400 font-bold">1059 lots (100%)</td>
+      <td class="py-2.5 px-3 text-amber-400/90">$1.0321</td>
+      <td class="py-2.5 px-3 text-emerald-400 font-bold">$+4.77</td>
+      <td class="py-2.5 px-3 text-emerald-400 font-bold">₹+429</td>
       <td class="py-2.5 px-3 text-cyan-300 font-bold">+1.2R</td>
       <td class="py-2.5 px-3"><span class='px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'>WIN</span></td>
-      <td class="py-2.5 px-3 text-slate-400 text-[11px]">40R_RUNNER_TRAIL</td>
+      <td class="py-2.5 px-3 text-slate-400 text-[11px]">100%_TRAILING_STOP</td>
     </tr>
     
     <tr class="border-b border-slate-800/60 hover:bg-slate-800/30 transition font-mono text-xs">
@@ -311,15 +313,15 @@
       <td class="py-2.5 px-3 text-slate-400">10-08 21:45</td>
       <td class="py-2.5 px-3 font-bold text-emerald-400">BUY</td>
       <td class="py-2.5 px-3 text-slate-200">$4,117.22</td>
-      <td class="py-2.5 px-3 text-slate-200">$4,124.32</td>
-      <td class="py-2.5 px-3 text-slate-400">$4,124.32</td>
-      <td class="py-2.5 px-3 text-cyan-400">845 lots</td>
-      <td class="py-2.5 px-3 text-amber-400/90">$1.3151</td>
-      <td class="py-2.5 px-3 text-emerald-400 font-bold">$+10.09</td>
-      <td class="py-2.5 px-3 text-emerald-400 font-bold">₹+908</td>
-      <td class="py-2.5 px-3 text-cyan-300 font-bold">+1.6R</td>
+      <td class="py-2.5 px-3 text-slate-200">$4,129.90</td>
+      <td class="py-2.5 px-3 text-slate-400">$4,129.90</td>
+      <td class="py-2.5 px-3 text-cyan-400 font-bold">845 lots (100%)</td>
+      <td class="py-2.5 px-3 text-amber-400/90">$0.8236</td>
+      <td class="py-2.5 px-3 text-emerald-400 font-bold">$+9.89</td>
+      <td class="py-2.5 px-3 text-emerald-400 font-bold">₹+890</td>
+      <td class="py-2.5 px-3 text-cyan-300 font-bold">+2.1R</td>
       <td class="py-2.5 px-3"><span class='px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'>WIN</span></td>
-      <td class="py-2.5 px-3 text-slate-400 text-[11px]">40R_RUNNER_TRAIL</td>
+      <td class="py-2.5 px-3 text-slate-400 text-[11px]">100%_TRAILING_STOP</td>
     </tr>
     
     <tr class="border-b border-slate-800/60 hover:bg-slate-800/30 transition font-mono text-xs">
@@ -328,80 +330,80 @@
       <td class="py-2.5 px-3 text-slate-400">10-09 18:15</td>
       <td class="py-2.5 px-3 font-bold text-rose-400">SELL</td>
       <td class="py-2.5 px-3 text-slate-200">$4,190.07</td>
-      <td class="py-2.5 px-3 text-slate-200">$4,184.60</td>
-      <td class="py-2.5 px-3 text-slate-400">$4,184.60</td>
-      <td class="py-2.5 px-3 text-cyan-400">1096 lots</td>
-      <td class="py-2.5 px-3 text-amber-400/90">$1.7331</td>
-      <td class="py-2.5 px-3 text-emerald-400 font-bold">$+9.66</td>
-      <td class="py-2.5 px-3 text-emerald-400 font-bold">₹+869</td>
-      <td class="py-2.5 px-3 text-cyan-300 font-bold">+1.6R</td>
+      <td class="py-2.5 px-3 text-slate-200">$4,178.47</td>
+      <td class="py-2.5 px-3 text-slate-400">$4,178.47</td>
+      <td class="py-2.5 px-3 text-cyan-400 font-bold">1096 lots (100%)</td>
+      <td class="py-2.5 px-3 text-amber-400/90">$1.0808</td>
+      <td class="py-2.5 px-3 text-emerald-400 font-bold">$+11.63</td>
+      <td class="py-2.5 px-3 text-emerald-400 font-bold">₹+1047</td>
+      <td class="py-2.5 px-3 text-cyan-300 font-bold">+2.5R</td>
       <td class="py-2.5 px-3"><span class='px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'>WIN</span></td>
-      <td class="py-2.5 px-3 text-slate-400 text-[11px]">40R_RUNNER_TRAIL</td>
+      <td class="py-2.5 px-3 text-slate-400 text-[11px]">100%_TRAILING_STOP</td>
     </tr>
     
     <tr class="border-b border-slate-800/60 hover:bg-slate-800/30 transition font-mono text-xs">
       <td class="py-2.5 px-3 text-slate-400">#04</td>
       <td class="py-2.5 px-3 text-slate-300">10-10 13:30</td>
-      <td class="py-2.5 px-3 text-slate-400">10-11 17:00</td>
+      <td class="py-2.5 px-3 text-slate-400">10-11 13:15</td>
       <td class="py-2.5 px-3 font-bold text-emerald-400">BUY</td>
       <td class="py-2.5 px-3 text-slate-200">$4,189.57</td>
-      <td class="py-2.5 px-3 text-slate-200">$4,189.97</td>
-      <td class="py-2.5 px-3 text-slate-400">$4,189.97</td>
-      <td class="py-2.5 px-3 text-cyan-400">2500 lots</td>
-      <td class="py-2.5 px-3 text-amber-400/90">$2.4719</td>
-      <td class="py-2.5 px-3 text-emerald-400 font-bold">$+3.33</td>
-      <td class="py-2.5 px-3 text-emerald-400 font-bold">₹+300</td>
-      <td class="py-2.5 px-3 text-cyan-300 font-bold">+1.2R</td>
+      <td class="py-2.5 px-3 text-slate-200">$4,191.06</td>
+      <td class="py-2.5 px-3 text-slate-400">$4,191.06</td>
+      <td class="py-2.5 px-3 text-cyan-400 font-bold">2500 lots (100%)</td>
+      <td class="py-2.5 px-3 text-amber-400/90">$2.4727</td>
+      <td class="py-2.5 px-3 text-emerald-400 font-bold">$+1.25</td>
+      <td class="py-2.5 px-3 text-emerald-400 font-bold">₹+112</td>
+      <td class="py-2.5 px-3 text-cyan-300 font-bold">+0.7R</td>
       <td class="py-2.5 px-3"><span class='px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'>WIN</span></td>
-      <td class="py-2.5 px-3 text-slate-400 text-[11px]">40R_RUNNER_TRAIL</td>
+      <td class="py-2.5 px-3 text-slate-400 text-[11px]">100%_TRAILING_STOP</td>
     </tr>
     
     <tr class="border-b border-slate-800/60 hover:bg-slate-800/30 transition font-mono text-xs">
       <td class="py-2.5 px-3 text-slate-400">#05</td>
-      <td class="py-2.5 px-3 text-slate-300">10-11 17:15</td>
-      <td class="py-2.5 px-3 text-slate-400">10-12 13:00</td>
+      <td class="py-2.5 px-3 text-slate-300">10-11 17:00</td>
+      <td class="py-2.5 px-3 text-slate-400">10-11 21:30</td>
       <td class="py-2.5 px-3 font-bold text-emerald-400">BUY</td>
-      <td class="py-2.5 px-3 text-slate-200">$4,189.69</td>
-      <td class="py-2.5 px-3 text-slate-200">$4,195.69</td>
-      <td class="py-2.5 px-3 text-slate-400">$4,195.69</td>
-      <td class="py-2.5 px-3 text-cyan-400">2500 lots</td>
-      <td class="py-2.5 px-3 text-amber-400/90">$2.4734</td>
-      <td class="py-2.5 px-3 text-emerald-400 font-bold">$+8.93</td>
-      <td class="py-2.5 px-3 text-emerald-400 font-bold">₹+804</td>
-      <td class="py-2.5 px-3 text-cyan-300 font-bold">+2.3R</td>
+      <td class="py-2.5 px-3 text-slate-200">$4,189.67</td>
+      <td class="py-2.5 px-3 text-slate-200">$4,191.53</td>
+      <td class="py-2.5 px-3 text-slate-400">$4,191.53</td>
+      <td class="py-2.5 px-3 text-cyan-400 font-bold">2500 lots (100%)</td>
+      <td class="py-2.5 px-3 text-amber-400/90">$2.4730</td>
+      <td class="py-2.5 px-3 text-emerald-400 font-bold">$+2.18</td>
+      <td class="py-2.5 px-3 text-emerald-400 font-bold">₹+196</td>
+      <td class="py-2.5 px-3 text-cyan-300 font-bold">+0.9R</td>
       <td class="py-2.5 px-3"><span class='px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'>WIN</span></td>
-      <td class="py-2.5 px-3 text-slate-400 text-[11px]">40R_RUNNER_TRAIL</td>
+      <td class="py-2.5 px-3 text-slate-400 text-[11px]">100%_TRAILING_STOP</td>
     </tr>
     
     <tr class="border-b border-slate-800/60 hover:bg-slate-800/30 transition font-mono text-xs">
       <td class="py-2.5 px-3 text-slate-400">#06</td>
       <td class="py-2.5 px-3 text-slate-300">10-12 13:15</td>
-      <td class="py-2.5 px-3 text-slate-400">10-12 15:45</td>
+      <td class="py-2.5 px-3 text-slate-400">10-12 15:00</td>
       <td class="py-2.5 px-3 font-bold text-rose-400">SELL</td>
       <td class="py-2.5 px-3 text-slate-200">$4,182.89</td>
-      <td class="py-2.5 px-3 text-slate-200">$4,181.93</td>
-      <td class="py-2.5 px-3 text-slate-400">$4,181.93</td>
-      <td class="py-2.5 px-3 text-cyan-400">1041 lots</td>
-      <td class="py-2.5 px-3 text-amber-400/90">$1.0276</td>
-      <td class="py-2.5 px-3 text-emerald-400 font-bold">$+4.78</td>
-      <td class="py-2.5 px-3 text-emerald-400 font-bold">₹+430</td>
-      <td class="py-2.5 px-3 text-cyan-300 font-bold">+1.2R</td>
+      <td class="py-2.5 px-3 text-slate-200">$4,179.19</td>
+      <td class="py-2.5 px-3 text-slate-400">$4,179.19</td>
+      <td class="py-2.5 px-3 text-cyan-400 font-bold">1041 lots (100%)</td>
+      <td class="py-2.5 px-3 text-amber-400/90">$1.0267</td>
+      <td class="py-2.5 px-3 text-emerald-400 font-bold">$+2.83</td>
+      <td class="py-2.5 px-3 text-emerald-400 font-bold">₹+255</td>
+      <td class="py-2.5 px-3 text-cyan-300 font-bold">+0.8R</td>
       <td class="py-2.5 px-3"><span class='px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'>WIN</span></td>
-      <td class="py-2.5 px-3 text-slate-400 text-[11px]">40R_RUNNER_TRAIL</td>
+      <td class="py-2.5 px-3 text-slate-400 text-[11px]">100%_TRAILING_STOP</td>
     </tr>
     
     <tr class="border-b border-slate-800/60 hover:bg-slate-800/30 transition font-mono text-xs">
       <td class="py-2.5 px-3 text-slate-400">#07</td>
-      <td class="py-2.5 px-3 text-slate-300">10-12 17:00</td>
+      <td class="py-2.5 px-3 text-slate-300">10-12 15:15</td>
       <td class="py-2.5 px-3 text-slate-400">10-12 17:15</td>
       <td class="py-2.5 px-3 font-bold text-emerald-400">BUY</td>
-      <td class="py-2.5 px-3 text-slate-200">$4,175.44</td>
-      <td class="py-2.5 px-3 text-slate-200">$4,173.44</td>
-      <td class="py-2.5 px-3 text-slate-400">$4,173.44</td>
-      <td class="py-2.5 px-3 text-cyan-400">2500 lots</td>
-      <td class="py-2.5 px-3 text-amber-400/90">$3.6935</td>
-      <td class="py-2.5 px-3 text-rose-400 font-bold">$-8.69</td>
-      <td class="py-2.5 px-3 text-rose-400 font-bold">₹-782</td>
+      <td class="py-2.5 px-3 text-slate-200">$4,176.67</td>
+      <td class="py-2.5 px-3 text-slate-200">$4,172.92</td>
+      <td class="py-2.5 px-3 text-slate-400">$4,172.92</td>
+      <td class="py-2.5 px-3 text-cyan-400 font-bold">1333 lots (100%)</td>
+      <td class="py-2.5 px-3 text-amber-400/90">$1.9691</td>
+      <td class="py-2.5 px-3 text-rose-400 font-bold">$-6.97</td>
+      <td class="py-2.5 px-3 text-rose-400 font-bold">₹-627</td>
       <td class="py-2.5 px-3 text-cyan-300 font-bold">-1.0R</td>
       <td class="py-2.5 px-3"><span class='px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30'>LOSS</span></td>
       <td class="py-2.5 px-3 text-slate-400 text-[11px]">STOP_LOSS</td>
@@ -410,46 +412,80 @@
     <tr class="border-b border-slate-800/60 hover:bg-slate-800/30 transition font-mono text-xs">
       <td class="py-2.5 px-3 text-slate-400">#08</td>
       <td class="py-2.5 px-3 text-slate-300">10-12 18:00</td>
-      <td class="py-2.5 px-3 text-slate-400">10-13 18:30</td>
+      <td class="py-2.5 px-3 text-slate-400">10-13 15:00</td>
       <td class="py-2.5 px-3 font-bold text-emerald-400">BUY</td>
       <td class="py-2.5 px-3 text-slate-200">$4,168.68</td>
-      <td class="py-2.5 px-3 text-slate-200">$4,180.85</td>
-      <td class="py-2.5 px-3 text-slate-400">$4,180.85</td>
-      <td class="py-2.5 px-3 text-cyan-400">493 lots</td>
-      <td class="py-2.5 px-3 text-amber-400/90">$0.4856</td>
-      <td class="py-2.5 px-3 text-emerald-400 font-bold">$+7.31</td>
-      <td class="py-2.5 px-3 text-emerald-400 font-bold">₹+658</td>
+      <td class="py-2.5 px-3 text-slate-200">$4,185.32</td>
+      <td class="py-2.5 px-3 text-slate-400">$4,185.32</td>
+      <td class="py-2.5 px-3 text-cyan-400 font-bold">493 lots (100%)</td>
+      <td class="py-2.5 px-3 text-amber-400/90">$0.4870</td>
+      <td class="py-2.5 px-3 text-emerald-400 font-bold">$+7.72</td>
+      <td class="py-2.5 px-3 text-emerald-400 font-bold">₹+695</td>
       <td class="py-2.5 px-3 text-cyan-300 font-bold">+1.6R</td>
       <td class="py-2.5 px-3"><span class='px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'>WIN</span></td>
-      <td class="py-2.5 px-3 text-slate-400 text-[11px]">40R_RUNNER_TRAIL</td>
+      <td class="py-2.5 px-3 text-slate-400 text-[11px]">100%_TRAILING_STOP</td>
     </tr>
     
     <tr class="border-b border-slate-800/60 hover:bg-slate-800/30 transition font-mono text-xs">
       <td class="py-2.5 px-3 text-slate-400">#09</td>
-      <td class="py-2.5 px-3 text-slate-300">10-13 21:00</td>
-      <td class="py-2.5 px-3 text-slate-400">10-14 18:00</td>
+      <td class="py-2.5 px-3 text-slate-300">10-13 17:15</td>
+      <td class="py-2.5 px-3 text-slate-400">10-13 17:30</td>
       <td class="py-2.5 px-3 font-bold text-rose-400">SELL</td>
-      <td class="py-2.5 px-3 text-slate-200">$4,164.82</td>
-      <td class="py-2.5 px-3 text-slate-200">$4,130.69</td>
-      <td class="py-2.5 px-3 text-slate-400">$4,130.69</td>
-      <td class="py-2.5 px-3 text-cyan-400">440 lots</td>
-      <td class="py-2.5 px-3 text-amber-400/90">$0.6884</td>
-      <td class="py-2.5 px-3 text-emerald-400 font-bold">$+19.74</td>
-      <td class="py-2.5 px-3 text-emerald-400 font-bold">₹+1777</td>
-      <td class="py-2.5 px-3 text-cyan-300 font-bold">+2.3R</td>
-      <td class="py-2.5 px-3"><span class='px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'>WIN</span></td>
-      <td class="py-2.5 px-3 text-slate-400 text-[11px]">40R_RUNNER_TRAIL</td>
+      <td class="py-2.5 px-3 text-slate-200">$4,189.21</td>
+      <td class="py-2.5 px-3 text-slate-200">$4,192.54</td>
+      <td class="py-2.5 px-3 text-slate-400">$4,192.54</td>
+      <td class="py-2.5 px-3 text-cyan-400 font-bold">1502 lots (100%)</td>
+      <td class="py-2.5 px-3 text-amber-400/90">$2.2292</td>
+      <td class="py-2.5 px-3 text-rose-400 font-bold">$-7.23</td>
+      <td class="py-2.5 px-3 text-rose-400 font-bold">₹-651</td>
+      <td class="py-2.5 px-3 text-cyan-300 font-bold">-1.0R</td>
+      <td class="py-2.5 px-3"><span class='px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30'>LOSS</span></td>
+      <td class="py-2.5 px-3 text-slate-400 text-[11px]">STOP_LOSS</td>
     </tr>
     
     <tr class="border-b border-slate-800/60 hover:bg-slate-800/30 transition font-mono text-xs">
       <td class="py-2.5 px-3 text-slate-400">#10</td>
+      <td class="py-2.5 px-3 text-slate-300">10-13 18:00</td>
+      <td class="py-2.5 px-3 text-slate-400">10-13 18:30</td>
+      <td class="py-2.5 px-3 font-bold text-rose-400">SELL</td>
+      <td class="py-2.5 px-3 text-slate-200">$4,188.47</td>
+      <td class="py-2.5 px-3 text-slate-200">$4,182.90</td>
+      <td class="py-2.5 px-3 text-slate-400">$4,182.90</td>
+      <td class="py-2.5 px-3 text-cyan-400 font-bold">973 lots (100%)</td>
+      <td class="py-2.5 px-3 text-amber-400/90">$0.9605</td>
+      <td class="py-2.5 px-3 text-emerald-400 font-bold">$+4.46</td>
+      <td class="py-2.5 px-3 text-emerald-400 font-bold">₹+401</td>
+      <td class="py-2.5 px-3 text-cyan-300 font-bold">+1.1R</td>
+      <td class="py-2.5 px-3"><span class='px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'>WIN</span></td>
+      <td class="py-2.5 px-3 text-slate-400 text-[11px]">100%_TRAILING_STOP</td>
+    </tr>
+    
+    <tr class="border-b border-slate-800/60 hover:bg-slate-800/30 transition font-mono text-xs">
+      <td class="py-2.5 px-3 text-slate-400">#11</td>
+      <td class="py-2.5 px-3 text-slate-300">10-13 21:00</td>
+      <td class="py-2.5 px-3 text-slate-400">10-14 18:00</td>
+      <td class="py-2.5 px-3 font-bold text-rose-400">SELL</td>
+      <td class="py-2.5 px-3 text-slate-200">$4,164.82</td>
+      <td class="py-2.5 px-3 text-slate-200">$4,113.77</td>
+      <td class="py-2.5 px-3 text-slate-400">$4,113.77</td>
+      <td class="py-2.5 px-3 text-cyan-400 font-bold">440 lots (100%)</td>
+      <td class="py-2.5 px-3 text-amber-400/90">$0.4272</td>
+      <td class="py-2.5 px-3 text-emerald-400 font-bold">$+22.03</td>
+      <td class="py-2.5 px-3 text-emerald-400 font-bold">₹+1983</td>
+      <td class="py-2.5 px-3 text-cyan-300 font-bold">+4.5R</td>
+      <td class="py-2.5 px-3"><span class='px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'>WIN</span></td>
+      <td class="py-2.5 px-3 text-slate-400 text-[11px]">100%_TRAILING_STOP</td>
+    </tr>
+    
+    <tr class="border-b border-slate-800/60 hover:bg-slate-800/30 transition font-mono text-xs">
+      <td class="py-2.5 px-3 text-slate-400">#12</td>
       <td class="py-2.5 px-3 text-slate-300">10-14 18:45</td>
       <td class="py-2.5 px-3 text-slate-400">10-14 21:00</td>
       <td class="py-2.5 px-3 font-bold text-emerald-400">BUY</td>
       <td class="py-2.5 px-3 text-slate-200">$4,101.94</td>
       <td class="py-2.5 px-3 text-slate-200">$4,091.84</td>
       <td class="py-2.5 px-3 text-slate-400">$4,091.84</td>
-      <td class="py-2.5 px-3 text-cyan-400">495 lots</td>
+      <td class="py-2.5 px-3 text-cyan-400 font-bold">495 lots (100%)</td>
       <td class="py-2.5 px-3 text-amber-400/90">$0.7170</td>
       <td class="py-2.5 px-3 text-rose-400 font-bold">$-5.72</td>
       <td class="py-2.5 px-3 text-rose-400 font-bold">₹-515</td>
@@ -471,10 +507,10 @@
     new Chart(ctx, {
       type: 'line',
       data: {
-        labels: ["10-08 12:00", "10-08 17:00", "10-08 21:45", "10-09 18:15", "10-11 17:00", "10-12 13:00", "10-12 15:45", "10-12 17:15", "10-13 18:30", "10-14 18:00", "10-14 21:00"],
+        labels: ["10-08 12:00", "10-08 15:45", "10-08 21:45", "10-09 18:15", "10-11 13:15", "10-11 21:30", "10-12 15:00", "10-12 17:15", "10-13 15:00", "10-13 17:30", "10-13 18:30", "10-14 18:00", "10-14 21:00"],
         datasets: [{
           label: 'Account Equity ($)',
-          data: [50.0, 54.76, 64.85, 74.51, 77.84, 86.77, 91.55, 82.86, 90.17, 109.91, 104.19],
+          data: [50.0, 54.77, 64.66, 76.29, 77.54, 79.72, 82.55, 75.58, 83.3, 76.07, 80.53, 102.56, 96.84],
           borderColor: '#10b981',
           backgroundColor: 'rgba(16, 185, 129, 0.08)',
           borderWidth: 2,
