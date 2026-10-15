@@ -20,15 +20,16 @@ def main():
     trader = MultiPairLiveTrader(fixed_risk_usd=5.0)
 
     print("=" * 80)
-    print("🧠 AGENT BRAIN | AUTONOMOUS LIVE TRADER")
-    print("STRATEGY: Profile 1 — Verified Level 2 DOM Institutional Order Flow Strategy")
+    print("🧠 AGENT BRAIN | AUTONOMOUS 24/7 LIVE TRADER")
+    print("CHAMPION 3-PAIR MASTER PORTFOLIO ENGINE (Gold, BTC, ETH)")
     print("=" * 80)
     for sym, p in trader.params.items():
-        print(f"  • {sym:<8} | Strategy: {p['strategy_label']} | Mode: {p['mode']} | Imb: >={p['min_imbalance']}x | TP: {p['tp_pct']*100:.1f}% | SL: {p['sl_pct']*100:.2f}% | Trail: {p['trail_mode']} | BE Lock: +{p['be_lock_r']:.2f}R")
+        wknd = "24/7 Continuous" if p.get("weekend_trading") else "Mon-Fri (Weekend Paused)"
+        print(f"  • {sym:<8} | Strategy: {p['strategy_label']} | Mode: {p['mode']} | Risk: $5.00 | Trading: {wknd}")
     print("=" * 80)
     print(f"Risk Rules: Strictly $5.00 fixed risk per trade | Base Capital: $50.00")
-    print(f"Weekend Filter: Active (Sat/Sun new entries blocked)")
-    print(f"L2 Reversal Guard: Active (Early +0.6R lock / 50% loss cut on adverse wall flip)")
+    print(f"Trailing: Unified Ladder (+1R->+0.2R, +1.5R->+0.6R, +2R->+1R, +2.5R->+1.5R, +3R->+2R, +4R->+2.5R, +5R->+3.5R, +6R+ continuous 1.5R trail)")
+    print(f"Reversal Guard: Active (-0.45R early cut / +0.8R peak profit lock)")
     print("=" * 80 + "\n")
 
     # Ensure sibling services (Dashboard & DOM Recorder) are synchronized
@@ -47,7 +48,7 @@ def main():
             cycle_count += 1
             now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             try:
-                print(f"\n--- [Cycle #{cycle_count} | {now_str}] Scanning 4 Instruments & Managing Positions ---", flush=True)
+                print(f"\n--- [Cycle #{cycle_count} | {now_str}] Scanning 3 Champion Instruments & Managing Positions ---", flush=True)
                 status = trader.scan_and_manage_all_pairs()
                 active_count = status.get("active_positions_count", 0)
                 bot_status = status.get("bot_status", "ACTIVE")

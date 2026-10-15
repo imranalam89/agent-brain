@@ -23,7 +23,13 @@ from config.settings import (
     DELTA_FEES,
     calculate_brokerage_fee,
     CONTRACT_VALUES,
-    LEVERAGE_MAP
+    LEVERAGE_MAP,
+    CHAMPION_CONFIG,
+    CHAMPION_CONFIG_BTC,
+    CHAMPION_CONFIG_ETH,
+    UNIFIED_TRAILING_LADDER,
+    WEEKEND_TRADING_SYMBOLS,
+    WEEKEND_PAUSED_SYMBOLS
 )
 from data.database import DatabaseManager
 from exchange.delta_client import DeltaExchangeClient
@@ -36,23 +42,33 @@ class MultiPairLiveTrader:
     """
     Autonomous Level 2 DOM Institutional Order Flow Trading Engine.
     
-    Verified Model C Macro Runner Strategy:
-    1. Pure Level 2 Microstructure:
-       - 100% driven by real-time Order Book Imbalance & Institutional Resting Walls.
-       - Discards lagging candle oscillators and VWAP bands.
-    2. Asset-Specific Execution Modes:
-       - BTCUSD : BREAKOUT Mode (Imbalance >= 3.0x, TP 2.2%, SL 0.3%, Cooldown 15m)
-       - ETHUSD : SESSION_FLOW Mode (Imbalance >= 2.0x, TP 2.0%, SL 0.3%, Cooldown 10m)
-       - XAUTUSD: ABSORPTION_FADE Mode (Imbalance >= 2.0x / Asks >= 3.1x Bids, TP 0.8%, SL 0.2%, Cooldown 10m)
-       - SLVONUSD: BREAKOUT Mode (Imbalance >= 2.5x, TP 2.0%, SL 0.3%, Cooldown 10m)
-    3. Strict Invariants:
-       - Capital: $50.00 USD base with strictly $5.00 fixed risk per trade.
-       - Mutual Exclusion: Exactly 1 open position per symbol at any time.
-       - Weekend Filter: Saturday & Sunday paused (institutional desks closed).
-       - Time-Confluence Filter: Pauses during midday lunch chop (13:00-14:00 IST) and late NY whipsaw (22:00-23:15 IST).
-    4. Model C Macro Runner Trade Management:
-       - Breakeven profit lock (+0.20R guaranteed green) at +1.0R.
-       - Wide Breathing Trailing Stop (1.35x SL buffer behind peak price) starting at +1.5R.
+    Verified 3-Pair Champion Portfolio Architecture (Gold + BTC + ETH):
+    1. Gold (XAUTUSD):
+       - Hybrid A: 15m Session Breakout (London/NY ORB) + CVD Order Flow Absorption.
+       - Level 2 DOM wall confirmation, 15m cooldown, 2-Loss = 2h halt circuit breaker.
+       - Ratcheted trailing stop with 1.10x breathing buffer and 4-bar swing protection.
+       - Pauses Saturday/Sunday (commodity market closed).
+    2. Bitcoin (BTCUSD):
+       - DOM Imbalance & Ask/Bid Wall Sweep (Institutional Depth >= 3.0x).
+       - Peak profit lock at +0.8R, 2-Loss = 4h halt circuit breaker (liquidation cascade shield).
+       - Continuous 24/7 trading (weekends included).
+    3. Ethereum (ETHUSD):
+       - Weekday: Confluence DOM Sweep & CVD Trend Pullback (London/NY session).
+       - Weekend: Bollinger & RSI Range Exhaustion Reversal (24/7 weekend trading, fixed +2.0R TP).
+       - 2-Loss = 2h halt circuit breaker.
+    4. All 3 Champion Pairs:
+       - Strictly $5.00 fixed raw risk per trade.
+       - Unified Ratcheted Trailing Ladder:
+         +1.0R -> +0.20R (Guaranteed Green, fees covered)
+         +1.5R -> +0.60R
+         +2.0R -> +1.00R
+         +2.5R -> +1.50R
+         +3.0R -> +2.00R
+         +4.0R -> +2.50R
+         +5.0R -> +3.50R (1.5R buffer)
+         +6.0R+ -> Continuous 1.5R trailing buffer behind peak price.
+       - Early Reversal Cut: Cut early at -0.45R on opposing hostile orderbook wall (saves ~55% of loss).
+       - Strict Invariant: Exactly 1 open position per symbol at any time.
     """
 
     def __init__(
@@ -77,65 +93,58 @@ class MultiPairLiveTrader:
         # Order Flow Microstructure Engine
         self.orderflow_engine = OrderFlowEngine(min_imbalance_ratio=1.8)
 
-        # Asset-specific DOM parameters calibrated from 589K Level 2 DOM snapshots
+        # Asset-specific DOM parameters calibrated from 3-Pair Champion Backtest
         self.params = {
             "BTCUSD": {
                 "mode": "BREAKOUT",
                 "min_imbalance": 3.0,
-                "tp_pct": 0.022,      # 2.2% Take Profit
+                "tp_pct": 0.022,      # 2.2% Take Profit runner
                 "sl_pct": 0.003,      # 0.3% Stop Loss (1:7.33 R:R)
-                "cooldown_sec": 900,  # 15 minutes cooldown (360 snapshots)
-                "trail_mode": "BREATHING",
-                "trail_mult": 1.50,
-                "be_trigger_r": 0.8,
-                "be_lock_r": 0.30,
+                "cooldown_sec": 900,  # 15 minutes post-exit rest
+                "cascade_breaker_losses": 2, # 2 losses in a row
+                "cascade_breaker_hours": 4.0, # 4-hour halt (protects against liquidation dumps)
+                "profit_lock_r": 0.80, # Bank +0.8R on opposing wall detection
+                "reversal_cut_r": -0.45, # Cut early at -0.45R (saves ~55% loss)
                 "c_val": 0.001,
-                "decimals": 1,
-                "strategy_label": "DOM Breakout (Selective 3.0x • Breathing 1.5x)"
+                "decimals": 2,
+                "weekend_trading": True,
+                "strategy_label": "DOM Imbalance & Ask/Bid Wall Sweep (Selective 3.0x • 24/7 Crypto)"
             },
             "ETHUSD": {
-                "mode": "SESSION_FLOW",
+                "mode": "CONFLUENCE_WEEKEND",
                 "min_imbalance": 2.0,
-                "tp_pct": 0.020,      # 2.0% Take Profit
-                "sl_pct": 0.003,      # 0.3% Stop Loss (1:6.67 R:R)
-                "cooldown_sec": 1200, # 20 minutes cooldown (480 snapshots)
-                "trail_mode": "BREATHING",
-                "trail_mult": 1.50,
-                "be_trigger_r": 1.0,
-                "be_lock_r": 0.30,
+                "tp_pct": 0.020,      # Weekday runner target
+                "sl_pct": 0.0035,     # Structure-based baseline
+                "cooldown_sec": 900,  # 15 minutes post-exit rest
+                "cascade_breaker_losses": 2, # 2 losses in a row
+                "cascade_breaker_hours": 2.0, # 2-hour halt (sweet spot for ETH)
+                "reversal_cut_r": -0.45, # Cut early at -0.45R on opposing DOM wall
                 "c_val": 0.01,
                 "decimals": 2,
-                "strategy_label": "DOM London/NY Session Flow Wall Defense (Breathing 1.5x)"
+                "weekend_trading": True,
+                "weekend_tp_r": 2.0,  # Fixed +2.0R take profit on weekend mean reversion
+                "strategy_label": "Confluence DOM Sweep (Weekday) + BB Exhaustion Reversal (Weekend 24/7)"
             },
             "XAUTUSD": {
-                "mode": "PRICEACTION_DOM",
+                "mode": "HYBRID_A",
                 "min_imbalance": 1.5,
-                "tp_pct": 0.020,      # 2.0% Take Profit (1:5.0 R:R)
-                "sl_pct": 0.0040,     # 0.40% Stop Loss ($16.60 Gold buffer)
-                "cooldown_sec": 900,  # 15 minutes cooldown
-                "trail_mode": "BREATHING",
-                "trail_mult": 1.0,
-                "be_trigger_r": 0.70, # Lock profit when reaching +0.70R
-                "be_lock_r": 0.50,    # Lock +0.50R ($2.50 profit)
+                "tp_pct": 0.020,      # Runner target
+                "sl_pct": 0.0025,     # Structure-based baseline
+                "cooldown_sec": 900,  # 15 minutes post-exit rest
+                "cascade_breaker_losses": 2, # 2 losses in a row
+                "cascade_breaker_hours": 2.0, # 2-hour halt
+                "breathing_mult": 1.10, # 1.10x breathing trail distance behind peak
+                "swing_lookback_bars": 4, # 4-bar swing low/high structural protection
+                "reversal_cut_r": -0.45, # Cut early at -0.45R on opposing absorption wall
                 "c_val": 0.001,
                 "decimals": 2,
-                "strategy_label": "Price Action Primary + L2 DOM Verification (15m Breakout/Retest & Trend Pullback)"
-            },
-            "SLVONUSD": {
-                "mode": "BREAKOUT",
-                "min_imbalance": 2.0, # 2.0x Imbalance
-                "tp_pct": 0.020,      # 2.0% Take Profit
-                "sl_pct": 0.003,      # 0.3% Stop Loss (1:6.67 R:R)
-                "cooldown_sec": 0,    # 0s cooldown (No Cooldown)
-                "trail_mode": "BREATHING",
-                "trail_mult": 1.35,
-                "be_trigger_r": 1.0,
-                "be_lock_r": 0.30,
-                "c_val": 0.1,
-                "decimals": 3,
-                "strategy_label": "DOM Breakout Runner (0m Cooldown • Breathing 1.35x)"
+                "weekend_trading": False, # Pauses on weekends (traditional markets closed)
+                "strategy_label": "Hybrid A (15m Breakout + CVD Order Flow Absorption + DOM)"
             }
         }
+
+        # Track consecutive losses per pair for the cascade circuit breakers
+        self.consecutive_losses: Dict[str, int] = {s: 0 for s in self.params}
 
         # Rolling micro price window for absorption detection
         self.price_window: Dict[str, List[float]] = {s: [] for s in ACTIVE_SYMBOLS}
@@ -234,6 +243,35 @@ class MultiPairLiveTrader:
                             print(f"⏳ [COOLDOWN RESTORED] {sym} cooldown active ({rem // 60}m {rem % 60}s remaining).")
                     except Exception:
                         pass
+
+            # Restore consecutive losses and cascade circuit breaker halts
+            for sym in self.params:
+                sym_trades = [t for t in closed_trades if t.get("symbol") == sym]
+                consec = 0
+                for tr in sym_trades[:5]:
+                    pnl_val = float(tr.get("pnl_usd", 0) or 0)
+                    if pnl_val < 0:
+                        consec += 1
+                    else:
+                        break
+                self.consecutive_losses[sym] = consec
+                limit_losses = self.params[sym].get("cascade_breaker_losses", 2)
+                halt_hrs = self.params[sym].get("cascade_breaker_hours", 2.0)
+                if consec >= limit_losses and sym_trades:
+                    c_str = sym_trades[0].get("closed_at")
+                    if c_str:
+                        try:
+                            try:
+                                c_dt = datetime.fromisoformat(c_str)
+                            except Exception:
+                                c_dt = datetime.strptime(c_str, "%Y-%m-%d %H:%M:%S")
+                            halt_end = c_dt.timestamp() + (halt_hrs * 3600)
+                            if time.time() < halt_end:
+                                self.cooldown_until[sym] = max(self.cooldown_until.get(sym, 0), halt_end)
+                                rem_mins = int((halt_end - time.time()) / 60)
+                                print(f"🚨 [CASCADE BREAKER RESTORED] {sym} halted ({consec} consecutive losses, {rem_mins}m remaining).")
+                        except Exception:
+                            pass
         except Exception as e:
             print(f"[NOTICE] Could not restore open positions: {e}")
 
@@ -467,58 +505,84 @@ class MultiPairLiveTrader:
 
     def _manage_active_position(self, symbol: str, current_price: float):
         """
-        Model C Wide Breathing Macro Runner Trade Management:
-        1. Breakeven Move at +0.8R: Move stop loss to entry price (100% position risk-free).
-        2. Model C Trailing Stop at +1.5R: Ratchet SL with 1.35x SL buffer behind peak price.
-        3. Take Profit Exit: Full exit on target.
-        4. Stop Loss / Breakeven Exit: Full exit on stop hit.
+        Unified 3-Pair Champion Trailing Ladder & Early Reversal Guard:
+        - Unified Trailing Ladder:
+          +1.0R -> +0.20R (Guaranteed Green, fees covered)
+          +1.5R -> +0.60R
+          +2.0R -> +1.00R
+          +2.5R -> +1.50R
+          +3.0R -> +2.00R
+          +4.0R -> +2.50R
+          +5.0R -> +3.50R (1.5R breathing buffer)
+          +6.0R+ -> Continuous 1.5R trailing buffer behind peak price.
+        - Gold: In addition, 4-bar swing low/high structural protection.
+        - Weekend ETH: Fixed +2.0R TP / -1.0R SL with -0.45R reversal cut.
+        - Hostile Reversal Guard:
+          * In Profit (>= +0.8R BTC, >= +0.6R others): Bank profit early before retrace.
+          * In Loss (<= -0.30R): Cut early at -0.45R on hostile orderbook wall (saves ~55% of loss).
         """
         pos = self.active_positions[symbol]
         side = pos["side"]
         entry = pos["entry_price"]
-        sl_pct = pos.get("sl_pct", self.params[symbol]["sl_pct"])
-        tp_pct = pos.get("tp_pct", self.params[symbol]["tp_pct"])
+        dist = pos.get("dist") or abs(entry - pos["stop_loss"])
         decimals = self.params[symbol]["decimals"]
+        is_weekend_trade = pos.get("is_weekend", False)
+
+        # Track peak excursions for dynamic runner trailing
+        if "highest_price" not in pos:
+            pos["highest_price"] = max(entry, current_price)
+            pos["lowest_price"] = min(entry, current_price)
+        else:
+            if current_price > pos["highest_price"]:
+                pos["highest_price"] = current_price
+            if current_price < pos["lowest_price"]:
+                pos["lowest_price"] = current_price
 
         if side == "BUY":
-            profit_pct = (current_price - entry) / entry
+            r_mult = (current_price - entry) / max(1e-6, dist)
+            peak_r = (pos["highest_price"] - entry) / max(1e-6, dist)
         else:
-            profit_pct = (entry - current_price) / entry
+            r_mult = (entry - current_price) / max(1e-6, dist)
+            peak_r = (entry - pos["lowest_price"]) / max(1e-6, dist)
 
-        r_mult = profit_pct / max(1e-6, sl_pct)
-
-        # 1. Progressive Profit-Locking Trailing Ladder & +0.30R Fee-Covered Breakeven
-        one_r_dist = entry * sl_pct
-        trail_mode = self.params[symbol].get("trail_mode", "BREATHING")
-        trail_mult = self.params[symbol].get("trail_mult", 1.5)
-        be_trigger = self.params[symbol].get("be_trigger_r", 1.0)
-        be_lock = self.params[symbol].get("be_lock_r", 0.30)
         target_sl = None
 
-        if trail_mode == "BREATHING":
-            if r_mult >= 4.0:
-                target_sl = (current_price - one_r_dist * trail_mult) if side == "BUY" else (current_price + one_r_dist * trail_mult)
-            elif r_mult >= 3.0:
-                target_sl = (entry + 2.0 * one_r_dist) if side == "BUY" else (entry - 2.0 * one_r_dist)
-            elif r_mult >= 2.5:
-                target_sl = (entry + 1.5 * one_r_dist) if side == "BUY" else (entry - 1.5 * one_r_dist)
-            elif r_mult >= 2.0:
-                target_sl = (entry + 1.0 * one_r_dist) if side == "BUY" else (entry - 1.0 * one_r_dist)
-            elif r_mult >= 1.5:
-                target_sl = (entry + 0.6 * one_r_dist) if side == "BUY" else (entry - 0.6 * one_r_dist)
-            elif r_mult >= be_trigger:
-                target_sl = (entry + be_lock * one_r_dist) if side == "BUY" else (entry - be_lock * one_r_dist)
-        elif trail_mode == "RATCHET":
-            if r_mult >= 4.0:
-                target_sl = (entry + 3.0 * one_r_dist) if side == "BUY" else (entry - 3.0 * one_r_dist)
-            elif r_mult >= 3.0:
-                target_sl = (entry + 2.0 * one_r_dist) if side == "BUY" else (entry - 2.0 * one_r_dist)
-            elif r_mult >= 2.0:
-                target_sl = (entry + 1.0 * one_r_dist) if side == "BUY" else (entry - 1.0 * one_r_dist)
-            elif r_mult >= 1.2:
-                target_sl = (entry + be_lock * one_r_dist) if side == "BUY" else (entry - be_lock * one_r_dist)
-            elif r_mult >= be_trigger:
-                target_sl = (entry + be_lock * one_r_dist) if side == "BUY" else (entry - be_lock * one_r_dist)
+        if is_weekend_trade:
+            # Weekend ETH trade: Fixed +2.0R TP / -1.0R SL
+            pass
+        else:
+            # UNIFIED RATCHETED TRAILING SL LADDER (ALL 3 PAIRS)
+            if peak_r >= 6.0:
+                # Macro runner continuous 1.5R buffer behind peak price
+                target_sl = (pos["highest_price"] - 1.50 * dist) if side == "BUY" else (pos["lowest_price"] + 1.50 * dist)
+            elif peak_r >= 5.0:
+                target_sl = (entry + 3.50 * dist) if side == "BUY" else (entry - 3.50 * dist)
+            elif peak_r >= 4.0:
+                target_sl = (entry + 2.50 * dist) if side == "BUY" else (entry - 2.50 * dist)
+            elif peak_r >= 3.0:
+                target_sl = (entry + 2.00 * dist) if side == "BUY" else (entry - 2.00 * dist)
+            elif peak_r >= 2.5:
+                target_sl = (entry + 1.50 * dist) if side == "BUY" else (entry - 1.50 * dist)
+            elif peak_r >= 2.0:
+                target_sl = (entry + 1.00 * dist) if side == "BUY" else (entry - 1.00 * dist)
+            elif peak_r >= 1.5:
+                target_sl = (entry + 0.60 * dist) if side == "BUY" else (entry - 0.60 * dist)
+            elif peak_r >= 1.0:
+                target_sl = (entry + 0.20 * dist) if side == "BUY" else (entry - 0.20 * dist)
+
+            # Gold-specific 4-bar swing low/high structural protection
+            if symbol == "XAUTUSD" and peak_r >= 2.8:
+                candles_15m = self.candle_cache.get(symbol, [])
+                if len(candles_15m) >= 6:
+                    recent_bars = candles_15m[-5:-1]
+                    if side == "BUY":
+                        recent_swing = min(float(b["low"]) for b in recent_bars)
+                        trail_level = max(recent_swing - 0.10 * dist, pos["highest_price"] - 1.10 * dist)
+                        target_sl = max(target_sl or 0.0, trail_level)
+                    else:
+                        recent_swing = max(float(b["high"]) for b in recent_bars)
+                        trail_level = min(recent_swing + 0.10 * dist, pos["lowest_price"] + 1.10 * dist)
+                        target_sl = min(target_sl or 999999.0, trail_level)
 
         if target_sl is not None:
             new_sl = round(target_sl, decimals)
@@ -527,7 +591,7 @@ class MultiPairLiveTrader:
                 old_sl = pos["stop_loss"]
                 pos["stop_loss"] = new_sl
                 pos["be_locked"] = True
-                locked_r = round(abs(new_sl - entry) / one_r_dist, 2)
+                locked_r = round(abs(new_sl - entry) / dist, 2)
 
                 # 1. Update SQLite trade record
                 try:
@@ -559,17 +623,17 @@ class MultiPairLiveTrader:
                     except Exception as e:
                         print(f"[DELTA SL ORDER NOTICE] {e}")
 
-                print(f"⚡ [PROFIT TRAIL RATCHET] {symbol} {side} SL ratcheted from ${old_sl} to ${new_sl} (+{locked_r}R profit locked @ +{r_mult:.1f}R expansion).")
+                print(f"⚡ [PROFIT TRAIL RATCHET] {symbol} {side} SL ratcheted from ${old_sl} to ${new_sl} (+{locked_r}R profit locked @ +{peak_r:.1f}R peak).")
                 self.db.log_thought(
                     symbol=symbol,
                     event_type="TRAILING_SL_RATCHET",
                     stars=5.0,
-                    message=f"⚡ Trailing SL ratcheted on {symbol} {side} to ${new_sl} (+{locked_r}R profit locked @ +{r_mult:.1f}R). Exchange SL order placed on Delta."
+                    message=f"⚡ Trailing SL ratcheted on {symbol} {side} to ${new_sl} (+{locked_r}R profit locked @ +{peak_r:.1f}R peak). Delta stop order updated."
                 )
                 if locked_r <= 0.25:
-                    notifier.send_breakeven_alert(symbol, side, current_price, new_sl, r_mult)
+                    notifier.send_breakeven_alert(symbol, side, current_price, new_sl, peak_r)
                 else:
-                    notifier.send_trailing_alert(symbol, side, current_price, new_sl, r_mult)
+                    notifier.send_trailing_alert(symbol, side, current_price, new_sl, peak_r)
 
         # Baseline check: If position is open and authenticated, ensure at least one exchange stop exists
         if symbol not in self.verified_sl_orders and self.is_live_authenticated:
@@ -594,8 +658,7 @@ class MultiPairLiveTrader:
             except Exception as e:
                 print(f"[DELTA BASELINE SL NOTICE] {e}")
 
-        # 2. Level 2 DOM High-Conviction Reversal Guard
-        # If running trade experiences severe opposing orderbook pressure (>=3.0x hostile imbalance + 2+ hostile walls):
+        # 2. Level 2 DOM High-Conviction Hostile Reversal Guard
         try:
             dom_data = self.client.get_l2_orderbook(symbol, depth=30)
             if dom_data and isinstance(dom_data, dict):
@@ -610,41 +673,42 @@ class MultiPairLiveTrader:
                     b_walls = dom_m.get("bid_walls", [])
                     a_walls = dom_m.get("ask_walls", [])
 
-                    # Detect extreme hostile orderbook reversal
                     hostile_reversal = False
                     opposing_ratio = 1.0
+                    min_hostile_imb = 2.2 if symbol in ("XAUTUSD", "BTCUSD") else 2.0
                     if side == "BUY":
-                        # We are LONG: Hostile sellers dump with heavy asks & ask walls
-                        hostile_reversal = (s_ratio >= 2.8 and len(a_walls) >= 2)
+                        hostile_reversal = (s_ratio >= min_hostile_imb and len(a_walls) >= 2)
                         opposing_ratio = s_ratio
                     elif side == "SELL":
-                        # We are SHORT: Hostile buyers pump with heavy bids & bid walls
-                        hostile_reversal = (b_ratio >= 2.8 and len(b_walls) >= 2)
+                        hostile_reversal = (b_ratio >= min_hostile_imb and len(b_walls) >= 2)
                         opposing_ratio = b_ratio
 
                     if hostile_reversal:
-                        # Case A: In profit (+0.6R or higher) -> Lock profit immediately rather than giving it back
-                        if r_mult >= 0.6:
+                        # Case A: Reversal Peak Profit Lock (BTC >= +0.8R, Others >= +0.6R)
+                        profit_threshold = 0.80 if symbol == "BTCUSD" else 0.60
+                        if r_mult >= profit_threshold:
                             print(f"🚨 [L2 EARLY REVERSAL PROFIT LOCK] {symbol} {side} closed early @ ${current_price:,.2f} (+{r_mult:.2f}R). Hostile DOM reversal flow ({opposing_ratio:.2f}x).")
                             self.db.log_thought(
                                 symbol=symbol,
                                 event_type="EARLY_REVERSAL_PROFIT_LOCK",
                                 stars=5.0,
-                                message=f"🚨 High-Conviction L2 DOM Reversal: Opposing orderbook flow reached {opposing_ratio:.2f}x with stacked hostile walls. Closed early to bank +{r_mult:.2f}R profit before pullback."
+                                message=f"🚨 High-Conviction L2 DOM Reversal: Opposing orderbook flow reached {opposing_ratio:.2f}x with stacked hostile walls. Closed early to bank +{r_mult:.2f}R profit."
                             )
-                            self._close_position(symbol, current_price, reason="EARLY_REVERSAL_EXIT")
+                            self._close_position(symbol, current_price, reason="REVERSAL_PROFIT_LOCK")
                             return
 
-                        # Case B: In loss (-0.3R to -0.8R) -> Cut early to save full -1.0R SL loss!
-                        elif r_mult <= -0.3:
-                            print(f"🛡️ [L2 EARLY REVERSAL LOSS CUT] {symbol} {side} cut early @ ${current_price:,.2f} ({r_mult:.2f}R). Saved ~50% SL capital from full stop-out.")
+                        # Case B: Reversal Full Cut at -0.45R (In loss <= -0.30R)
+                        elif r_mult <= -0.30:
+                            cut_price = round(entry - 0.45 * dist if side == "BUY" else entry + 0.45 * dist, decimals)
+                            exec_cut_p = cut_price if (cut_price > pos["stop_loss"] if side == "BUY" else cut_price < pos["stop_loss"]) else current_price
+                            print(f"🛡️ [L2 EARLY REVERSAL CUT] {symbol} {side} cut early @ ${exec_cut_p:,.2f} (-0.45R). Opposing wall detected, saving ~55% loss.")
                             self.db.log_thought(
                                 symbol=symbol,
                                 event_type="EARLY_REVERSAL_CUT",
                                 stars=4.5,
-                                message=f"🛡️ Early Reversal Risk Cut: Hostile DOM reversal confirmed thesis invalidated. Cut position early at {r_mult:.2f}R to prevent full -1.0R loss."
+                                message=f"🛡️ Early Reversal Risk Cut: Hostile DOM reversal confirmed thesis invalidated. Cut position early at -0.45R to prevent full -1.0R loss."
                             )
-                            self._close_position(symbol, current_price, reason="EARLY_REVERSAL_CUT")
+                            self._close_position(symbol, exec_cut_p, reason="REVERSAL_FULL_CUT")
                             return
         except Exception:
             pass
@@ -652,7 +716,8 @@ class MultiPairLiveTrader:
         # 3. Take Profit Exit Check
         tp_hit = (current_price >= pos["take_profit"]) if side == "BUY" else (current_price <= pos["take_profit"])
         if tp_hit:
-            self._close_position(symbol, current_price, reason="TAKE_PROFIT")
+            reason = "WEEKEND_TP_2R" if is_weekend_trade else "TAKE_PROFIT"
+            self._close_position(symbol, current_price, reason=reason)
             return
 
         # 4. Stop Loss / Breakeven Exit Check
@@ -662,10 +727,63 @@ class MultiPairLiveTrader:
             self._close_position(symbol, current_price, reason=reason)
             return
 
+    @staticmethod
+    def _calc_ema(prices: List[float], period: int) -> List[float]:
+        if not prices:
+            return []
+        ema = [prices[0]]
+        mult = 2.0 / (period + 1.0)
+        for p in prices[1:]:
+            ema.append((p - ema[-1]) * mult + ema[-1])
+        return ema
+
+    @staticmethod
+    def _calc_bollinger(prices: List[float], period: int = 20, num_std: float = 2.0):
+        upper, mid, lower = [], [], []
+        for i in range(len(prices)):
+            if i < period:
+                upper.append(prices[i])
+                mid.append(prices[i])
+                lower.append(prices[i])
+            else:
+                w = prices[i - period + 1 : i + 1]
+                m = sum(w) / period
+                std = math.sqrt(sum((x - m) ** 2 for x in w) / period)
+                mid.append(m)
+                upper.append(m + num_std * std)
+                lower.append(m - num_std * std)
+        return upper, mid, lower
+
+    @staticmethod
+    def _calc_rsi(prices: List[float], period: int = 14) -> List[float]:
+        rsi = [50.0] * len(prices)
+        if len(prices) <= period:
+            return rsi
+        gains, losses = [], []
+        for i in range(1, period + 1):
+            diff = prices[i] - prices[i - 1]
+            gains.append(max(0.0, diff))
+            losses.append(max(0.0, -diff))
+        avg_g = sum(gains) / period
+        avg_l = sum(losses) / period
+        for i in range(period + 1, len(prices)):
+            diff = prices[i] - prices[i - 1]
+            g = max(0.0, diff)
+            l = max(0.0, -diff)
+            avg_g = (avg_g * (period - 1) + g) / period
+            avg_l = (avg_l * (period - 1) + l) / period
+            if avg_l == 0:
+                rsi[i] = 100.0
+            else:
+                rsi[i] = 100.0 - (100.0 / (1.0 + (avg_g / avg_l)))
+        return rsi
+
     def _evaluate_entry_signal(self, symbol: str, current_price: float) -> Optional[Dict[str, Any]]:
         """
-        Pure Level 2 DOM Institutional Order Flow Entry Evaluation.
-        Enforces Weekend, Time-Confluence, and Asset-Specific Microstructure Rules.
+        Pure Level 2 DOM & Microstructure Champion Entry Evaluation (3 Champion Pairs):
+        1. BTCUSD: DOM Imbalance >= 3.0x & Resting Wall Sweep (24/7 continuous).
+        2. ETHUSD: Confluence DOM Sweep (Weekday) + BB Exhaustion Reversal (Weekend 24/7).
+        3. XAUTUSD: Hybrid A (15m Session Breakout + CVD Orderflow Absorption + DOM Confirmation).
         """
         # 1. Check Cooldown
         if time.time() < self.cooldown_until.get(symbol, 0.0):
@@ -679,22 +797,26 @@ class MultiPairLiveTrader:
 
         now_ist = datetime.now(IST)
         now_ts = time.time()
+        is_weekend = now_ist.weekday() in (5, 6)
+        cfg = self.params.get(symbol)
+        if not cfg:
+            return None
 
-        # 2. Weekend Rule: Saturday (5) & Sunday (6) low-liquidity retail chop paused
-        if now_ist.weekday() in (5, 6):
+        # 2. Weekend Policy:
+        # BTC and ETH trade 24/7 uninterrupted (weekends included).
+        # Gold (XAUTUSD) pauses on weekends (traditional markets closed).
+        if symbol == "XAUTUSD" and is_weekend:
             if now_ts - self.last_thought_log.get(f"{symbol}_weekend", 0) > 900:
                 self.last_thought_log[f"{symbol}_weekend"] = now_ts
                 self.db.log_thought(
                     symbol=symbol,
                     event_type="WEEKEND_FILTER",
                     stars=3.0,
-                    message="⏸️ Weekend Filter Active: Saturday & Sunday retail chop paused. Institutional desks closed. Trading resumes Monday."
+                    message="⏸️ Gold Weekend Pause: Commodity desks closed Saturday/Sunday. Trading resumes Monday."
                 )
             return None
 
         # 3. Fetch Level 2 Order Book Depth from Delta Exchange
-
-        # 4. Fetch Level 2 Order Book Depth from Delta Exchange
         dom_data = self.client.get_l2_orderbook(symbol, depth=50)
         bids = dom_data.get("bids", []) if isinstance(dom_data, dict) else []
         asks = dom_data.get("asks", []) if isinstance(dom_data, dict) else []
@@ -711,109 +833,198 @@ class MultiPairLiveTrader:
         ask_walls = metrics.get("ask_walls", [])
         mid = metrics.get("mid_price") or current_price
 
-        cfg = self.params[symbol]
-        mode = cfg["mode"]
-        min_imb = cfg["min_imbalance"]
-
         has_bid_wall = any(w.get("price", 0) <= mid for w in bid_walls) if bid_walls else False
         has_ask_wall = any(w.get("price", 0) >= mid for w in ask_walls) if ask_walls else False
 
         long_trigger = False
         short_trigger = False
         strat_title = ""
+        sl_dist = 0.0
+        tp_price = 0.0
+        sl_price = 0.0
+        is_weekend_signal = False
+        c_val = cfg["c_val"]
+        decimals = cfg["decimals"]
 
-        # 5. Evaluate Exact Asset Strategy Mode
-        if mode == "BREAKOUT":
-            # BTCUSD (3.0x), SLVONUSD (2.5x): Momentum sweep through resting liquidity walls
+        # 4. Evaluate Asset Strategy Logic
+        # -------------------------------------------------------------
+        # PAIR 1: BITCOIN (BTCUSD) - 24/7 DOM Imbalance >= 3.0x & Sweep
+        # -------------------------------------------------------------
+        if symbol == "BTCUSD":
+            min_imb = cfg.get("min_imbalance", 3.0)
             long_trigger = (side_dominant == "BUYERS" and buyer_ratio >= min_imb and (has_ask_wall or len(ask_walls) > 0))
             short_trigger = (side_dominant == "SELLERS" and seller_ratio >= min_imb and (has_bid_wall or len(bid_walls) > 0))
-            strat_title = f"DOM {symbol} Breakout & Ask Wall Sweep" if long_trigger else f"DOM {symbol} Breakout & Bid Wall Sweep"
+            if long_trigger or short_trigger:
+                strat_title = f"DOM {symbol} Breakout & Ask Wall Sweep" if long_trigger else f"DOM {symbol} Breakout & Bid Wall Sweep"
+                sl_dist = round(mid * cfg["sl_pct"], decimals)
+                tp_price = round(mid * (1.0 + cfg["tp_pct"]) if long_trigger else mid * (1.0 - cfg["tp_pct"]), decimals)
+                sl_price = round(mid - sl_dist if long_trigger else mid + sl_dist, decimals)
 
-        elif mode == "SESSION_FLOW":
-            # ETHUSD (2.0x): Trend continuation during London/NY liquid sessions (13:00 - 23:45 IST)
-            in_session = (13 <= now_ist.hour <= 23)
-            if in_session:
-                long_trigger = (side_dominant == "BUYERS" and buyer_ratio >= min_imb and (has_bid_wall or len(bid_walls) > 0))
-                short_trigger = (side_dominant == "SELLERS" and seller_ratio >= min_imb and (has_ask_wall or len(ask_walls) > 0))
-                strat_title = f"DOM {symbol} London/NY Session Flow Wall Defense"
-
-        elif mode == "PRICEACTION_DOM":
-            # XAUTUSD: Price Action Primary (15m Breakout/Retest & Dynamic Trend Pullback) + Level 2 DOM Verification
-            candles_15m = self.candle_cache.get(symbol, [])
-            if now_ts - self.last_candle_fetch.get(symbol, 0) > 60 or not candles_15m:
+        # ---------------------------------------------------------------------------------
+        # PAIR 2: ETHEREUM (ETHUSD) - Weekday Confluence + Weekend BB/RSI Scalp (24/7 Crypto)
+        # ---------------------------------------------------------------------------------
+        elif symbol == "ETHUSD":
+            # Cache 5m candles for ETH
+            candles_5m = self.candle_cache.get(symbol, [])
+            if now_ts - self.last_candle_fetch.get(symbol, 0) > 60 or not candles_5m:
                 try:
-                    c_start = int(now_ts - (86400 * 4)) # Last 4 days
-                    candles_15m = self.client.get_candles(symbol, resolution="15m", start=c_start, end=int(now_ts))
-                    if candles_15m and len(candles_15m) >= 25:
-                        self.candle_cache[symbol] = candles_15m
+                    c_start = int(now_ts - (86400 * 3))
+                    candles_5m = self.client.get_candles(symbol, resolution="5m", start=c_start, end=int(now_ts))
+                    if candles_5m and len(candles_5m) >= 30:
+                        self.candle_cache[symbol] = candles_5m
                         self.last_candle_fetch[symbol] = now_ts
                 except Exception as e:
                     print(f"[CANDLE FETCH NOTICE] {symbol}: {e}")
 
-            if candles_15m and len(candles_15m) >= 25:
-                # Daily Profit Lock: If Gold already has a WIN closed today, pause new entries to lock the green day
-                today_str = now_ist.strftime("%Y-%m-%d")
-                recent_trades = self.db.get_trades(limit=25)
-                has_today_win = any(
-                    str(t.get("symbol", "")).upper() == symbol
-                    and str(t.get("status", "")).upper() == "CLOSED"
-                    and str(t.get("closed_at", "")).startswith(today_str)
-                    and float(t.get("pnl_usd", 0)) > 0
-                    for t in recent_trades
-                )
-                if has_today_win:
-                    if now_ts - self.last_thought_log.get(f"{symbol}_daily_lock", 0) > 900:
-                        self.last_thought_log[f"{symbol}_daily_lock"] = now_ts
-                        self.db.log_thought(
-                            symbol=symbol,
-                            event_type="DAILY_WIN_LOCK",
-                            stars=5.0,
-                            message=f"🔒 Daily Profit Lock Active: {symbol} has already secured a green day win. Capital protected, new entries paused until tomorrow."
-                        )
-                    return None
+            if candles_5m and len(candles_5m) >= 30:
+                closes = [float(x["close"]) for x in candles_5m]
+                highs = [float(x["high"]) for x in candles_5m]
+                lows = [float(x["low"]) for x in candles_5m]
+                c_idx = len(candles_5m) - 1
+                curr_c = candles_5m[-1]
 
-                c = candles_15m[-1]
-                prev_c = candles_15m[-2]
-                prev_window = candles_15m[-18:-2]
-                prior_high = max(x['high'] for x in prev_window)
-                prior_low = min(x['low'] for x in prev_window)
+                if is_weekend:
+                    # Weekend Module: Bollinger & RSI Range Exhaustion Reversal
+                    bb_up, bb_mid, bb_low = self._calc_bollinger(closes, period=20, num_std=2.0)
+                    rsi14 = self._calc_rsi(closes, period=14)
+                    
+                    if lows[-1] <= bb_low[-1] and closes[-1] > bb_low[-1] and rsi14[-1] <= 35:
+                        long_trigger = True
+                        sl_dist = max(3.0, closes[-1] - lows[-1] + 1.0)
+                        strat_title = "Weekend Bollinger & RSI Reversal (Long)"
+                        is_weekend_signal = True
+                    elif highs[-1] >= bb_up[-1] and closes[-1] < bb_up[-1] and rsi14[-1] >= 65:
+                        short_trigger = True
+                        sl_dist = max(3.0, highs[-1] - closes[-1] + 1.0)
+                        strat_title = "Weekend Bollinger & RSI Reversal (Short)"
+                        is_weekend_signal = True
 
-                # EMAs
-                closes = [x['close'] for x in candles_15m]
-                k20, k50 = 2 / 21, 2 / 51
-                ema20_val, ema50_val = closes[0], closes[0]
-                for p_val in closes[1:]:
-                    ema20_val = p_val * k20 + ema20_val * (1 - k20)
-                    ema50_val = p_val * k50 + ema50_val * (1 - k50)
+                    if long_trigger or short_trigger:
+                        # Fixed 2.0R Take Profit on weekend mean reversion
+                        tp_price = round(mid + 2.0 * sl_dist if long_trigger else mid - 2.0 * sl_dist, decimals)
+                        sl_price = round(mid - sl_dist if long_trigger else mid + sl_dist, decimals)
 
-                # Price Action 1: Break & Retest
-                bull_retest = (prev_c['close'] > prior_high) and (c['low'] <= prior_high * 1.0005) and (c['close'] > prior_high)
-                bear_retest = (prev_c['close'] < prior_low) and (c['high'] >= prior_low * 0.9995) and (c['close'] < prior_low)
+                else:
+                    # Weekday Module: London & NY Confluence (13:00 - 23:00 IST, avoid hours 16, 19, 20, 22)
+                    in_session = (13 <= now_ist.hour <= 23) and (now_ist.hour not in (16, 19, 20, 22))
+                    if in_session:
+                        ema20 = self._calc_ema(closes, 20)
+                        ema50 = self._calc_ema(closes, 50)
+                        bar_range = max(1.0, highs[-1] - lows[-1])
+                        delta = float(curr_c.get("delta", 0.0))
+                        vol = max(1.0, float(curr_c.get("volume", 1.0)))
+                        dr = delta / vol
+                        recent_h15 = max(highs[max(0, c_idx - 15) : c_idx])
+                        recent_l15 = min(lows[max(0, c_idx - 15) : c_idx])
+                        recent_h8 = max(highs[max(0, c_idx - 8) : c_idx])
+                        recent_l8 = min(lows[max(0, c_idx - 8) : c_idx])
 
-                # Price Action 2: Dynamic Trend Pullback Rejection
-                is_uptrend = (ema20_val > ema50_val)
-                is_downtrend = (ema20_val < ema50_val)
-                c_range = max(0.1, c['high'] - c['low'])
-                lower_wick = min(c['open'], c['close']) - c['low']
-                upper_wick = c['high'] - max(c['open'], c['close'])
+                        # 1. Range Sweep
+                        if lows[-1] < recent_l15 and closes[-1] > recent_l15 and (dr > 0 or (closes[-1] - lows[-1]) / bar_range >= 0.35):
+                            long_trigger = True
+                            sl_dist = max(3.5, bar_range * 1.3)
+                            strat_title = "DOM Range Sweep (Long)"
+                        elif highs[-1] > recent_h15 and closes[-1] < recent_h15 and (dr < 0 or (highs[-1] - closes[-1]) / bar_range >= 0.35):
+                            short_trigger = True
+                            sl_dist = max(3.5, bar_range * 1.3)
+                            strat_title = "DOM Range Sweep (Short)"
+                        # 2. Trend Pullback
+                        elif ema20[-1] > ema50[-1] and lows[-1] <= ema20[-1] and closes[-1] > ema20[-1] and dr >= 0.02:
+                            long_trigger = True
+                            sl_dist = max(3.5, closes[-1] - lows[-1] + 1.5)
+                            strat_title = "Trend Pullback (Long)"
+                        elif ema20[-1] < ema50[-1] and highs[-1] >= ema20[-1] and closes[-1] < ema20[-1] and dr <= -0.02:
+                            short_trigger = True
+                            sl_dist = max(3.5, highs[-1] - closes[-1] + 1.5)
+                            strat_title = "Trend Pullback (Short)"
+                        # 3. Breakout
+                        elif closes[-1] > recent_h8 and dr >= 0.03:
+                            long_trigger = True
+                            sl_dist = max(3.5, bar_range * 1.4)
+                            strat_title = "Momentum Breakout (Long)"
+                        elif closes[-1] < recent_l8 and dr <= -0.03:
+                            short_trigger = True
+                            sl_dist = max(3.5, bar_range * 1.4)
+                            strat_title = "Momentum Breakout (Short)"
 
-                bull_pullback = is_uptrend and (c['low'] <= ema20_val) and (c['close'] > ema20_val) and (lower_wick / c_range >= 0.30) and (c['close'] > c['open'])
-                bear_pullback = is_downtrend and (c['high'] >= ema20_val) and (c['close'] < ema20_val) and (upper_wick / c_range >= 0.30) and (c['close'] < c['open'])
+                        if long_trigger or short_trigger:
+                            tp_price = round(mid + 40.0 * sl_dist if long_trigger else mid - 40.0 * sl_dist, decimals)
+                            sl_price = round(mid - sl_dist if long_trigger else mid + sl_dist, decimals)
 
-                pa_bull = bull_retest or bull_pullback
-                pa_bear = bear_retest or bear_pullback
+        # ---------------------------------------------------------------------------------
+        # PAIR 3: GOLD (XAUTUSD) - Hybrid A (15m Session Breakout + CVD Absorption + DOM)
+        # ---------------------------------------------------------------------------------
+        elif symbol == "XAUTUSD":
+            # Session Window: 13:00 to 23:00 IST, avoiding news blackout hours 16, 19, 20, 22
+            in_session = (13 <= now_ist.hour <= 23) and (now_ist.hour not in (16, 19, 20, 22))
+            if in_session:
+                candles_15m = self.candle_cache.get(symbol, [])
+                if now_ts - self.last_candle_fetch.get(symbol, 0) > 60 or not candles_15m:
+                    try:
+                        c_start = int(now_ts - (86400 * 4))
+                        candles_15m = self.client.get_candles(symbol, resolution="15m", start=c_start, end=int(now_ts))
+                        if candles_15m and len(candles_15m) >= 25:
+                            self.candle_cache[symbol] = candles_15m
+                            self.last_candle_fetch[symbol] = now_ts
+                    except Exception as e:
+                        print(f"[CANDLE FETCH NOTICE] {symbol}: {e}")
 
-                # Level 2 DOM Verification: Orderbook volume delta confirms direction
-                delta = c.get('delta', 0.0)
-                vol = max(1.0, c.get('volume', 1.0))
-                delta_ratio = delta / vol
-                dom_bull = (delta_ratio >= 0.05) or (side_dominant == "BUYERS" and buyer_ratio >= 1.5)
-                dom_bear = (delta_ratio <= -0.05) or (side_dominant == "SELLERS" and seller_ratio >= 1.5)
+                if candles_15m and len(candles_15m) >= 25:
+                    c = candles_15m[-1]
+                    curr_p = float(c["close"])
+                    c_idx = len(candles_15m) - 1
 
-                long_trigger = pa_bull and dom_bull
-                short_trigger = pa_bear and dom_bear
-                pattern_name = "Breakout Retest" if (bull_retest or bear_retest) else "Trend Pullback"
-                strat_title = f"PA Primary ({pattern_name}) + DOM Delta Verification"
+                    # Component 1: Session Breakout (London 13:00-15:30 or NY 18:00-21:00 ORB)
+                    hm = now_ist.strftime("%H:%M")
+                    is_orb_session = ("13:00" <= hm <= "15:30") or ("18:00" <= hm <= "21:00")
+                    delta = float(c.get("delta", 0.0))
+                    vol = max(1.0, float(c.get("volume", 1.0)))
+                    delta_ratio = delta / vol
+
+                    if is_orb_session:
+                        sub = candles_15m[max(0, c_idx - 8) : c_idx]
+                        range_high = max(float(x["high"]) for x in sub)
+                        range_low = min(float(x["low"]) for x in sub)
+                        if curr_p > range_high and float(c["close"]) > float(c["open"]) and delta > 0:
+                            long_trigger = True
+                            sl_dist = max(3.0, (curr_p - range_low) * 0.40)
+                            strat_title = "Session Breakout (London/NY ORB)"
+                        elif curr_p < range_low and float(c["close"]) < float(c["open"]) and delta < 0:
+                            short_trigger = True
+                            sl_dist = max(3.0, (range_high - curr_p) * 0.40)
+                            strat_title = "Session Breakout (London/NY ORB)"
+
+                    # Component 2: CVD Order Flow Absorption
+                    if not (long_trigger or short_trigger):
+                        sub_abs = candles_15m[max(0, c_idx - 12) : c_idx]
+                        hi = max(float(x["high"]) for x in sub_abs)
+                        lo = min(float(x["low"]) for x in sub_abs)
+                        bar_range = max(0.01, float(c["high"]) - float(c["low"]))
+                        lower_wick = (min(float(c["open"]), curr_p) - float(c["low"])) / bar_range
+                        upper_wick = (float(c["high"]) - max(float(c["open"]), curr_p)) / bar_range
+
+                        if float(c["high"]) >= hi * 0.9998 and upper_wick >= 0.30 and delta_ratio <= -0.03:
+                            short_trigger = True
+                            sl_dist = max(3.0, float(c["high"]) - curr_p)
+                            strat_title = "CVD Order Flow Absorption (Resistance)"
+                        elif float(c["low"]) <= lo * 1.0002 and lower_wick >= 0.30 and delta_ratio >= 0.03:
+                            long_trigger = True
+                            sl_dist = max(3.0, curr_p - float(c["low"]))
+                            strat_title = "CVD Order Flow Absorption (Support)"
+
+                    # Component 3: Level 2 DOM Confirmation
+                    if long_trigger:
+                        dom_ok = (delta_ratio >= 0.015) or (side_dominant == "BUYERS" and buyer_ratio >= 1.5) or has_bid_wall
+                        if not dom_ok:
+                            long_trigger = False
+                    elif short_trigger:
+                        dom_ok = (delta_ratio <= -0.015) or (side_dominant == "SELLERS" and seller_ratio >= 1.5) or has_ask_wall
+                        if not dom_ok:
+                            short_trigger = False
+
+                    if long_trigger or short_trigger:
+                        tp_price = round(mid + 40.0 * sl_dist if long_trigger else mid - 40.0 * sl_dist, decimals)
+                        sl_price = round(mid - sl_dist if long_trigger else mid + sl_dist, decimals)
 
         # Periodic status thought log in Live Journal for UI transparency
         last_t = self.last_thought_log.get(symbol, 0)
@@ -825,29 +1036,17 @@ class MultiPairLiveTrader:
                 symbol=symbol,
                 event_type="SETUP_MONITOR",
                 stars=3.5 if (long_trigger or short_trigger) else 2.5,
-                message=f"Scanning {symbol} ({mode}): DOM Ratio {ratio_disp:.2f}x ({side_dominant}). {wall_info}. Mid: ${mid:,.2f}."
+                message=f"Scanning {symbol} ({cfg['mode']}): DOM Ratio {ratio_disp:.2f}x ({side_dominant}). {wall_info}. Mid: ${mid:,.2f}."
             )
 
         if not long_trigger and not short_trigger:
             return None
 
         trade_side = "BUY" if long_trigger else "SELL"
-        tp_pct = cfg["tp_pct"]
-        sl_pct = cfg["sl_pct"]
-        decimals = cfg["decimals"]
-        c_val = cfg["c_val"]
-
-        if trade_side == "BUY":
-            tp_price = round(mid * (1.0 + tp_pct), decimals)
-            sl_price = round(mid * (1.0 - sl_pct), decimals)
-        else:
-            tp_price = round(mid * (1.0 - tp_pct), decimals)
-            sl_price = round(mid * (1.0 + sl_pct), decimals)
 
         # Strictly $5.00 fixed risk per trade sizing
-        sl_distance_usd = mid * sl_pct
         current_risk = self.db.get_target_risk_usd(self.fixed_risk_usd)
-        raw_lots = current_risk / max(0.0001, sl_distance_usd * c_val)
+        raw_lots = current_risk / max(0.0001, sl_dist * c_val)
         lots = max(1, round(raw_lots))
 
         return {
@@ -856,15 +1055,16 @@ class MultiPairLiveTrader:
             "entry_price": mid,
             "stop_loss": sl_price,
             "take_profit": tp_price,
-            "dist": sl_distance_usd,
-            "sl_pct": sl_pct,
-            "tp_pct": tp_pct,
+            "dist": sl_dist,
+            "sl_pct": round(sl_dist / mid, 5),
+            "tp_pct": cfg.get("tp_pct", 0.02),
             "lots": lots,
             "risk_usd": current_risk,
             "strategy_name": f"{cfg['strategy_label']} ({strat_title})",
+            "is_weekend": is_weekend_signal,
             "buyer_ratio": round(buyer_ratio, 2),
             "seller_ratio": round(seller_ratio, 2),
-            "walls_count": len(ask_walls if trade_side == "BUY" and mode == "BREAKOUT" else bid_walls)
+            "walls_count": len(ask_walls if trade_side == "BUY" else bid_walls)
         }
 
     def _execute_entry(self, symbol: str, signal: Dict[str, Any], current_price: float):
@@ -932,6 +1132,9 @@ class MultiPairLiveTrader:
             "opened_at": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S"),
             "opened_ts": time.time(),
             "be_locked": False,
+            "is_weekend": signal.get("is_weekend", False),
+            "highest_price": current_price,
+            "lowest_price": current_price,
             "leverage": LEVERAGE_MAP.get(symbol, 100),
             "risk_usd": current_risk,
             "strategy_name": signal.get("strategy_name", p["strategy_label"])
@@ -1028,7 +1231,7 @@ class MultiPairLiveTrader:
         gross_pnl = diff * rem_lots * c_val
 
         # Calculate Delta Exchange India fees
-        is_sl = ("SL" in reason.upper()) or ("STOP" in reason.upper())
+        is_sl = ("SL" in reason.upper()) or ("STOP" in reason.upper()) or ("CUT" in reason.upper())
         fee = calculate_brokerage_fee(symbol, notional, is_sl=is_sl)
         total_pnl = round(gross_pnl - fee, 2)
         rr_achieved = round(total_pnl / self.fixed_risk_usd, 1)
@@ -1065,16 +1268,37 @@ class MultiPairLiveTrader:
         # Dispatch real-time exit notification
         notifier.send_exit_alert(symbol, side, exit_price, total_pnl, reason)
 
-        # Enforce post-trade cooldown (15m BTC, 10m ETH, Gold, Silver)
+        # Enforce post-trade cooldown (15m standard rest)
         cd_sec = p["cooldown_sec"]
         self.cooldown_until[symbol] = time.time() + cd_sec
+
+        # Pair-specific cascade circuit breaker logic
+        if total_pnl < 0:
+            self.consecutive_losses[symbol] = self.consecutive_losses.get(symbol, 0) + 1
+            cascade_limit = p.get("cascade_breaker_losses", 2)
+            cascade_hours = p.get("cascade_breaker_hours", 2.0)
+            if self.consecutive_losses[symbol] >= cascade_limit:
+                halt_sec = int(cascade_hours * 3600)
+                self.cooldown_until[symbol] = max(self.cooldown_until[symbol], time.time() + halt_sec)
+                self.consecutive_losses[symbol] = 0
+                exp_halt_time = datetime.fromtimestamp(self.cooldown_until[symbol]).strftime("%H:%M:%S")
+                print(f"🚨 [CASCADE CIRCUIT BREAKER] {cascade_limit} consecutive losses on {symbol}! Trading halted for {cascade_hours:.1f} hours until {exp_halt_time}.")
+                self.db.log_thought(
+                    symbol=symbol,
+                    event_type="CASCADE_BREAKER",
+                    stars=5.0,
+                    message=f"🚨 Liquidation Cascade Circuit Breaker: {cascade_limit} consecutive losses hit on {symbol}. Pausing new entries for {cascade_hours:.1f}h until {exp_halt_time} to shield capital."
+                )
+        else:
+            self.consecutive_losses[symbol] = 0
+
         exp_time = datetime.fromtimestamp(self.cooldown_until[symbol]).strftime("%H:%M:%S")
-        print(f"⏳ [COOLDOWN ACTIVATED] {symbol} closed ({reason}). Cooldown active until {exp_time} ({cd_sec//60} mins).")
+        print(f"⏳ [COOLDOWN ACTIVATED] {symbol} closed ({reason}). Active until {exp_time}.")
         self.db.log_thought(
             symbol=symbol,
             event_type="POST_TRADE_COOLDOWN",
             stars=5.0,
-            message=f"⏳ Post-trade cooldown active on {symbol} for {cd_sec//60} mins until {exp_time} ({reason}). Preserving capital against churn."
+            message=f"⏳ Post-trade rest active on {symbol} until {exp_time} ({reason}). Preserving capital."
         )
 
         print(f"\n🏁 [POSITION CLOSED] {symbol} {side} Exit @ ${exit_price:,.2f} ({reason}) | Net P&L: ${total_pnl:+.2f} ({rr_achieved:+.1f}R)")

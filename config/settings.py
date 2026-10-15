@@ -36,9 +36,8 @@ DELTA_API_SECRET = os.getenv("DELTA_API_SECRET", "")
 # ==========================================
 ACTIVE_SYMBOLS = [
     "XAUTUSD",    # Tether Gold Token Perpetual (100x Isolated, 1 Lot = 0.001 XAUT, Fee = 0.01%)
-    "SLVONUSD",   # iShares Silver Trust ONDO Perpetual (50x Isolated, 1 Lot = 0.1 SLVON, Fee = 0.01%)
-    "BTCUSD",     # Bitcoin Perpetual (100x Isolated, 1 Lot = 0.001 BTC, Fee = 0.01%)
-    "ETHUSD"      # Ethereum Perpetual (100x Isolated, 1 Lot = 0.01 ETH, Fee = 0.01%)
+    "BTCUSD",     # Bitcoin Perpetual (100x Isolated, 1 Lot = 0.001 BTC, Fee = 0.02% Maker / 0.05% Taker)
+    "ETHUSD"      # Ethereum Perpetual (100x Isolated, 1 Lot = 0.01 ETH, Fee = 0.02% Maker / 0.05% Taker)
 ]
 
 # Dedicated Level 2 DOM orderbook recording symbols (Ultra-high fidelity 1s orderbook)
@@ -134,10 +133,14 @@ MIN_DOM_IMBALANCE_RATIO = 1.8  # Buyers/Sellers must dominate DOM by at least 1.
 ABSORPTION_DELTA_PERCENTILE = 80 # Heavy volume candle with wick rejection
 
 # ==========================================
-# 5. TRADING SESSIONS & WEEKEND LOCK
+# 5. TRADING SESSIONS & WEEKEND POLICY
 # ==========================================
-# Strict Weekend Rule: No trading Saturday and Sunday
-WEEKEND_LOCK_ENABLED = True
+# 24/7 Continuous Trading for Crypto (BTCUSD & ETHUSD trade 24/7 including weekends)
+# Traditional Commodities (Gold / XAUTUSD) pause on weekends (Friday 23:30 IST -> Monday 05:30 IST)
+WEEKEND_CRYPTO_24_7 = True
+WEEKEND_TRADING_SYMBOLS = ["BTCUSD", "ETHUSD"]
+WEEKEND_PAUSED_SYMBOLS = ["XAUTUSD"]
+WEEKEND_LOCK_ENABLED = False  # Global lock disabled; handled per-symbol
 # Friday NY close (approx 23:30 IST / 18:00 UTC) -> Monday Asian open (05:30 IST / 00:00 UTC)
 FRIDAY_CLOSE_HOUR_IST = 23
 FRIDAY_CLOSE_MINUTE_IST = 30
