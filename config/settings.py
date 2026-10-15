@@ -188,9 +188,40 @@ CHAMPION_CONFIG = {
         "end_ist": "23:00",             # Avoids 00:00 - 12:30 IST Asian morning chop
         "blackout_hours": [16, 19, 20, 22] # High-impact news spike filters
     },
+    "cooldown": {
+        "post_exit_mins": 15,           # 15-minute rest after every trade exit
+        "cascade_breaker_losses": 2,    # Circuit breaker if 2 losses in a row
+        "cascade_breaker_hours": 4.0    # 4-hour trading halt after 2-loss streak
+    },
     "dom_confirmation": {
         "enabled": True,
         "min_delta_ratio": 0.015,       # Institutional buyer/seller aggression into DOM
         "wick_rejection_min": 0.28      # Strong wick rejection confirming active DOM support/resistance
     }
 }
+
+# ==========================================
+# 8. CHAMPION PRODUCTION ENGINE: BITCOIN (BTCUSD)
+# ==========================================
+# 24/7 Continuous Trading (Weekend Included, Oct 08 - Till Now):
+# 71.4% Win Rate | +$86.64 USD (+₹7,798 INR) | 8.36 Profit Factor | $7.93 Max DD
+CHAMPION_CONFIG_BTC = {
+    "strategy_name": "⚡ DOM Imbalance & Ask Wall Sweep (L2 Depth ≥ 3.0x)",
+    "symbol": "BTCUSD",
+    "sizing_mode": "RAW_GROSS_RISK",     # $5.00 Gross Risk per trade
+    "risk_per_trade_usd": 5.0,          # Strict $5.00 fixed initial risk
+    "imbalance_threshold": 3.0,         # Minimum 3.0x Level 2 DOM wall imbalance
+    "reversal_cut": {
+        "enabled": True,                # Emergency full cut on opposing DOM reversal signal
+        "cut_r": -0.45,                 # Exit at -0.45R (saves ~48% of loss)
+        "profit_lock_r": 0.80           # Bank +0.8R at peak before retracing to breakeven
+    },
+    "cooldown": {
+        "post_exit_mins": 15,           # 15-minute rest after every trade exit
+        "cascade_breaker_losses": 2,    # Circuit breaker if 2 losses in a row
+        "cascade_breaker_hours": 4.0    # 4-hour halt after 2-loss streak (saved 3 losses on Oct 08)
+    },
+    "trail_mode": "DYNAMIC_RUNNER",     # Trailing runner engine
+    "weekend_trading": True             # 24/7 continuous crypto trading
+}
+
