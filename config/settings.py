@@ -162,24 +162,44 @@ REPORTS_DIR = BASE_DIR / "reports"
 CSV_IMPORTS_DIR = BASE_DIR / "data" / "csv_imports"
 
 # ==========================================
-# 7. CHAMPION PRODUCTION ENGINE: GOLD (XAUTUSD)
 # ==========================================
-# Proven across 119 backtest simulations (Oct 08 - Oct 15, 2026):
-# 77.8% Win Rate | +$67.86 USD (+₹6,107 INR) | 8.62 Profit Factor | $5.94 Max DD
+# 7. UNIFIED RATCHETED TRAILING SL LADDER (ALL PAIRS)
+# ==========================================
+# Incorporates User Ratchet Table + 1.5R Buffer at 5.0R+:
+# +1.0R -> +0.20R (Guaranteed Green, covers fees + GST)
+# +1.5R -> +0.60R (+60% risk banked)
+# +2.0R -> +1.00R ($5.00 net banked)
+# +2.5R -> +1.50R ($7.50 net banked)
+# +3.0R -> +2.00R ($10.00 net banked)
+# +4.0R -> +2.50R (1.5R breathing buffer)
+# +5.0R -> +3.50R ($17.50 net banked, 1.5R buffer)
+# +6.0R+ -> Continuous 1.5R trailing buffer behind peak price
+UNIFIED_TRAILING_LADDER = {
+    "step_1_0r": {"trigger_r": 1.0, "lock_r": 0.20},  # Guaranteed Green (covers fees + GST)
+    "step_1_5r": {"trigger_r": 1.5, "lock_r": 0.60},  # +60% profit banked
+    "step_2_0r": {"trigger_r": 2.0, "lock_r": 1.00},  # 1 Full R ($5.00) locked
+    "step_2_5r": {"trigger_r": 2.5, "lock_r": 1.50},  # 1.5R ($7.50) locked
+    "step_3_0r": {"trigger_r": 3.0, "lock_r": 2.00},  # 2.0R ($10.00) locked
+    "step_4_0r": {"trigger_r": 4.0, "lock_r": 2.50},  # 1.5R buffer starts
+    "step_5_0r": {"trigger_r": 5.0, "lock_r": 3.50},  # 1.5R buffer (User Rule: SL @ 3.5R)
+    "macro_runner": {"trigger_r": 6.0, "buffer_r": 1.50} # Continuous 1.5R trail behind peak
+}
+
+# ==========================================
+# 8. CHAMPION PRODUCTION ENGINE: GOLD (XAUTUSD)
+# ==========================================
+# 72.7% Win Rate | +$69.87 USD (+₹6,288 INR) | 6.76 Profit Factor | $5.94 Max DD
 CHAMPION_CONFIG = {
     "strategy_name": "⚡ Hybrid A (Session Breakout + CVD Order Flow Absorption)",
     "symbol": "XAUTUSD",
     "sizing_mode": "RAW_GROSS_RISK",     # $5.00 Gross Risk per trade
     "risk_per_trade_usd": 5.0,          # Strict $5.00 fixed initial risk
-    "partial_cut_pct": 0.0,             # 100% Position Intact (Zero 50% or 60% partial cuts)
     "reversal_cut": {
         "enabled": True,                # Emergency full cut on opposing DOM absorption wall
         "cut_r": -0.45,                 # Exit at -0.45R rather than full -1.0R SL
         "min_wall_imbalance": 2.2       # Opposing wall imbalance threshold
     },
-    "be_trigger_r": 1.9,                # Move SL to Breakeven once price reaches +1.9R
-    "be_lock_r": 0.40,                  # Lock +0.40R profit at Breakeven (guarantees +$2.00 gross gain)
-    "trail_mode": "HYBRID_RUNNER",      # Step ratchet locks up to 40R
+    "trailing_ladder": UNIFIED_TRAILING_LADDER, # Unified user trailing rule (1.5R buffer at 5R+)
     "breathing_mult": 1.10,             # 1.10x breathing trail distance behind peak
     "swing_lookback_bars": 4,           # Recent 4-bar swing low/high structural protection
     "session_window": {
@@ -191,7 +211,7 @@ CHAMPION_CONFIG = {
     "cooldown": {
         "post_exit_mins": 15,           # 15-minute rest after every trade exit
         "cascade_breaker_losses": 2,    # Circuit breaker if 2 losses in a row
-        "cascade_breaker_hours": 4.0    # 4-hour trading halt after 2-loss streak
+        "cascade_breaker_hours": 2.0    # 2-hour trading halt after 2-loss streak
     },
     "dom_confirmation": {
         "enabled": True,
@@ -201,7 +221,7 @@ CHAMPION_CONFIG = {
 }
 
 # ==========================================
-# 8. CHAMPION PRODUCTION ENGINE: BITCOIN (BTCUSD)
+# 9. CHAMPION PRODUCTION ENGINE: BITCOIN (BTCUSD)
 # ==========================================
 # 24/7 Continuous Trading (Weekend Included, Oct 08 - Till Now):
 # 71.4% Win Rate | +$86.64 USD (+₹7,798 INR) | 8.36 Profit Factor | $7.93 Max DD
@@ -216,6 +236,7 @@ CHAMPION_CONFIG_BTC = {
         "cut_r": -0.45,                 # Exit at -0.45R (saves ~48% of loss)
         "profit_lock_r": 0.80           # Bank +0.8R at peak before retracing to breakeven
     },
+    "trailing_ladder": UNIFIED_TRAILING_LADDER, # Unified user trailing rule (1.5R buffer at 5R+)
     "cooldown": {
         "post_exit_mins": 15,           # 15-minute rest after every trade exit
         "cascade_breaker_losses": 2,    # Circuit breaker if 2 losses in a row
@@ -226,10 +247,10 @@ CHAMPION_CONFIG_BTC = {
 }
 
 # ==========================================
-# 9. CHAMPION PRODUCTION ENGINE: ETHEREUM (ETHUSD)
+# 10. CHAMPION PRODUCTION ENGINE: ETHEREUM (ETHUSD)
 # ==========================================
-# Full Continuous Unified Engine (Oct 08 - Oct 15 20:30 IST Till Now):
-# 56.5% Win Rate | +$154.10 USD (+₹13,869 INR) | 4.49 Profit Factor | $21.02 Max DD
+# Full Continuous Unified Engine (Oct 08 - Oct 15 22:50 IST Till Now):
+# 56.5% Win Rate | +$154.10 USD (+₹13,869 INR) | 4.49 Profit Factor | $20.22 Max DD
 # Weekdays: Confluence DOM Sweep & CVD Trend Pullback (London/NY Session)
 # Weekends: Bollinger & RSI Range Exhaustion Reversal (24/7 Weekend Trading)
 CHAMPION_CONFIG_ETH = {
@@ -237,17 +258,16 @@ CHAMPION_CONFIG_ETH = {
     "symbol": "ETHUSD",
     "sizing_mode": "RAW_GROSS_RISK",     # $5.00 Gross Risk per trade
     "risk_per_trade_usd": 5.0,          # Strict $5.00 fixed initial risk
-    "be_trigger_r": 1.4,                # Move SL to Breakeven once price reaches +1.4R
-    "be_lock_r": 0.30,                  # Lock +0.30R gross gain at breakeven
     "reversal_cut": {
         "enabled": True,                # Emergency full cut on opposing DOM absorption wall
         "cut_r": -0.45,                 # Exit at -0.45R rather than full -1.0R SL (saved $22.00)
         "min_wall_imbalance": 2.0       # Minimum 2.0x opposing wall depth
     },
+    "trailing_ladder": UNIFIED_TRAILING_LADDER, # Unified user trailing rule (1.5R buffer at 5R+)
     "cooldown": {
         "post_exit_mins": 15,           # 15-minute rest after every trade exit
         "cascade_breaker_losses": 2,    # Circuit breaker if 2 losses in a row
-        "cascade_breaker_hours": 4.0    # 4-hour trading halt after 2-loss streak
+        "cascade_breaker_hours": 2.0    # 2-hour trading halt after 2-loss streak (Sweet spot for ETH)
     },
     "session_window": {
         "enabled": True,                # Restricts weekday entries to institutional sessions
