@@ -70,11 +70,12 @@
         <i data-lucide="database" class="w-3.5 h-3.5"></i>
         <span>Backtest Ledger</span>
       </a>
+      <a href="combined_portfolio_backtest_report.html" class="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 hover:text-white border border-amber-500/40 font-bold transition flex items-center gap-1.5">
+        <i data-lucide="trophy" class="w-3.5 h-3.5 text-amber-400"></i>
+        <span>🏆 3-Pair Champion Portfolio</span>
+      </a>
       <a href="gold_journal.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
         <span>🥇 Gold</span>
-      </a>
-      <a href="silver_journal.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
-        <span>🥈 Silver</span>
       </a>
       <a href="btc_journal.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
         <span>₿ BTC</span>
@@ -97,20 +98,20 @@
       </div>
       <div>
         <div class="font-bold text-white flex items-center gap-2">
-          <span>Active Strategy: 🏛️ Level 2 DOM Institutional Order Flow Strategy (Model C Macro Runner)</span>
-          <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px]">DOM Sniper Live</span>
+          <span>Active Strategy: ⚡ Champion 3-Pair Master Portfolio (Gold + BTC + ETH 24/7)</span>
+          <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px]">Champion Live</span>
         </div>
         <p class="text-slate-400 text-[11px] mt-0.5">
-          BTC &amp; Silver (Breakout Wall Sweep) • Gold (Absorption Fade) • ETH (Session Flow) • Model C Breathing Trailing (1.35x @ +1.5R) • Breakeven (+0.20R Profit Buffer @ +1.0R) • Strict $5.00 Risk
+          Gold (Hybrid A: 15m Breakout + CVD Absorption) • BTC (DOM Imbalance ≥3.0x Wall Sweep • 24/7) • ETH (Confluence Weekday + BB Range Scalp Weekend • 24/7) • Unified Trailing Ladder (+5R→+3.5R) • Reversal Cut (-0.45R) • Strict $5.00 Risk
         </p>
       </div>
     </div>
     <div class="flex items-center gap-2 flex-wrap">
       <span class="px-3 py-1 rounded-xl bg-slate-900 border border-slate-700 text-slate-300">
-        Brokerage Fee: <strong class="text-amber-400">XAUT/SLV 0.01% Maker • BTC/ETH 0.02% Maker / 0.05% Taker (+18% GST)</strong>
+        Brokerage Fee: <strong class="text-amber-400">Gold 0.01% Maker • BTC/ETH 0.02% Maker / 0.05% Taker (+18% GST)</strong>
       </span>
       <span class="px-3 py-1 rounded-xl bg-slate-900 border border-slate-700 text-slate-300">
-        Leverage: <strong class="text-blue-400">100x BTC/ETH/Gold | 50x Silver</strong>
+        Leverage: <strong class="text-blue-400">100x BTC / ETH / Gold (Isolated)</strong>
       </span>
       <span class="px-3 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1">
         <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
@@ -134,7 +135,7 @@
           </span>
         </div>
         <p id="botStatusSubtext" class="text-xs text-slate-400">
-          Bot is actively scanning BTC, ETH, Gold, and Silver every 3 seconds for high-confluence entries.
+          Bot is actively scanning Gold, BTC, and ETH every 3 seconds for high-confluence entries (24/7 Continuous Crypto).
         </p>
         <div class="flex items-center gap-2 flex-wrap pt-1 text-xs">
           <button id="btnToggleBot" onclick="toggleBotMasterStatus()" class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold transition flex items-center gap-1.5">
@@ -199,8 +200,8 @@
     </div>
     <div class="glass-card rounded-2xl p-4 border-l-4 border-l-purple-500">
       <span class="text-slate-400 text-xs block mb-1">Active Positions</span>
-      <span id="statOpenCount" class="text-2xl font-extrabold text-white">0 / 4</span>
-      <span class="text-[11px] text-purple-400 block mt-1">Parallel Non-Blocking</span>
+      <span id="statOpenCount" class="text-2xl font-extrabold text-white">0 / 3</span>
+      <span class="text-[11px] text-purple-400 block mt-1">3 Champion Pairs</span>
     </div>
     <div class="glass-card rounded-2xl p-4 border-l-4 border-l-amber-500">
       <span class="text-slate-400 text-xs block mb-1">Total Delta Fees</span>
@@ -219,21 +220,14 @@
     </div>
   </div>
 
-  <!-- LIVE TICKERS BAR -->
-  <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-3 font-mono text-xs">
+  <!-- LIVE TICKERS BAR (3 CHAMPION PAIRS) -->
+  <div class="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
     <div class="glass-card rounded-xl p-3 flex items-center justify-between border-t-2 border-t-amber-500">
       <div>
         <span class="text-slate-400 text-[11px] block">🥇 Gold (XAUTUSD)</span>
         <span id="ticker_XAUTUSD" class="text-base font-bold text-white">--</span>
       </div>
       <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[10px]">100x Isolated</span>
-    </div>
-    <div class="glass-card rounded-xl p-3 flex items-center justify-between border-t-2 border-t-cyan-500">
-      <div>
-        <span class="text-slate-400 text-[11px] block">🥈 Silver (SLVONUSD)</span>
-        <span id="ticker_SLVONUSD" class="text-base font-bold text-white">--</span>
-      </div>
-      <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 text-[10px]">50x Isolated</span>
     </div>
     <div class="glass-card rounded-xl p-3 flex items-center justify-between border-t-2 border-t-orange-500">
       <div>
@@ -477,7 +471,7 @@
   <script>
     const INITIAL_OPEN = [];
     const INITIAL_TRADES = [];
-    const INITIAL_THOUGHTS = [{"id": 34, "timestamp": "2026-09-30 14:57:03", "symbol": "BTCUSD", "event_type": "DYNAMIC_SCALE_OUT_50", "conviction_stars": 5.0, "message": "\ud83c\udfaf Scale-out 50% on BTCUSD BUY @ $83383.69988778 (TARGET_2R_REACHED): Target milestone reached: 22.9R attained. Bank 50% profit and trail runner.. Banked +$2.00. Stop locked at BE $83151.6.", "metrics_json": "{}"}, {"id": 29, "timestamp": "2026-09-30 00:11:57", "symbol": "BTCUSD", "event_type": "DYNAMIC_SCALE_OUT_50", "conviction_stars": 5.0, "message": "\ud83c\udfaf Scale-out 50% on BTCUSD BUY @ $83672.49814467 (TARGET_2R_REACHED): Target milestone reached: 2.1R attained. Bank 50% profit and trail runner.. Banked +$4.98. Stop locked at BE $83182.7.", "metrics_json": "{}"}, {"id": 28, "timestamp": "2026-09-29 21:07:12", "symbol": "BTCUSD", "event_type": "LIVE_ENTRY_TRIGGERED", "conviction_stars": 5.0, "message": "\ud83d\ude80 Multi-pair entry triggered on BTCUSD BUY @ $83157.96656359. Size: 20 Lots. Strict $5 Risk. Active Pairs: ['BTCUSD'].", "metrics_json": "{}"}, {"id": 26, "timestamp": "2026-09-29 20:54:02", "symbol": "BTCUSD", "event_type": "LIVE_ENTRY_TRIGGERED", "conviction_stars": 5.0, "message": "\ud83d\ude80 Multi-pair entry triggered on BTCUSD BUY @ $83082.87604462. Size: 28 Lots. Strict $5 Risk. Active Pairs: ['BTCUSD'].", "metrics_json": "{}"}, {"id": 25, "timestamp": "2026-09-29 17:21:29", "symbol": "BTCUSD", "event_type": "LIVE_ENTRY_TRIGGERED", "conviction_stars": 5.0, "message": "\ud83d\ude80 Multi-pair entry triggered on BTCUSD SELL @ $84290.85148365. Size: 25 Lots. Strict $5 Risk. Active Pairs: ['XAUTUSD', 'ETHUSD', 'BTCUSD'].", "metrics_json": "{}"}, {"id": 24, "timestamp": "2026-09-29 17:21:13", "symbol": "ETHUSD", "event_type": "LIVE_ENTRY_TRIGGERED", "conviction_stars": 5.0, "message": "\ud83d\ude80 Multi-pair entry triggered on ETHUSD SELL @ $2727.03649809. Size: 41 Lots. Strict $5 Risk. Active Pairs: ['XAUTUSD', 'ETHUSD'].", "metrics_json": "{}"}, {"id": 23, "timestamp": "2026-09-29 17:03:20", "symbol": "ETHUSD", "event_type": "LIVE_ENTRY_TRIGGERED", "conviction_stars": 5.0, "message": "\ud83d\ude80 Multi-pair entry triggered on ETHUSD SELL @ $2723.63769745. Size: 62 Lots. Strict $5 Risk. Active Pairs: ['BTCUSD', 'XAUTUSD', 'ETHUSD'].", "metrics_json": "{}"}, {"id": 22, "timestamp": "2026-09-29 17:00:39", "symbol": "XAUTUSD", "event_type": "LIVE_ENTRY_TRIGGERED", "conviction_stars": 5.0, "message": "\ud83d\ude80 Multi-pair entry triggered on XAUTUSD SELL @ $4168.69554983. Size: 1429 Lots. Strict $5 Risk. Active Pairs: ['ETHUSD', 'BTCUSD', 'XAUTUSD'].", "metrics_json": "{}"}, {"id": 21, "timestamp": "2026-09-29 15:45:53", "symbol": "BTCUSD", "event_type": "LIVE_ENTRY_TRIGGERED", "conviction_stars": 5.0, "message": "\ud83d\ude80 Multi-pair entry triggered on BTCUSD SELL @ $84156.01560999. Size: 28 Lots. Strict $5 Risk. Active Pairs: ['ETHUSD', 'BTCUSD'].", "metrics_json": "{}"}, {"id": 20, "timestamp": "2026-09-29 14:06:04", "symbol": "ETHUSD", "event_type": "LIVE_ENTRY_TRIGGERED", "conviction_stars": 5.0, "message": "\ud83d\ude80 Multi-pair entry triggered on ETHUSD SELL @ $2711.3639778. Size: 38 Lots. Strict $5 Risk. Active Pairs: ['BTCUSD', 'ETHUSD'].", "metrics_json": "{}"}, {"id": 19, "timestamp": "2026-09-29 14:03:04", "symbol": "BTCUSD", "event_type": "LIVE_ENTRY_TRIGGERED", "conviction_stars": 5.0, "message": "\ud83d\ude80 Multi-pair entry triggered on BTCUSD SELL @ $84004.36337182. Size: 28 Lots. Strict $5 Risk. Active Pairs: ['BTCUSD'].", "metrics_json": "{}"}, {"id": 18, "timestamp": "2026-09-29 13:27:52", "symbol": "XAUTUSD", "event_type": "SCALE_OUT_50_LOCKED", "conviction_stars": 5.0, "message": "\ud83c\udfaf Scale-out completed for XAUTUSD SELL @ $4151.40349801. 50% lots booked (+$5.72). Stop moved to BE $4159.89 (Risk = $0.00).", "metrics_json": "{}"}, {"id": 17, "timestamp": "2026-09-29 12:56:11", "symbol": "XAUTUSD", "event_type": "LIVE_ENTRY_TRIGGERED", "conviction_stars": 5.0, "message": "\ud83d\ude80 Multi-pair entry triggered on XAUTUSD SELL @ $4160.24113388. Size: 1429 Lots. Strict $5 Risk. Active Pairs: ['XAUTUSD'].", "metrics_json": "{}"}, {"id": 16, "timestamp": "2026-09-29 00:51:01", "symbol": "ETHUSD", "event_type": "SCALE_OUT_50_LOCKED", "conviction_stars": 5.0, "message": "\ud83c\udfaf Scale-out completed for ETHUSD SELL @ $2682.24848829. 50% lots booked (+$4.83). Stop moved to BE $2697.56 (Risk = $0.00).", "metrics_json": "{}"}, {"id": 15, "timestamp": "2026-09-28 23:04:13", "symbol": "ETHUSD", "event_type": "LIVE_ENTRY_TRIGGERED", "conviction_stars": 5.0, "message": "\ud83d\ude80 Multi-pair entry triggered on ETHUSD SELL @ $2698.35583544. Size: 62 Lots. Strict $5 Risk. Active Pairs: ['ETHUSD'].", "metrics_json": "{}"}, {"id": 14, "timestamp": "2026-09-28 12:04:05", "symbol": "BTCUSD", "event_type": "SCALE_OUT_50_LOCKED", "conviction_stars": 5.0, "message": "\ud83c\udfaf Scale-out completed for BTCUSD BUY @ $90365.0. 50% lots booked (+$4.86). Stop moved to BE $90018.0 (Risk = $0.00).", "metrics_json": "{}"}, {"id": 13, "timestamp": "2026-09-28 12:04:05", "symbol": "XAUTUSD", "event_type": "LIVE_ENTRY_TRIGGERED", "conviction_stars": 5.0, "message": "\ud83d\ude80 Multi-pair entry triggered on XAUTUSD BUY @ $4750.0. Size: 500 Lots. Strict $5 Risk. Active Pairs: ['BTCUSD', 'ETHUSD', 'XAUTUSD'].", "metrics_json": "{}"}, {"id": 12, "timestamp": "2026-09-28 12:04:05", "symbol": "ETHUSD", "event_type": "LIVE_ENTRY_TRIGGERED", "conviction_stars": 5.0, "message": "\ud83d\ude80 Multi-pair entry triggered on ETHUSD BUY @ $3100.0. Size: 62 Lots. Strict $5 Risk. Active Pairs: ['BTCUSD', 'ETHUSD'].", "metrics_json": "{}"}, {"id": 11, "timestamp": "2026-09-28 12:04:05", "symbol": "BTCUSD", "event_type": "LIVE_ENTRY_TRIGGERED", "conviction_stars": 5.0, "message": "\ud83d\ude80 Multi-pair entry triggered on BTCUSD BUY @ $90000.0. Size: 28 Lots. Strict $5 Risk. Active Pairs: ['BTCUSD'].", "metrics_json": "{}"}, {"id": 10, "timestamp": "2026-09-28 11:56:24", "symbol": "BTCUSD", "event_type": "SCALE_OUT_50_LOCKED", "conviction_stars": 5.0, "message": "\ud83c\udfaf Scale-out completed for BTCUSD BUY @ $90365.0. 50% lots booked (+$4.86). Stop moved to BE $90018.0 (Risk = $0.00).", "metrics_json": "{}"}, {"id": 9, "timestamp": "2026-09-28 11:56:24", "symbol": "XAUTUSD", "event_type": "LIVE_ENTRY_TRIGGERED", "conviction_stars": 5.0, "message": "\ud83d\ude80 Multi-pair entry triggered on XAUTUSD BUY @ $4750.0. Size: 500 Lots. Strict $5 Risk. Active Pairs: ['BTCUSD', 'ETHUSD', 'XAUTUSD'].", "metrics_json": "{}"}, {"id": 8, "timestamp": "2026-09-28 11:56:24", "symbol": "ETHUSD", "event_type": "LIVE_ENTRY_TRIGGERED", "conviction_stars": 5.0, "message": "\ud83d\ude80 Multi-pair entry triggered on ETHUSD BUY @ $3100.0. Size: 62 Lots. Strict $5 Risk. Active Pairs: ['BTCUSD', 'ETHUSD'].", "metrics_json": "{}"}, {"id": 7, "timestamp": "2026-09-28 11:56:24", "symbol": "BTCUSD", "event_type": "LIVE_ENTRY_TRIGGERED", "conviction_stars": 5.0, "message": "\ud83d\ude80 Multi-pair entry triggered on BTCUSD BUY @ $90000.0. Size: 28 Lots. Strict $5 Risk. Active Pairs: ['BTCUSD'].", "metrics_json": "{}"}, {"id": 6, "timestamp": "2026-09-25 20:30:38", "symbol": "SLVONUSD", "event_type": "WEB_SCAN", "conviction_stars": 3.5, "message": "Web Scan: SLVONUSD at $0.0. DOM: NEUTRAL (Ratio: 1.0x). Sweep: NONE.", "metrics_json": "{\"dom\": {\"total_bid_size\": 0.0, \"total_ask_size\": 0.0, \"bid_imbalance_ratio\": 1.0, \"ask_imbalance_ratio\": 1.0, \"dominant_side\": \"NEUTRAL\"}, \"price\": 0.0, \"sweep\": \"NONE\"}"}, {"id": 5, "timestamp": "2026-09-25 20:30:38", "symbol": "XAUTUSD", "event_type": "WEB_SCAN", "conviction_stars": 3.5, "message": "Web Scan: XAUTUSD at $0.0. DOM: NEUTRAL (Ratio: 1.0x). Sweep: NONE.", "metrics_json": "{\"dom\": {\"total_bid_size\": 0.0, \"total_ask_size\": 0.0, \"bid_imbalance_ratio\": 1.0, \"ask_imbalance_ratio\": 1.0, \"dominant_side\": \"NEUTRAL\"}, \"price\": 0.0, \"sweep\": \"NONE\"}"}];
+    const INITIAL_THOUGHTS = [{"timestamp": "2026-10-16 00:50:27", "symbol": "DELTA_LIVE", "event_type": "SESSION_INITIALIZED", "conviction_stars": 5.0, "message": "\u26a1 Live Trading Session Initialized on Delta Exchange India (User 74634658). Strict $5 risk sizing active. 4-Phase scale-out discipline standing by."}];
 
     let allClosedTrades = Array.isArray(INITIAL_TRADES) ? INITIAL_TRADES : [];
     let currentFilterMode = 'all'; // 'today', 'week', 'month', 'all', 'custom', 'day_click'
@@ -5890,7 +5884,7 @@
           badge.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5";
           badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>ACTIVE (Scanning A+ Setups)</span>`;
         }
-        if (subtext) subtext.innerText = "Bot is actively scanning BTC, ETH, Gold, and Silver every 3 seconds for high-confluence entries.";
+        if (subtext) subtext.innerText = "Bot is actively scanning Gold, BTC, and ETH every 3 seconds for high-confluence entries (24/7 Continuous Crypto).";
         if (toggleBtn) toggleBtn.className = "px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold transition flex items-center gap-1.5";
         if (toggleBtnText) toggleBtnText.innerText = "Pause Bot (News Sleep)";
       }

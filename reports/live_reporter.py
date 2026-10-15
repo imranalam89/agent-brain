@@ -176,11 +176,12 @@ def generate_live_journal_html(
         <i data-lucide="database" class="w-3.5 h-3.5"></i>
         <span>Backtest Ledger</span>
       </a>
+      <a href="combined_portfolio_backtest_report.html" class="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 hover:text-white border border-amber-500/40 font-bold transition flex items-center gap-1.5">
+        <i data-lucide="trophy" class="w-3.5 h-3.5 text-amber-400"></i>
+        <span>🏆 3-Pair Champion Portfolio</span>
+      </a>
       <a href="gold_journal.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
         <span>🥇 Gold</span>
-      </a>
-      <a href="silver_journal.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
-        <span>🥈 Silver</span>
       </a>
       <a href="btc_journal.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-bold transition flex items-center gap-1.5">
         <span>₿ BTC</span>
@@ -203,20 +204,20 @@ def generate_live_journal_html(
       </div>
       <div>
         <div class="font-bold text-white flex items-center gap-2">
-          <span>Active Strategy: 🏛️ Level 2 DOM Institutional Order Flow Strategy (Model C Macro Runner)</span>
-          <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px]">DOM Sniper Live</span>
+          <span>Active Strategy: ⚡ Champion 3-Pair Master Portfolio (Gold + BTC + ETH 24/7)</span>
+          <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px]">Champion Live</span>
         </div>
         <p class="text-slate-400 text-[11px] mt-0.5">
-          BTC &amp; Silver (Breakout Wall Sweep) • Gold (Absorption Fade) • ETH (Session Flow) • Model C Breathing Trailing (1.35x @ +1.5R) • Breakeven (+0.20R Profit Buffer @ +1.0R) • Strict $5.00 Risk
+          Gold (Hybrid A: 15m Breakout + CVD Absorption) • BTC (DOM Imbalance ≥3.0x Wall Sweep • 24/7) • ETH (Confluence Weekday + BB Range Scalp Weekend • 24/7) • Unified Trailing Ladder (+5R→+3.5R) • Reversal Cut (-0.45R) • Strict $5.00 Risk
         </p>
       </div>
     </div>
     <div class="flex items-center gap-2 flex-wrap">
       <span class="px-3 py-1 rounded-xl bg-slate-900 border border-slate-700 text-slate-300">
-        Brokerage Fee: <strong class="text-amber-400">XAUT/SLV 0.01% Maker • BTC/ETH 0.02% Maker / 0.05% Taker (+18% GST)</strong>
+        Brokerage Fee: <strong class="text-amber-400">Gold 0.01% Maker • BTC/ETH 0.02% Maker / 0.05% Taker (+18% GST)</strong>
       </span>
       <span class="px-3 py-1 rounded-xl bg-slate-900 border border-slate-700 text-slate-300">
-        Leverage: <strong class="text-blue-400">100x BTC/ETH/Gold | 50x Silver</strong>
+        Leverage: <strong class="text-blue-400">100x BTC / ETH / Gold (Isolated)</strong>
       </span>
       <span class="px-3 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1">
         <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
@@ -240,7 +241,7 @@ def generate_live_journal_html(
           </span>
         </div>
         <p id="botStatusSubtext" class="text-xs text-slate-400">
-          Bot is actively scanning BTC, ETH, Gold, and Silver every 3 seconds for high-confluence entries.
+          Bot is actively scanning Gold, BTC, and ETH every 3 seconds for high-confluence entries (24/7 Continuous Crypto).
         </p>
         <div class="flex items-center gap-2 flex-wrap pt-1 text-xs">
           <button id="btnToggleBot" onclick="toggleBotMasterStatus()" class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold transition flex items-center gap-1.5">
@@ -305,8 +306,8 @@ def generate_live_journal_html(
     </div>
     <div class="glass-card rounded-2xl p-4 border-l-4 border-l-purple-500">
       <span class="text-slate-400 text-xs block mb-1">Active Positions</span>
-      <span id="statOpenCount" class="text-2xl font-extrabold text-white">{len(active_positions)} / 4</span>
-      <span class="text-[11px] text-purple-400 block mt-1">Parallel Non-Blocking</span>
+      <span id="statOpenCount" class="text-2xl font-extrabold text-white">{len(active_positions)} / 3</span>
+      <span class="text-[11px] text-purple-400 block mt-1">3 Champion Pairs</span>
     </div>
     <div class="glass-card rounded-2xl p-4 border-l-4 border-l-amber-500">
       <span class="text-slate-400 text-xs block mb-1">Total Delta Fees</span>
@@ -325,21 +326,14 @@ def generate_live_journal_html(
     </div>
   </div>
 
-  <!-- LIVE TICKERS BAR -->
-  <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-3 font-mono text-xs">
+  <!-- LIVE TICKERS BAR (3 CHAMPION PAIRS) -->
+  <div class="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
     <div class="glass-card rounded-xl p-3 flex items-center justify-between border-t-2 border-t-amber-500">
       <div>
         <span class="text-slate-400 text-[11px] block">🥇 Gold (XAUTUSD)</span>
         <span id="ticker_XAUTUSD" class="text-base font-bold text-white">--</span>
       </div>
       <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[10px]">100x Isolated</span>
-    </div>
-    <div class="glass-card rounded-xl p-3 flex items-center justify-between border-t-2 border-t-cyan-500">
-      <div>
-        <span class="text-slate-400 text-[11px] block">🥈 Silver (SLVONUSD)</span>
-        <span id="ticker_SLVONUSD" class="text-base font-bold text-white">--</span>
-      </div>
-      <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 text-[10px]">50x Isolated</span>
     </div>
     <div class="glass-card rounded-xl p-3 flex items-center justify-between border-t-2 border-t-orange-500">
       <div>
@@ -1189,7 +1183,7 @@ def generate_live_journal_html(
           badge.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5";
           badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>ACTIVE (Scanning A+ Setups)</span>`;
         }}
-        if (subtext) subtext.innerText = "Bot is actively scanning BTC, ETH, Gold, and Silver every 3 seconds for high-confluence entries.";
+        if (subtext) subtext.innerText = "Bot is actively scanning Gold, BTC, and ETH every 3 seconds for high-confluence entries (24/7 Continuous Crypto).";
         if (toggleBtn) toggleBtn.className = "px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold transition flex items-center gap-1.5";
         if (toggleBtnText) toggleBtnText.innerText = "Pause Bot (News Sleep)";
       }}
