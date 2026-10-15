@@ -440,7 +440,7 @@ def generate_live_journal_html(
           <span class="text-[11px] text-slate-400 block">Period Delta Fees</span>
           <span id="periodTotalFees" class="text-xl font-extrabold text-amber-400">-$0.00</span>
           <span id="periodTotalFeesInr" class="text-[10px] text-amber-400/80 block mt-0.5 font-bold">~₹0.00</span>
-          <span class="text-[10px] text-slate-500 block mt-1">XAUT/SLV $0.01 | BTC/ETH %</span>
+          <span class="text-[10px] text-slate-500 block mt-1">Gold $0.01 | BTC/ETH %</span>
         </div>
         <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 border-l-4 border-l-blue-500">
           <span class="text-[11px] text-slate-400 block">Period Win Rate</span>
@@ -929,7 +929,7 @@ def generate_live_journal_html(
             </div>
             <p class="text-sm font-bold text-slate-300">No Open Positions — Agent Brain is Actively Scanning</p>
             <p class="text-xs text-slate-500 max-w-lg">
-              Scanning order book DOM imbalances, Footprint absorption, and Session VWAP across <strong>BTCUSD, ETHUSD, XAUTUSD, and SLVONUSD</strong>. High-conviction entry will trigger automatically.
+              Scanning order book DOM imbalances, Footprint absorption, and Session VWAP across <strong>Gold (XAUTUSD), Bitcoin (BTCUSD), and Ethereum (ETHUSD)</strong>. High-conviction entry will trigger automatically.
             </p>
           </div>
         `;
