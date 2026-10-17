@@ -326,28 +326,205 @@ def generate_live_journal_html(
     </div>
   </div>
 
-  <!-- LIVE TICKERS BAR (3 CHAMPION PAIRS) -->
-  <div class="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
-    <div class="glass-card rounded-xl p-3 flex items-center justify-between border-t-2 border-t-amber-500">
-      <div>
-        <span class="text-slate-400 text-[11px] block">🥇 Gold (XAUTUSD)</span>
-        <span id="ticker_XAUTUSD" class="text-base font-bold text-white">--</span>
+  <!-- INDIVIDUAL PAIR PROFITABILITY & PERFORMANCE LEADERBOARD -->
+  <div class="max-w-7xl mx-auto space-y-3 font-mono">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+      <div class="flex items-center gap-2">
+        <i data-lucide="trophy" class="w-5 h-5 text-amber-400"></i>
+        <h2 class="text-base font-bold text-white tracking-tight">Champion Pair Profitability &amp; Leaderboard</h2>
       </div>
-      <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[10px]">100x Isolated</span>
+      <div class="flex items-center gap-2 text-xs">
+        <span class="text-slate-400">#1 Top Performer:</span>
+        <span id="topPairLeaderBadge" class="px-3 py-1 rounded-full text-xs font-black bg-gradient-to-r from-amber-500/20 via-emerald-500/20 to-teal-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 shadow-sm">
+          <span>👑</span>
+          <span id="topPairLeaderText">Awaiting Live Fills...</span>
+        </span>
+      </div>
     </div>
-    <div class="glass-card rounded-xl p-3 flex items-center justify-between border-t-2 border-t-orange-500">
-      <div>
-        <span class="text-slate-400 text-[11px] block">₿ Bitcoin (BTCUSD)</span>
-        <span id="ticker_BTCUSD" class="text-base font-bold text-white">--</span>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- GOLD (XAUTUSD) CARD -->
+      <div id="card_pair_XAUTUSD" class="glass-card rounded-2xl p-4 border-t-4 border-t-amber-500 flex flex-col justify-between hover:border-amber-400/80 transition shadow-lg relative overflow-hidden group">
+        <div>
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-xl shadow-inner group-hover:scale-105 transition">
+                🥇
+              </div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <span class="font-extrabold text-white text-sm">Gold</span>
+                  <span class="text-slate-400 text-xs">(XAUTUSD)</span>
+                </div>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span class="text-[10px] text-slate-500">Live Mark:</span>
+                  <span id="ticker_XAUTUSD" class="text-xs font-bold text-amber-400">Scanning...</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-col items-end gap-1">
+              <span id="rankBadge_XAUTUSD" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">Rank --</span>
+              <span class="text-[10px] text-slate-500">100x Isolated</span>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-800/80 space-y-2 text-xs">
+            <div class="flex items-center justify-between pb-1.5 border-b border-slate-800/60">
+              <span class="text-slate-400">Realized Net P&amp;L</span>
+              <div class="text-right">
+                <span id="pnl_XAUTUSD" class="font-extrabold text-sm text-slate-200">$0.00</span>
+                <span id="pnlInr_XAUTUSD" class="text-[10px] text-slate-500 block font-mono">₹0.00</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400">Win Rate</span>
+              <span id="wr_XAUTUSD" class="font-bold text-slate-200">0.0% (0W / 0L)</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400">Total Closed Trades</span>
+              <span id="trades_XAUTUSD" class="font-bold text-slate-300">0 Trades</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400">Profit Factor</span>
+              <span id="pf_XAUTUSD" class="font-bold text-slate-300">0.00</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400">Brokerage Fees</span>
+              <span id="fees_XAUTUSD" class="font-bold text-amber-400/90">-$0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-3 mt-3 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400">
+          <span class="truncate text-[10px]">Asian Breakout + CVD</span>
+          <button onclick="setPairFilter('XAUTUSD')" class="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 font-bold text-[10px] transition border border-amber-500/30 flex items-center gap-1">
+            <i data-lucide="filter" class="w-3 h-3"></i>
+            <span>Filter Gold</span>
+          </button>
+        </div>
       </div>
-      <span class="px-2 py-0.5 rounded bg-orange-500/10 text-orange-400 text-[10px]">100x Isolated</span>
-    </div>
-    <div class="glass-card rounded-xl p-3 flex items-center justify-between border-t-2 border-t-purple-500">
-      <div>
-        <span class="text-slate-400 text-[11px] block">Ξ Ethereum (ETHUSD)</span>
-        <span id="ticker_ETHUSD" class="text-base font-bold text-white">--</span>
+
+      <!-- BITCOIN (BTCUSD) CARD -->
+      <div id="card_pair_BTCUSD" class="glass-card rounded-2xl p-4 border-t-4 border-t-orange-500 flex flex-col justify-between hover:border-orange-400/80 transition shadow-lg relative overflow-hidden group">
+        <div>
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-xl shadow-inner group-hover:scale-105 transition">
+                ₿
+              </div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <span class="font-extrabold text-white text-sm">Bitcoin</span>
+                  <span class="text-slate-400 text-xs">(BTCUSD)</span>
+                </div>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span class="text-[10px] text-slate-500">Live Mark:</span>
+                  <span id="ticker_BTCUSD" class="text-xs font-bold text-orange-400">Scanning...</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-col items-end gap-1">
+              <span id="rankBadge_BTCUSD" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">Rank --</span>
+              <span class="text-[10px] text-slate-500">100x Isolated</span>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-800/80 space-y-2 text-xs">
+            <div class="flex items-center justify-between pb-1.5 border-b border-slate-800/60">
+              <span class="text-slate-400">Realized Net P&amp;L</span>
+              <div class="text-right">
+                <span id="pnl_BTCUSD" class="font-extrabold text-sm text-slate-200">$0.00</span>
+                <span id="pnlInr_BTCUSD" class="text-[10px] text-slate-500 block font-mono">₹0.00</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400">Win Rate</span>
+              <span id="wr_BTCUSD" class="font-bold text-slate-200">0.0% (0W / 0L)</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400">Total Closed Trades</span>
+              <span id="trades_BTCUSD" class="font-bold text-slate-300">0 Trades</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400">Profit Factor</span>
+              <span id="pf_BTCUSD" class="font-bold text-slate-300">0.00</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400">Brokerage Fees</span>
+              <span id="fees_BTCUSD" class="font-bold text-amber-400/90">-$0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-3 mt-3 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400">
+          <span class="truncate text-[10px]">EMA Pullback + DOM Delta</span>
+          <button onclick="setPairFilter('BTCUSD')" class="px-2.5 py-1 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 text-orange-300 font-bold text-[10px] transition border border-orange-500/30 flex items-center gap-1">
+            <i data-lucide="filter" class="w-3 h-3"></i>
+            <span>Filter BTC</span>
+          </button>
+        </div>
       </div>
-      <span class="px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 text-[10px]">100x Isolated</span>
+
+      <!-- ETHEREUM (ETHUSD) CARD -->
+      <div id="card_pair_ETHUSD" class="glass-card rounded-2xl p-4 border-t-4 border-t-purple-500 flex flex-col justify-between hover:border-purple-400/80 transition shadow-lg relative overflow-hidden group">
+        <div>
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-xl shadow-inner group-hover:scale-105 transition">
+                Ξ
+              </div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <span class="font-extrabold text-white text-sm">Ethereum</span>
+                  <span class="text-slate-400 text-xs">(ETHUSD)</span>
+                </div>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span class="text-[10px] text-slate-500">Live Mark:</span>
+                  <span id="ticker_ETHUSD" class="text-xs font-bold text-purple-400">Scanning...</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-col items-end gap-1">
+              <span id="rankBadge_ETHUSD" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">Rank --</span>
+              <span class="text-[10px] text-slate-500">100x Isolated</span>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-800/80 space-y-2 text-xs">
+            <div class="flex items-center justify-between pb-1.5 border-b border-slate-800/60">
+              <span class="text-slate-400">Realized Net P&amp;L</span>
+              <div class="text-right">
+                <span id="pnl_ETHUSD" class="font-extrabold text-sm text-slate-200">$0.00</span>
+                <span id="pnlInr_ETHUSD" class="text-[10px] text-slate-500 block font-mono">₹0.00</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400">Win Rate</span>
+              <span id="wr_ETHUSD" class="font-bold text-slate-200">0.0% (0W / 0L)</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400">Total Closed Trades</span>
+              <span id="trades_ETHUSD" class="font-bold text-slate-300">0 Trades</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400">Profit Factor</span>
+              <span id="pf_ETHUSD" class="font-bold text-slate-300">0.00</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400">Brokerage Fees</span>
+              <span id="fees_ETHUSD" class="font-bold text-amber-400/90">-$0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-3 mt-3 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400">
+          <span class="truncate text-[10px]">EMA Pullback + Weekend BB</span>
+          <button onclick="setPairFilter('ETHUSD')" class="px-2.5 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 font-bold text-[10px] transition border border-purple-500/30 flex items-center gap-1">
+            <i data-lucide="filter" class="w-3 h-3"></i>
+            <span>Filter ETH</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -534,14 +711,22 @@ def generate_live_journal_html(
 
     <!-- RIGHT: FILTERED DELTA LIVE TRADES LEDGER -->
     <div class="lg:col-span-7 glass-card rounded-2xl p-5 space-y-3 font-mono flex flex-col h-[520px]">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
         <div class="flex items-center gap-2">
           <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
           <h3 class="font-bold text-white text-sm">Executed Trades Ledger</h3>
+          <span id="executedCount" class="text-xs text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+            {len(live_closed)} Trades Banked
+          </span>
         </div>
-        <span id="executedCount" class="text-xs text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
-          {len(live_closed)} Trades Banked
-        </span>
+
+        <!-- PAIR FILTER TABS -->
+        <div class="flex items-center gap-1 text-xs">
+          <button id="btnPairAll" onclick="setPairFilter('ALL')" class="px-2.5 py-1 rounded-lg cal-tab-active font-bold transition">All Pairs</button>
+          <button id="btnPairXAUT" onclick="setPairFilter('XAUTUSD')" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition">🥇 Gold</button>
+          <button id="btnPairBTC" onclick="setPairFilter('BTCUSD')" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition">₿ BTC</button>
+          <button id="btnPairETH" onclick="setPairFilter('ETHUSD')" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition">Ξ ETH</button>
+        </div>
       </div>
 
       <div class="custom-scroll flex-1 overflow-y-auto pr-1">
@@ -594,7 +779,142 @@ def generate_live_journal_html(
     // Asynchronously preload strategy trades for instant calendar click filtering
     fetch('/strategy_trades.json').then(r => r.json()).then(data => {{
       strategyHistoricalTrades = data || [];
+      renderAll();
     }}).catch(e => console.log('Strategy trades preload notice:', e));
+
+    let activePairFilter = 'ALL';
+
+    function setPairFilter(pair) {{
+      activePairFilter = pair;
+      const pairMap = {{
+        'ALL': 'btnPairAll',
+        'XAUTUSD': 'btnPairXAUT',
+        'BTCUSD': 'btnPairBTC',
+        'ETHUSD': 'btnPairETH'
+      }};
+      Object.entries(pairMap).forEach(([k, btnId]) => {{
+        const el = document.getElementById(btnId);
+        if (el) {{
+          if (k === pair) {{
+            el.className = "px-2.5 py-1 rounded-lg cal-tab-active font-bold transition";
+          }} else {{
+            el.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition";
+          }}
+        }}
+      }});
+      renderAll();
+    }}
+
+    function filterTradesByPair(trades) {{
+      if (!trades || trades.length === 0) return [];
+      if (activePairFilter === 'ALL') return trades;
+      return trades.filter(t => (t.symbol || '').toUpperCase().includes(activePairFilter.toUpperCase()));
+    }}
+
+    function updatePairPerformanceCards(trades) {{
+      const pairs = [
+        {{ key: 'XAUTUSD', name: 'Gold', symMatch: 'XAUT', cardId: 'card_pair_XAUTUSD', pnlId: 'pnl_XAUTUSD', pnlInrId: 'pnlInr_XAUTUSD', wrId: 'wr_XAUTUSD', tradesId: 'trades_XAUTUSD', pfId: 'pf_XAUTUSD', feesId: 'fees_XAUTUSD', rankId: 'rankBadge_XAUTUSD' }},
+        {{ key: 'BTCUSD', name: 'Bitcoin', symMatch: 'BTC', cardId: 'card_pair_BTCUSD', pnlId: 'pnl_BTCUSD', pnlInrId: 'pnlInr_BTCUSD', wrId: 'wr_BTCUSD', tradesId: 'trades_BTCUSD', pfId: 'pf_BTCUSD', feesId: 'fees_BTCUSD', rankId: 'rankBadge_BTCUSD' }},
+        {{ key: 'ETHUSD', name: 'Ethereum', symMatch: 'ETH', cardId: 'card_pair_ETHUSD', pnlId: 'pnl_ETHUSD', pnlInrId: 'pnlInr_ETHUSD', wrId: 'wr_ETHUSD', tradesId: 'trades_ETHUSD', pfId: 'pf_ETHUSD', feesId: 'fees_ETHUSD', rankId: 'rankBadge_ETHUSD' }}
+      ];
+
+      // If trades is empty and we have strategyHistoricalTrades in suite mode, use strategyHistoricalTrades
+      let sourceTrades = (trades && trades.length > 0) ? trades : ((calDataMode === 'suite' && strategyHistoricalTrades.length > 0) ? strategyHistoricalTrades : allClosedTrades);
+
+      const stats = pairs.map(p => {{
+        const pTrades = sourceTrades.filter(t => (t.symbol || '').toUpperCase().includes(p.symMatch));
+        const total = pTrades.length;
+        const wins = pTrades.filter(t => (t.pnl_usd || 0) > 0);
+        const losses = pTrades.filter(t => (t.pnl_usd || 0) < 0);
+        const netPnl = pTrades.reduce((acc, t) => acc + (t.pnl_usd || 0), 0);
+        const totalFees = pTrades.reduce((acc, t) => acc + computeTradeFee(t), 0);
+        const grossProfit = wins.reduce((acc, t) => {{
+          const gross = t.gross_pnl_usd !== undefined ? Number(t.gross_pnl_usd) : ((t.pnl_usd || 0) + computeTradeFee(t));
+          return acc + gross;
+        }}, 0);
+        const grossLoss = Math.abs(losses.reduce((acc, t) => {{
+          const gross = t.gross_pnl_usd !== undefined ? Number(t.gross_pnl_usd) : ((t.pnl_usd || 0) + computeTradeFee(t));
+          return acc + gross;
+        }}, 0));
+        const wr = total > 0 ? ((wins.length / total) * 100).toFixed(1) : "0.0";
+        const pf = grossLoss > 0 ? (grossProfit / grossLoss).toFixed(2) : (grossProfit > 0 ? "∞" : "0.00");
+        const netInr = Math.round(netPnl * 90.0 * 100) / 100;
+
+        return {{
+          ...p,
+          total,
+          winsCount: wins.length,
+          lossesCount: losses.length,
+          netPnl,
+          netInr,
+          totalFees,
+          wr,
+          pf
+        }};
+      }});
+
+      // Sort descending by netPnl to determine ranking
+      const sorted = [...stats].sort((a, b) => b.netPnl - a.netPnl);
+      const topPair = sorted[0];
+
+      // Update top pair leader badge
+      const topBadgeEl = document.getElementById("topPairLeaderText");
+      if (topBadgeEl) {{
+        if (topPair && topPair.total > 0) {{
+          topBadgeEl.innerText = `${{topPair.name}} (${{topPair.key}}) • ${{topPair.netPnl >= 0 ? '+$' : '-$'}}${{Math.abs(topPair.netPnl).toFixed(2)}} Net P&L`;
+        }} else {{
+          topBadgeEl.innerText = "Awaiting Live Fills...";
+        }}
+      }}
+
+      // Update cards & badges
+      stats.forEach(s => {{
+        const rankIndex = sorted.findIndex(item => item.key === s.key);
+        const rankNum = rankIndex + 1;
+
+        const pnlEl = document.getElementById(s.pnlId);
+        if (pnlEl) {{
+          pnlEl.innerText = (s.netPnl >= 0 ? "+$" : "-$") + Math.abs(s.netPnl).toFixed(2);
+          pnlEl.className = "font-extrabold text-sm " + (s.netPnl > 0 ? "text-emerald-400" : (s.netPnl < 0 ? "text-rose-400" : "text-slate-200"));
+        }}
+
+        const pnlInrEl = document.getElementById(s.pnlInrId);
+        if (pnlInrEl) {{
+          pnlInrEl.innerText = (s.netInr >= 0 ? "+₹" : "-₹") + Math.abs(s.netInr).toFixed(2);
+          pnlInrEl.className = "text-[10px] block font-mono font-bold " + (s.netInr > 0 ? "text-emerald-400/80" : (s.netInr < 0 ? "text-rose-400/80" : "text-slate-500"));
+        }}
+
+        const wrEl = document.getElementById(s.wrId);
+        if (wrEl) wrEl.innerText = `${{s.wr}}% (${{s.winsCount}}W / ${{s.lossesCount}}L)`;
+
+        const trEl = document.getElementById(s.tradesId);
+        if (trEl) trEl.innerText = `${{s.total}} Trades`;
+
+        const pfEl = document.getElementById(s.pfId);
+        if (pfEl) pfEl.innerText = s.pf;
+
+        const feeEl = document.getElementById(s.feesId);
+        if (feeEl) feeEl.innerText = `-$${{s.totalFees.toFixed(2)}}`;
+
+        const rankEl = document.getElementById(s.rankId);
+        if (rankEl) {{
+          if (s.total === 0) {{
+            rankEl.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700";
+            rankEl.innerText = "No Fills";
+          }} else if (rankNum === 1) {{
+            rankEl.className = "px-2.5 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-500/30 to-emerald-500/30 text-amber-300 border border-amber-500/50 shadow-sm animate-pulse";
+            rankEl.innerText = "🏆 #1 Most Profitable";
+          }} else if (rankNum === 2) {{
+            rankEl.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-blue-300 border border-blue-500/30";
+            rankEl.innerText = "🥈 #2 Performer";
+          }} else {{
+            rankEl.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700";
+            rankEl.innerText = "🥉 #3 Performer";
+          }}
+        }}
+      }});
+      lucide.createIcons();
+    }}
 
     function setCalDataMode(mode) {{
       calDataMode = mode;
@@ -1004,7 +1324,8 @@ def generate_live_journal_html(
             </td>
           </tr>
         `;
-        document.getElementById("executedCount").innerText = "0 Trades";
+        const pairLabel = activePairFilter === 'ALL' ? '' : ` (${{activePairFilter}})`;
+        document.getElementById("executedCount").innerText = `0${{pairLabel}} Trades`;
         lucide.createIcons();
         return;
       }}
@@ -1039,7 +1360,8 @@ def generate_live_journal_html(
         `;
       }});
       tbody.innerHTML = html;
-      document.getElementById("executedCount").innerText = `${{trades.length}} Trades Banked`;
+      const pairLabel = activePairFilter === 'ALL' ? '' : ` (${{activePairFilter}})`;
+      document.getElementById("executedCount").innerText = `${{trades.length}}${{pairLabel}} Trades Banked`;
     }}
 
     function renderThoughts(thoughts) {{
@@ -1072,9 +1394,11 @@ def generate_live_journal_html(
     }}
 
     function renderAll() {{
-      const filtered = filterTrades(allClosedTrades);
-      updatePeriodScorecard(filtered);
-      renderClosedTrades(filtered);
+      const dateFiltered = filterTrades(allClosedTrades);
+      updatePeriodScorecard(dateFiltered);
+      updatePairPerformanceCards(dateFiltered);
+      const fullyFiltered = filterTradesByPair(dateFiltered);
+      renderClosedTrades(fullyFiltered);
       renderCalendarGrid();
     }}
 
