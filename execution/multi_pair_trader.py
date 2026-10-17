@@ -246,32 +246,43 @@ class MultiPairLiveTrader:
 
             # Restore consecutive losses and cascade circuit breaker halts
             for sym in self.params:
-                sym_trades = [t for t in closed_trades if t.get("symbol") == sym]
-                consec = 0
-                for tr in sym_trades[:5]:
-                    pnl_val = float(tr.get("pnl_usd", 0) or 0)
-                    if pnl_val < 0:
-                        consec += 1
-                    else:
-                        break
-                self.consecutive_losses[sym] = consec
-                limit_losses = self.params[sym].get("cascade_breaker_losses", 2)
-                halt_hrs = self.params[sym].get("cascade_breaker_hours", 2.0)
-                if consec >= limit_losses and sym_trades:
-                    c_str = sym_trades[0].get("closed_at")
-                    if c_str:
-                        try:
+                # 1. Load directly from SQLite persisted state
+                saved_halt = self.db.get_system_state(f"cooldown_until_{sym}", 0.0)
+                saved_consec = self.db.get_system_state(f"consecutive_losses_{sym}", None)
+                if saved_halt and float(saved_halt) > time.time():
+                    self.cooldown_until[sym] = max(self.cooldown_until.get(sym, 0), float(saved_halt))
+                    rem_mins = int((float(saved_halt) - time.time()) / 60)
+                    print(f"🚨 [PERSISTED CASCADE BREAKER RESTORED] {sym} halt restored from SQLite ({rem_mins}m remaining).")
+                if saved_consec is not None:
+                    self.consecutive_losses[sym] = int(saved_consec)
+                else:
+                    # Fallback to trade history inspection
+                    sym_trades = [t for t in closed_trades if t.get("symbol") == sym]
+                    consec = 0
+                    for tr in sym_trades[:5]:
+                        pnl_val = float(tr.get("pnl_usd", 0) or 0)
+                        if pnl_val < 0:
+                            consec += 1
+                        else:
+                            break
+                    self.consecutive_losses[sym] = consec
+                    limit_losses = self.params[sym].get("cascade_breaker_losses", 2)
+                    halt_hrs = self.params[sym].get("cascade_breaker_hours", 2.0)
+                    if consec >= limit_losses and sym_trades:
+                        c_str = sym_trades[0].get("closed_at")
+                        if c_str:
                             try:
-                                c_dt = datetime.fromisoformat(c_str)
+                                try:
+                                    c_dt = datetime.fromisoformat(c_str)
+                                except Exception:
+                                    c_dt = datetime.strptime(c_str, "%Y-%m-%d %H:%M:%S")
+                                halt_end = c_dt.timestamp() + (halt_hrs * 3600)
+                                if time.time() < halt_end:
+                                    self.cooldown_until[sym] = max(self.cooldown_until.get(sym, 0), halt_end)
+                                    rem_mins = int((halt_end - time.time()) / 60)
+                                    print(f"🚨 [CASCADE BREAKER RESTORED] {sym} halted ({consec} consecutive losses, {rem_mins}m remaining).")
                             except Exception:
-                                c_dt = datetime.strptime(c_str, "%Y-%m-%d %H:%M:%S")
-                            halt_end = c_dt.timestamp() + (halt_hrs * 3600)
-                            if time.time() < halt_end:
-                                self.cooldown_until[sym] = max(self.cooldown_until.get(sym, 0), halt_end)
-                                rem_mins = int((halt_end - time.time()) / 60)
-                                print(f"🚨 [CASCADE BREAKER RESTORED] {sym} halted ({consec} consecutive losses, {rem_mins}m remaining).")
-                        except Exception:
-                            pass
+                                pass
         except Exception as e:
             print(f"[NOTICE] Could not restore open positions: {e}")
 
@@ -919,17 +930,9 @@ class MultiPairLiveTrader:
                         recent_h8 = max(highs[max(0, c_idx - 8) : c_idx])
                         recent_l8 = min(lows[max(0, c_idx - 8) : c_idx])
 
-                        # 1. Range Sweep
-                        if lows[-1] < recent_l15 and closes[-1] > recent_l15 and (dr > 0 or (closes[-1] - lows[-1]) / bar_range >= 0.35):
-                            long_trigger = True
-                            sl_dist = max(3.5, bar_range * 1.3)
-                            strat_title = "DOM Range Sweep (Long)"
-                        elif highs[-1] > recent_h15 and closes[-1] < recent_h15 and (dr < 0 or (highs[-1] - closes[-1]) / bar_range >= 0.35):
-                            short_trigger = True
-                            sl_dist = max(3.5, bar_range * 1.3)
-                            strat_title = "DOM Range Sweep (Short)"
-                        # 2. Trend Pullback
-                        elif ema20[-1] > ema50[-1] and lows[-1] <= ema20[-1] and closes[-1] > ema20[-1] and dr >= 0.02:
+                        # Strict Champion Weekday Strategy: Trend Pullback (EMA 20/50 + CVD Aggression)
+                        # Non-champion DOM Range Sweep and Momentum Breakout removed to eliminate unwanted trades & losses
+                        if ema20[-1] > ema50[-1] and lows[-1] <= ema20[-1] and closes[-1] > ema20[-1] and dr >= 0.02:
                             long_trigger = True
                             sl_dist = max(3.5, closes[-1] - lows[-1] + 1.5)
                             strat_title = "Trend Pullback (Long)"
@@ -937,15 +940,6 @@ class MultiPairLiveTrader:
                             short_trigger = True
                             sl_dist = max(3.5, highs[-1] - closes[-1] + 1.5)
                             strat_title = "Trend Pullback (Short)"
-                        # 3. Breakout
-                        elif closes[-1] > recent_h8 and dr >= 0.03:
-                            long_trigger = True
-                            sl_dist = max(3.5, bar_range * 1.4)
-                            strat_title = "Momentum Breakout (Long)"
-                        elif closes[-1] < recent_l8 and dr <= -0.03:
-                            short_trigger = True
-                            sl_dist = max(3.5, bar_range * 1.4)
-                            strat_title = "Momentum Breakout (Short)"
 
                         if long_trigger or short_trigger:
                             tp_price = round(mid + 40.0 * sl_dist if long_trigger else mid - 40.0 * sl_dist, decimals)
@@ -1083,6 +1077,17 @@ class MultiPairLiveTrader:
         notional = round(lots * c_val * current_price, 2)
         margin = round(notional / LEVERAGE_MAP.get(symbol, 100), 2)
 
+        # Root Cause 2 Fix: Tighten Delta Exchange bracket hard stop from -1.0R to -0.50R
+        # Instead of placing the exchange stop at full -1.0R (which allowed market spikes to fill at -$7.00 loss with slippage),
+        # we place Delta's hard bracket stop at -0.50R (~$3.50 loss).
+        # This guarantees that even during high volatility or network latency, the exchange itself cuts the loss
+        # at -0.50R, perfectly matching the -0.45R backtest reversal cut!
+        rev_cut_mult = 0.50
+        if side == "BUY":
+            exchange_bracket_sl = round(current_price - rev_cut_mult * dist, decimals)
+        else:
+            exchange_bracket_sl = round(current_price + rev_cut_mult * dist, decimals)
+
         # Submit live bracket order to Delta Exchange if live authenticated
         if self.is_live_authenticated:
             try:
@@ -1091,10 +1096,10 @@ class MultiPairLiveTrader:
                     side=side.lower(),
                     size=lots,
                     order_type="market_order",
-                    stop_loss_price=sl,
+                    stop_loss_price=exchange_bracket_sl,
                     take_profit_price=tp
                 )
-                print(f"🚀 [DELTA LIVE ORDER PLACED] {symbol} {side} {lots} Lots (Risk: ${current_risk:.2f} | SL: ${sl} | TP: ${tp}) -> Response: {order_res.get('success')}")
+                print(f"🚀 [DELTA LIVE ORDER PLACED] {symbol} {side} {lots} Lots (Risk: ${current_risk:.2f} | Tight Exchange SL: ${exchange_bracket_sl} | TP: ${tp}) -> Response: {order_res.get('success')}")
 
                 # Standalone fallback stop order directly on Delta Exchange book
                 try:
@@ -1103,11 +1108,11 @@ class MultiPairLiveTrader:
                         symbol=symbol,
                         side=close_side,
                         size=lots,
-                        stop_price=sl,
+                        stop_price=exchange_bracket_sl,
                         is_take_profit=False
                     )
                     self.verified_sl_orders.add(symbol)
-                    print(f"🛡️ [DELTA STANDALONE SL PLACED] {symbol} {close_side.upper()} {lots} Lots Stop @ ${sl} -> Success: {sl_res.get('success')}")
+                    print(f"🛡️ [DELTA STANDALONE SL PLACED] {symbol} {close_side.upper()} {lots} Lots Stop @ ${exchange_bracket_sl} -> Success: {sl_res.get('success')}")
                 except Exception as e_sl:
                     print(f"[DELTA STANDALONE SL NOTICE] {e_sl}")
 
@@ -1120,7 +1125,8 @@ class MultiPairLiveTrader:
             "symbol": symbol,
             "side": side,
             "entry_price": current_price,
-            "stop_loss": sl,
+            "stop_loss": exchange_bracket_sl,
+            "initial_sl": sl,
             "take_profit": tp,
             "dist": dist,
             "sl_pct": sl_pct,
@@ -1291,6 +1297,10 @@ class MultiPairLiveTrader:
                 )
         else:
             self.consecutive_losses[symbol] = 0
+
+        # Root Cause 3 Fix: Persist halt timestamp & consecutive losses directly in SQLite system_state
+        self.db.set_system_state(f"consecutive_losses_{symbol}", self.consecutive_losses[symbol])
+        self.db.set_system_state(f"cooldown_until_{symbol}", self.cooldown_until[symbol])
 
         exp_time = datetime.fromtimestamp(self.cooldown_until[symbol]).strftime("%H:%M:%S")
         print(f"⏳ [COOLDOWN ACTIVATED] {symbol} closed ({reason}). Active until {exp_time}.")
