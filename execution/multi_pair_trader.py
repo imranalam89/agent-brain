@@ -102,6 +102,7 @@ class MultiPairLiveTrader:
                 "sl_pct": 0.003,      # 0.3% Stop Loss (1:7.33 R:R)
                 "cooldown_sec": 900,  # 15 minutes post-exit rest
                 "cascade_breaker_losses": 2, # 2 losses in a row
+                "cascade_window_hours": 2.0, # 2-hour lookback window for loss clustering
                 "cascade_breaker_hours": 4.0, # 4-hour halt (protects against liquidation dumps)
                 "profit_lock_r": 0.80, # Bank +0.8R on opposing wall detection
                 "reversal_cut_r": -0.45, # Cut early at -0.45R (saves ~55% loss)
@@ -117,6 +118,7 @@ class MultiPairLiveTrader:
                 "sl_pct": 0.0035,     # Structure-based baseline
                 "cooldown_sec": 900,  # 15 minutes post-exit rest
                 "cascade_breaker_losses": 2, # 2 losses in a row
+                "cascade_window_hours": 2.0, # 2-hour lookback window for loss clustering
                 "cascade_breaker_hours": 2.0, # 2-hour halt (sweet spot for ETH)
                 "reversal_cut_r": -0.45, # Cut early at -0.45R on opposing DOM wall
                 "c_val": 0.01,
@@ -132,6 +134,7 @@ class MultiPairLiveTrader:
                 "sl_pct": 0.0025,     # Structure-based baseline
                 "cooldown_sec": 900,  # 15 minutes post-exit rest
                 "cascade_breaker_losses": 2, # 2 losses in a row
+                "cascade_window_hours": 2.0, # 2-hour lookback window for loss clustering
                 "cascade_breaker_hours": 2.0, # 2-hour halt
                 "breathing_mult": 1.10, # 1.10x breathing trail distance behind peak
                 "swing_lookback_bars": 4, # 4-bar swing low/high structural protection
@@ -143,7 +146,8 @@ class MultiPairLiveTrader:
             }
         }
 
-        # Track consecutive losses per pair for the cascade circuit breakers
+        # Track loss timestamps within lookback window for the cascade circuit breakers
+        self.loss_timestamps: Dict[str, List[float]] = {s: [] for s in self.params}
         self.consecutive_losses: Dict[str, int] = {s: 0 for s in self.params}
 
         # Rolling micro price window for absorption detection
@@ -249,11 +253,24 @@ class MultiPairLiveTrader:
                 # 1. Load directly from SQLite persisted state
                 saved_halt = self.db.get_system_state(f"cooldown_until_{sym}", 0.0)
                 saved_consec = self.db.get_system_state(f"consecutive_losses_{sym}", None)
+                saved_loss_ts = self.db.get_system_state(f"loss_timestamps_{sym}", None)
                 if saved_halt and float(saved_halt) > time.time():
                     self.cooldown_until[sym] = max(self.cooldown_until.get(sym, 0), float(saved_halt))
                     rem_mins = int((float(saved_halt) - time.time()) / 60)
                     print(f"🚨 [PERSISTED CASCADE BREAKER RESTORED] {sym} halt restored from SQLite ({rem_mins}m remaining).")
-                if saved_consec is not None:
+                
+                if saved_loss_ts:
+                    try:
+                        loaded_ts = json.loads(saved_loss_ts)
+                        window_sec = self.params[sym].get("cascade_window_hours", 2.0) * 3600
+                        now_ts = time.time()
+                        self.loss_timestamps[sym] = [t for t in loaded_ts if (now_ts - t) <= window_sec]
+                    except Exception:
+                        self.loss_timestamps[sym] = []
+                
+                if self.loss_timestamps.get(sym):
+                    self.consecutive_losses[sym] = len(self.loss_timestamps[sym])
+                elif saved_consec is not None:
                     self.consecutive_losses[sym] = int(saved_consec)
                 else:
                     # Fallback to trade history inspection
@@ -1296,27 +1313,36 @@ class MultiPairLiveTrader:
         cd_sec = p["cooldown_sec"]
         self.cooldown_until[symbol] = time.time() + cd_sec
 
-        # Pair-specific cascade circuit breaker logic
+        # Pair-specific cascade circuit breaker logic (2 SLs within 2-Hour lookback window)
+        now_ts = time.time()
+        window_sec = p.get("cascade_window_hours", 2.0) * 3600
         if total_pnl < 0:
-            self.consecutive_losses[symbol] = self.consecutive_losses.get(symbol, 0) + 1
+            recent_losses = [t for t in self.loss_timestamps.get(symbol, []) if (now_ts - t) <= window_sec]
+            recent_losses.append(now_ts)
+            self.loss_timestamps[symbol] = recent_losses
+            self.consecutive_losses[symbol] = len(recent_losses)
+            
             cascade_limit = p.get("cascade_breaker_losses", 2)
             cascade_hours = p.get("cascade_breaker_hours", 2.0)
-            if self.consecutive_losses[symbol] >= cascade_limit:
+            if len(recent_losses) >= cascade_limit:
                 halt_sec = int(cascade_hours * 3600)
-                self.cooldown_until[symbol] = max(self.cooldown_until[symbol], time.time() + halt_sec)
+                self.cooldown_until[symbol] = max(self.cooldown_until.get(symbol, 0), now_ts + halt_sec)
+                self.loss_timestamps[symbol] = []
                 self.consecutive_losses[symbol] = 0
                 exp_halt_time = datetime.fromtimestamp(self.cooldown_until[symbol]).strftime("%H:%M:%S")
-                print(f"🚨 [CASCADE CIRCUIT BREAKER] {cascade_limit} consecutive losses on {symbol}! Trading halted for {cascade_hours:.1f} hours until {exp_halt_time}.")
+                print(f"🚨 [CASCADE CIRCUIT BREAKER] {cascade_limit} losses within {p.get('cascade_window_hours', 2.0):.1f}h on {symbol}! Trading halted for {cascade_hours:.1f} hours until {exp_halt_time}.")
                 self.db.log_thought(
                     symbol=symbol,
                     event_type="CASCADE_BREAKER",
                     stars=5.0,
-                    message=f"🚨 Liquidation Cascade Circuit Breaker: {cascade_limit} consecutive losses hit on {symbol}. Pausing new entries for {cascade_hours:.1f}h until {exp_halt_time} to shield capital."
+                    message=f"🚨 Liquidation Cascade Circuit Breaker: {cascade_limit} losses within {p.get('cascade_window_hours', 2.0):.1f}h hit on {symbol}. Pausing new entries for {cascade_hours:.1f}h until {exp_halt_time} to shield capital."
                 )
         else:
+            self.loss_timestamps[symbol] = []
             self.consecutive_losses[symbol] = 0
 
-        # Root Cause 3 Fix: Persist halt timestamp & consecutive losses directly in SQLite system_state
+        # Persist halt timestamp, loss timestamps & consecutive losses directly in SQLite system_state
+        self.db.set_system_state(f"loss_timestamps_{symbol}", json.dumps(self.loss_timestamps[symbol]))
         self.db.set_system_state(f"consecutive_losses_{symbol}", self.consecutive_losses[symbol])
         self.db.set_system_state(f"cooldown_until_{symbol}", self.cooldown_until[symbol])
 
