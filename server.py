@@ -351,6 +351,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 be_r = float(body.get("be_r", 0.8))
                 cooldown = int(body.get("cooldown", 60))
                 mode = body.get("mode", "BOUNCE").upper()
+                start_time = int(body.get("start_time")) if body.get("start_time") else None
+                end_time = int(body.get("end_time")) if body.get("end_time") else None
             else:
                 parsed = urllib.parse.urlparse(self.path)
                 qs = urllib.parse.parse_qs(parsed.query)
@@ -367,6 +369,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 be_r = float(qs.get("be_r", [0.8])[0])
                 cooldown = int(qs.get("cooldown", [60])[0])
                 mode = qs.get("mode", ["BOUNCE"])[0].upper()
+                start_time = int(qs.get("start_time")[0]) if qs.get("start_time") else None
+                end_time = int(qs.get("end_time")[0]) if qs.get("end_time") else None
 
             db_file = DOM_DATABASE_PATH if DOM_DATABASE_PATH.exists() else None
             tester = DOMStrategyBacktester(db_path=db_file)
@@ -384,7 +388,9 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 trail_mult=trail_mult,
                 breakeven_trigger_r=be_r,
                 cooldown_snapshots=cooldown,
-                mode=mode
+                mode=mode,
+                start_time=start_time,
+                end_time=end_time
             )
             tester.generate_html_report(res)
 

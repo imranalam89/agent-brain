@@ -73,7 +73,9 @@ class DOMStrategyBacktester:
         breakeven_trigger_r: float = 1.0, # R-multiple at which breakeven is armed (+0.20R profit buffer)
         cooldown_snapshots: int = 60, # ~3 minutes cooldown between trades
         mode: str = "BOUNCE",
-        max_snapshots: int = 500000
+        max_snapshots: int = 500000,
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None
     ) -> Dict[str, Any]:
         """
         Backtests an Institutional DOM Imbalance & Liquidity Wall Strategy:
@@ -86,6 +88,8 @@ class DOMStrategyBacktester:
         """
         snapshots = self.db.get_dom_snapshots(
             symbol,
+            start_time=start_time,
+            end_time=end_time,
             limit=max_snapshots,
             order="ASC",
             include_raw_ladders=False
@@ -481,7 +485,9 @@ class DOMStrategyBacktester:
         trail_mult: float = 1.0,
         breakeven_trigger_r: float = 0.8,
         cooldown_snapshots: int = 60,
-        mode: str = "BOUNCE"
+        mode: str = "BOUNCE",
+        start_time: Optional[int] = None,
+        end_time: Optional[int] = None
     ) -> Dict[str, Any]:
         """Runs DOM backtest across all monitored symbols and generates joint portfolio metrics."""
         targets = symbols or DOM_RECORDER_SYMBOLS
@@ -500,7 +506,9 @@ class DOMStrategyBacktester:
                 trail_mult=trail_mult,
                 breakeven_trigger_r=breakeven_trigger_r,
                 cooldown_snapshots=cooldown_snapshots,
-                mode=mode
+                mode=mode,
+                start_time=start_time,
+                end_time=end_time
             )
             results[sym] = res
             if res.get("success"):
