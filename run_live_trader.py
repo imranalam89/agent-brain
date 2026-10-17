@@ -67,8 +67,8 @@ def main():
                 import traceback
                 print(f"❌ [UNHANDLED LOOP ERROR] {e}\n{traceback.format_exc()}", flush=True)
 
-            # High-Frequency Scan: 3 seconds tick for instant execution & management
-            time.sleep(3)
+            # High-Frequency Real-Time Scan: 1 second tick for instant 1s L2 DOM execution & trailing management
+            time.sleep(1)
 
     except KeyboardInterrupt:
         print("\n\n🛑 [HALT] Autonomous Multi-Pair Live Trader stopped by user.")
