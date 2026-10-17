@@ -432,7 +432,7 @@ class MultiPairLiveTrader:
                     if sym not in active_symbols_on_exchange:
                         print(f"🧹 [ORPHAN ORDER CLEANUP] Cancelling order {oid} for flat pair {sym} ({o.get('stop_order_type')} @ {o.get('stop_price')})")
                         self.client.cancel_order(oid, pid)
-                    # Case 2: Symbol has active position -> Cancel obsolete stop-loss orders at older prices
+                    # Case 2: Symbol has active position -> Cancel obsolete stop-loss orders at older prices & replace with active SL
                     elif sym in self.active_positions:
                         current_sl = self.active_positions[sym].get("stop_loss")
                         stype = o.get("stop_order_type")
@@ -440,6 +440,24 @@ class MultiPairLiveTrader:
                         if stype == "stop_loss_order" and current_sl and abs(sprice - current_sl) > 0.05:
                             print(f"🧹 [OBSOLETE STOP CLEANUP] Cancelling old stop loss order {oid} on {sym} @ ${sprice} (Active SL is ${current_sl})")
                             self.client.cancel_order(oid, pid)
+                            self.verified_sl_orders.discard(sym)
+                            # Immediately place replacement active Stop Loss order on Delta Exchange
+                            try:
+                                side = self.active_positions[sym]["side"]
+                                close_side = "sell" if side == "BUY" else "buy"
+                                rem_lots = self.active_positions[sym].get("remaining_lots") or self.active_positions[sym].get("lots") or 1
+                                sl_res = self.client.place_stop_order(
+                                    symbol=sym,
+                                    side=close_side,
+                                    size=rem_lots,
+                                    stop_price=current_sl,
+                                    is_take_profit=False
+                                )
+                                if sl_res.get("success"):
+                                    self.verified_sl_orders.add(sym)
+                                    print(f"🛡️ [DELTA SL ORDER PLACED] {sym} {close_side.upper()} {rem_lots} Lots Stop @ ${current_sl} -> True")
+                            except Exception as e_sl:
+                                print(f"[REPLACEMENT SL ERROR] {sym}: {e_sl}")
             except Exception as e:
                 print(f"[ORDER RECONCILIATION NOTICE] {e}")
 
@@ -647,7 +665,7 @@ class MultiPairLiveTrader:
                     notifier.send_trailing_alert(symbol, side, current_price, new_sl, peak_r)
 
         # Baseline check: If position is open and authenticated, ensure at least one exchange stop exists
-        if symbol not in self.verified_sl_orders and self.is_live_authenticated:
+        if self.is_live_authenticated and symbol in self.active_positions:
             try:
                 open_orders = self.client.get_open_orders(symbol)
                 has_sl = any(o.get("stop_order_type") == "stop_loss_order" for o in open_orders)
