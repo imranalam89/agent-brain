@@ -1,6 +1,7 @@
 import sys
 import time
 import math
+import json
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path
@@ -535,7 +536,8 @@ class MultiPairLiveTrader:
                     self._execute_entry(symbol, signal, mark_price)
 
             except Exception as e:
-                print(f"[ERROR] Error monitoring {symbol}: {e}")
+                import traceback
+                print(f"[ERROR] Error monitoring {symbol}: {e}\n{traceback.format_exc()}", flush=True)
 
         # Update bot status
         is_paused, pause_reason, pause_until = self.db.is_bot_paused()
@@ -1100,6 +1102,7 @@ class MultiPairLiveTrader:
         """Submits entry order and initializes position in concurrent state manager."""
         p = self.params[symbol]
         c_val = p["c_val"]
+        decimals = p["decimals"]
         lots = signal["lots"]
         side = signal["side"]
         dist = signal["dist"]
