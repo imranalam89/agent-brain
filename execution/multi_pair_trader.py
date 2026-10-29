@@ -135,6 +135,7 @@ class MultiPairLiveTrader:
         self.cooldown_until: Dict[str, float] = {}
         self.missing_exchange_counts: Dict[str, int] = {}
         self.last_thought_log: Dict[str, float] = {}
+        self.last_evaluated_candle_ts: Dict[str, int] = {}
 
         # Check API key status
         self.is_live_authenticated = False
@@ -684,61 +685,117 @@ class MultiPairLiveTrader:
         res.sort(key=lambda x: x["timestamp"])
         return res
 
+    @staticmethod
+    def _get_closed_bars(candles: List[Dict[str, Any]], bar_duration_sec: int) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]], int]:
+        """
+        Returns (last_closed_bar, prev_closed_bar, last_closed_bar_index).
+        Guarantees that the evaluated bar is 100% completed and closed.
+        """
+        if not candles or len(candles) < 3:
+            return None, None, -1
+        now_ts = time.time()
+        latest = candles[-1]
+        # A bar at timestamp T spans [T, T + bar_duration_sec).
+        if now_ts >= latest["timestamp"] + bar_duration_sec:
+            return latest, candles[-2], len(candles) - 1
+        else:
+            return candles[-2], candles[-3], len(candles) - 2
+
+    def _get_mtf_consensus(self, symbol: str) -> Tuple[str, Dict[str, Any]]:
+        """
+        Computes 3-Timeframe Trend Consensus (1D, 4H, 1H EMA 50).
+        Requires at least 2 out of 3 votes for master trend.
+        Uses 2,500 historical 15m bars from SQLite to guarantee mathematical convergence.
+        """
+        c15 = self._get_symbol_candles(symbol, resolution="15m", limit=2500)
+        c4h = self._aggregate_candles(c15, 14400)
+        c1h = self._aggregate_candles(c15, 3600)
+        c1d = self._aggregate_candles(c15, 86400)
+
+        ema4h = self._calc_ema([x["close"] for x in c4h], 50)
+        ema1h = self._calc_ema([x["close"] for x in c1h], 50)
+        ema1d = self._calc_ema([x["close"] for x in c1d], 50)
+
+        v4h = 1 if (c4h and ema4h and c4h[-1]["close"] >= ema4h[-1]) else 0
+        v1h = 1 if (c1h and ema1h and c1h[-1]["close"] >= ema1h[-1]) else 0
+        v1d = 1 if (c1d and ema1d and c1d[-1]["close"] >= ema1d[-1]) else 0
+
+        votes = v4h + v1h + v1d
+        trend = "BULLISH" if votes >= 2 else "BEARISH"
+        return trend, {
+            "votes": votes,
+            "v4h": v4h, "ema4h": ema4h[-1] if ema4h else 0.0,
+            "v1h": v1h, "ema1h": ema1h[-1] if ema1h else 0.0,
+            "v1d": v1d, "ema1d": ema1d[-1] if ema1d else 0.0,
+        }
+
     def _get_symbol_candles(self, symbol: str, resolution: str = "15m", limit: int = 150) -> List[Dict[str, Any]]:
         """
         Retrieves recent candles for a symbol and resolution.
-        Checks cache first, then Delta REST API, then local SQLite fallback.
+        Higher timeframes (30m, 1h, 4h, 1d) are aggregated from 15m bars to guarantee
+        sufficient history for 50-period EMA convergence without missing bars.
         """
+        # For HTF, resample from 15m candles
+        if resolution in ("30m", "1h", "4h", "1d"):
+            sec_map = {"30m": 1800, "1h": 3600, "4h": 14400, "1d": 86400}
+            tf_sec = sec_map.get(resolution, 14400)
+            req_15m = max(2500, limit * (tf_sec // 900))
+            c15 = self._get_symbol_candles(symbol, resolution="15m", limit=req_15m)
+            return self._aggregate_candles(c15, tf_sec)
+
         cache_key = f"{symbol}_{resolution}"
         now_ts = time.time()
         cached = self.candle_cache.get(cache_key, [])
         last_fetch = self.last_candle_fetch.get(cache_key, 0.0)
 
-        if cached and (now_ts - last_fetch < 60) and len(cached) >= limit // 2:
+        if cached and (now_ts - last_fetch < 15) and len(cached) >= limit // 2:
             return cached
 
         candles = []
-        # 1. Try Delta REST API
+        # 1. Try Delta REST API for recent 15m/5m bars
         try:
-            start_ts = int(now_ts - (limit * 900 if resolution == "15m" else (limit * 300 if resolution == "5m" else limit * 3600)))
+            bar_sec = 300 if resolution == "5m" else 900
+            start_ts = int(now_ts - min(limit, 300) * bar_sec)
             api_res = self.client.get_candles(symbol, resolution=resolution, start=start_ts, end=int(now_ts))
-            if api_res and len(api_res) >= 10:
+            if api_res and len(api_res) >= 5:
                 candles = api_res
         except Exception:
             pass
 
-        # 2. Fallback to SQLite database if API returned empty
-        if not candles:
-            try:
-                tf = resolution
-                with self.db.get_connection() as conn:
-                    cursor = conn.cursor()
-                    cursor.execute(
-                        "SELECT timestamp, open, high, low, close, volume, delta FROM candles WHERE symbol = ? AND timeframe = ? ORDER BY timestamp DESC LIMIT ?",
-                        (symbol, tf, limit)
-                    )
-                    rows = cursor.fetchall()
-                    if rows:
-                        candles = [
-                            {
-                                "timestamp": r[0],
-                                "open": float(r[1]),
-                                "high": float(r[2]),
-                                "low": float(r[3]),
-                                "close": float(r[4]),
-                                "volume": float(r[5]),
-                                "delta": float(r[6])
-                            }
-                            for r in reversed(rows)
-                        ]
-            except Exception:
-                pass
-
-        # 3. If higher timeframe (1h/4h) is still empty, aggregate from 15m candles
-        if not candles and resolution in ("1h", "4h"):
-            c15 = self._get_symbol_candles(symbol, resolution="15m", limit=limit * 4)
-            tf_sec = 3600 if resolution == "1h" else 14400
-            candles = self._aggregate_candles(c15, tf_sec)
+        # 2. Merge with or fallback to SQLite database
+        try:
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT timestamp, open, high, low, close, volume, delta FROM candles WHERE symbol = ? AND timeframe = ? ORDER BY timestamp DESC LIMIT ?",
+                    (symbol, resolution, limit)
+                )
+                rows = cursor.fetchall()
+                if rows:
+                    db_candles = [
+                        {
+                            "timestamp": r[0],
+                            "open": float(r[1]),
+                            "high": float(r[2]),
+                            "low": float(r[3]),
+                            "close": float(r[4]),
+                            "volume": float(r[5] or 0.0),
+                            "delta": float(r[6] or 0.0)
+                        }
+                        for r in reversed(rows)
+                    ]
+                    if not candles:
+                        candles = db_candles
+                    else:
+                        # Combine db historical candles with latest API candles
+                        c_map = {c["timestamp"]: c for c in db_candles}
+                        for c in candles:
+                            c_map[c["timestamp"]] = c
+                        candles = [c_map[k] for k in sorted(c_map.keys())]
+                        if len(candles) > limit:
+                            candles = candles[-limit:]
+        except Exception:
+            pass
 
         if candles:
             self.candle_cache[cache_key] = candles
@@ -815,23 +872,27 @@ class MultiPairLiveTrader:
             # Session Window: London & NY Killzone (13:00 to 23:30 IST)
             in_session = (13 <= now_ist.hour <= 23)
             if in_session:
-                candles_15m = self._get_symbol_candles(symbol, resolution="15m", limit=120)
-                candles_4h = self._get_symbol_candles(symbol, resolution="4h", limit=50)
+                candles_15m = self._get_symbol_candles(symbol, resolution="15m", limit=150)
+                c, prev, bar_idx = self._get_closed_bars(candles_15m, 900)
 
-                if len(candles_15m) >= 28:
-                    c = candles_15m[-1]
-                    prev = candles_15m[-2]
+                if c and prev and bar_idx >= 30:
+                    closed_ts = c["timestamp"]
+                    if closed_ts <= self.last_evaluated_candle_ts.get(symbol, 0):
+                        return None
 
-                    # 4H Macro Trend Confirmation (50 EMA)
-                    close_4h = [x["close"] for x in candles_4h]
-                    ema4h = self._calc_ema(close_4h, 50) if len(close_4h) >= 2 else []
-                    master_trend = "BULLISH" if (candles_4h and close_4h[-1] >= ema4h[-1]) else "BEARISH"
+                    # 3-Timeframe Trend Consensus (1D, 4H, 1H EMA 50)
+                    master_trend, trend_info = self._get_mtf_consensus(symbol)
 
-                    # 24-Bar Support / Resistance Window
+                    # 24-Bar Support / Resistance Window on Completed Closed Bars
                     lookback_sr = cfg.get("lookback_bars", 24)
-                    win_sr = candles_15m[-lookback_sr - 2 : -2]
+                    win_sr = candles_15m[bar_idx - lookback_sr - 1 : bar_idx - 1]
                     sr_high = max(x["high"] for x in win_sr)
                     sr_low = min(x["low"] for x in win_sr)
+
+                    # 30m Structure Room-to-Run Filter
+                    c30 = self._get_symbol_candles(symbol, resolution="30m", limit=60)
+                    sr_30_hi = max(x["high"] for x in c30[-21:-1]) if len(c30) >= 22 else sr_high
+                    sr_30_lo = min(x["low"] for x in c30[-21:-1]) if len(c30) >= 22 else sr_low
 
                     c_range = max(0.01, c["high"] - c["low"])
                     lower_wick_pct = (min(c["open"], c["close"]) - c["low"]) / c_range
@@ -847,10 +908,12 @@ class MultiPairLiveTrader:
                         if dom_trapped and dom_defense and master_trend == "BEARISH":
                             trap_h = max(prev["high"], c["high"])
                             sl_dist = max(cfg.get("min_risk", 2.50), trap_h - c["close"] + cfg.get("sl_buffer", 0.50))
-                            short_trigger = True
-                            strat_title = f"DOM Bull Trap Absorption ({prev_delta:+.0f}Δ -> {curr_delta:+.0f}Δ | {int(upper_wick_pct*100)}% rejection)"
-                            tp_price = round(mid - cfg["target_rr"] * sl_dist, decimals)
-                            sl_price = round(mid + sl_dist, decimals)
+                            # Enforce Room to Run: At least 1.5R clearance to opposing 30m support
+                            if (c["close"] - sr_30_lo) >= 1.5 * sl_dist:
+                                short_trigger = True
+                                strat_title = f"DOM Bull Trap Absorption ({prev_delta:+.0f}Δ -> {curr_delta:+.0f}Δ | {int(upper_wick_pct*100)}% rejection | MTF {trend_info['votes']}/3 Bearish)"
+                                tp_price = round(mid - cfg["target_rr"] * sl_dist, decimals)
+                                sl_price = round(mid + sl_dist, decimals)
 
                     # 2. Bear Trap (Long Gold)
                     elif prev["low"] < sr_low and c["close"] > sr_low and c["close"] > prev["close"]:
@@ -859,10 +922,15 @@ class MultiPairLiveTrader:
                         if dom_trapped and dom_defense and master_trend == "BULLISH":
                             trap_l = min(prev["low"], c["low"])
                             sl_dist = max(cfg.get("min_risk", 2.50), c["close"] - trap_l + cfg.get("sl_buffer", 0.50))
-                            long_trigger = True
-                            strat_title = f"DOM Bear Trap Defense ({prev_delta:+.0f}Δ -> {curr_delta:+.0f}Δ | {int(lower_wick_pct*100)}% defense)"
-                            tp_price = round(mid + cfg["target_rr"] * sl_dist, decimals)
-                            sl_price = round(mid - sl_dist, decimals)
+                            # Enforce Room to Run: At least 1.5R clearance to opposing 30m resistance
+                            if (sr_30_hi - c["close"]) >= 1.5 * sl_dist:
+                                long_trigger = True
+                                strat_title = f"DOM Bear Trap Defense ({prev_delta:+.0f}Δ -> {curr_delta:+.0f}Δ | {int(lower_wick_pct*100)}% defense | MTF {trend_info['votes']}/3 Bullish)"
+                                tp_price = round(mid + cfg["target_rr"] * sl_dist, decimals)
+                                sl_price = round(mid - sl_dist, decimals)
+
+                    # Mark closed bar evaluated
+                    self.last_evaluated_candle_ts[symbol] = closed_ts
 
         # ---------------------------------------------------------------------------------
         # PAIR 2: ETHEREUM (ETHUSD) - Dual Engine: Momentum Breakout + DOM Liquidity Sweep (1:3.5 RR)
@@ -871,139 +939,151 @@ class MultiPairLiveTrader:
             # Session Window: London & NY Killzone (13:00 to 23:30 IST)
             in_session = (13 <= now_ist.hour <= 23)
             if in_session:
-                candles_15m = self._get_symbol_candles(symbol, resolution="15m", limit=120)
-                candles_5m = self._get_symbol_candles(symbol, resolution="5m", limit=30)
-                candles_4h = self._get_symbol_candles(symbol, resolution="4h", limit=50)
+                candles_15m = self._get_symbol_candles(symbol, resolution="15m", limit=150)
+                candles_5m = self._get_symbol_candles(symbol, resolution="5m", limit=60)
+                c, prev, bar_idx = self._get_closed_bars(candles_15m, 900)
 
-                if len(candles_15m) >= 55:
-                    c = candles_15m[-1]
-                    prev = candles_15m[-2]
+                if c and prev and bar_idx >= 55:
+                    closed_ts = c["timestamp"]
+                    if closed_ts <= self.last_evaluated_candle_ts.get(symbol, 0):
+                        return None
 
-                    # 4H Macro Trend (50 EMA)
-                    close_4h = [x["close"] for x in candles_4h]
-                    ema4h = self._calc_ema(close_4h, 50) if len(close_4h) >= 2 else []
-                    t_4h = "BULLISH" if (candles_4h and close_4h[-1] >= ema4h[-1]) else "BEARISH"
+                    # 3-Timeframe Trend Consensus (1D, 4H, 1H EMA 50)
+                    master_trend, trend_info = self._get_mtf_consensus(symbol)
 
                     # 15m EMA50 for Extension Filtering
-                    close_15m = [x["close"] for x in candles_15m]
+                    close_15m = [x["close"] for x in candles_15m[:bar_idx + 1]]
                     ema15_50 = self._calc_ema(close_15m, 50)
 
                     c_range = max(0.01, c["high"] - c["low"])
                     lw_pct = (min(c["open"], c["close"]) - c["low"]) / c_range
                     uw_pct = (c["high"] - max(c["open"], c["close"])) / c_range
 
+                    # Build 5m lookup map
+                    m5_map = {x["timestamp"]: x for x in candles_5m}
+                    b1 = m5_map.get(closed_ts)
+                    b2 = m5_map.get(closed_ts + 300)
+                    b3 = m5_map.get(closed_ts + 600)
+                    if not (b1 and b2 and b3) and len(candles_5m) >= 3:
+                        b1, b2, b3 = candles_5m[-3], candles_5m[-2], candles_5m[-1]
+
                     # Engine 1: Momentum Breakout (33 bars)
-                    win_33 = candles_15m[-35:-2]
+                    win_33 = candles_15m[bar_idx - 33 : bar_idx - 1]
                     hi_33 = max(x["high"] for x in win_33)
                     lo_33 = min(x["low"] for x in win_33)
-                    b1, b2, b3 = (candles_5m[-3], candles_5m[-2], candles_5m[-1]) if len(candles_5m) >= 3 else (c, c, c)
 
-                    if c["close"] > hi_33 and t_4h == "BULLISH" and b3["close"] > b2["close"] > b1["close"]:
-                        ext = (c["close"] - ema15_50[-1]) / c["close"] * 100
-                        if uw_pct < 0.18 and ext <= 2.2:
-                            long_trigger = True
-                            sl_dist = max(cfg.get("min_risk", 3.0), c["close"] - c["low"] + cfg.get("sl_buffer", 0.50))
-                            strat_title = f"Momentum Breakout (33-bar High ${hi_33:.2f} cleared, 5m staircase aligned)"
-                            tp_price = round(mid + cfg["target_rr"] * sl_dist, decimals)
-                            sl_price = round(mid - sl_dist, decimals)
-                    elif c["close"] < lo_33 and t_4h == "BEARISH" and b3["close"] < b2["close"] < b1["close"]:
-                        ext = (ema15_50[-1] - c["close"]) / c["close"] * 100
-                        if lw_pct < 0.18 and ext <= 2.2:
-                            short_trigger = True
-                            sl_dist = max(cfg.get("min_risk", 3.0), c["high"] - c["close"] + cfg.get("sl_buffer", 0.50))
-                            strat_title = f"Momentum Breakdown (33-bar Low ${lo_33:.2f} breached, 5m staircase aligned)"
-                            tp_price = round(mid - cfg["target_rr"] * sl_dist, decimals)
-                            sl_price = round(mid + sl_dist, decimals)
+                    if b1 and b2 and b3:
+                        if c["close"] > hi_33 and master_trend == "BULLISH" and b3["close"] > b2["close"] > b1["close"]:
+                            ext = (c["close"] - ema15_50[-1]) / c["close"] * 100
+                            if uw_pct < 0.18 and ext <= 2.2:
+                                long_trigger = True
+                                sl_dist = max(cfg.get("min_risk", 3.0), c["close"] - c["low"] + cfg.get("sl_buffer", 0.50))
+                                strat_title = f"Momentum Breakout (33-bar High ${hi_33:.2f} cleared, 5m staircase aligned | MTF {trend_info['votes']}/3 Bullish)"
+                                tp_price = round(mid + cfg["target_rr"] * sl_dist, decimals)
+                                sl_price = round(mid - sl_dist, decimals)
+                        elif c["close"] < lo_33 and master_trend == "BEARISH" and b3["close"] < b2["close"] < b1["close"]:
+                            ext = (ema15_50[-1] - c["close"]) / c["close"] * 100
+                            if lw_pct < 0.18 and ext <= 2.2:
+                                short_trigger = True
+                                sl_dist = max(cfg.get("min_risk", 3.0), c["high"] - c["close"] + cfg.get("sl_buffer", 0.50))
+                                strat_title = f"Momentum Breakdown (33-bar Low ${lo_33:.2f} breached, 5m staircase aligned | MTF {trend_info['votes']}/3 Bearish)"
+                                tp_price = round(mid - cfg["target_rr"] * sl_dist, decimals)
+                                sl_price = round(mid + sl_dist, decimals)
 
                     # Engine 2: DOM Liquidity Sweep Trap (48 bars)
                     if not (long_trigger or short_trigger):
-                        win_48 = candles_15m[-50:-2]
+                        win_48 = candles_15m[bar_idx - 48 : bar_idx - 1]
                         hi_48 = max(x["high"] for x in win_48)
                         lo_48 = min(x["low"] for x in win_48)
                         p_delta = prev.get("delta", 0.0)
                         c_delta = c.get("delta", 0.0)
 
-                        if prev["low"] < lo_48 and c["close"] > lo_48 and c["close"] > prev["close"] and p_delta < 0 and c_delta > 0 and lw_pct >= 0.25 and t_4h == "BULLISH":
+                        if prev["low"] < lo_48 and c["close"] > lo_48 and c["close"] > prev["close"] and p_delta < 0 and c_delta > 0 and lw_pct >= 0.25 and master_trend == "BULLISH":
                             long_trigger = True
                             sl_dist = max(cfg.get("min_risk", 3.0), c["close"] - c["low"] + cfg.get("sl_buffer", 0.50))
-                            strat_title = f"DOM Bear Trap (48-bar Low ${lo_48:.2f} swept, delta flip {p_delta:.0f} -> {c_delta:.0f})"
+                            strat_title = f"DOM Bear Trap (48-bar Low ${lo_48:.2f} swept, delta flip {p_delta:.0f} -> {c_delta:.0f} | MTF {trend_info['votes']}/3 Bullish)"
                             tp_price = round(mid + cfg["target_rr"] * sl_dist, decimals)
                             sl_price = round(mid - sl_dist, decimals)
-                        elif prev["high"] > hi_48 and c["close"] < hi_48 and c["close"] < prev["close"] and p_delta > 0 and c_delta < 0 and uw_pct >= 0.25 and t_4h == "BEARISH":
+                        elif prev["high"] > hi_48 and c["close"] < hi_48 and c["close"] < prev["close"] and p_delta > 0 and c_delta < 0 and uw_pct >= 0.25 and master_trend == "BEARISH":
                             short_trigger = True
                             sl_dist = max(cfg.get("min_risk", 3.0), c["high"] - c["close"] + cfg.get("sl_buffer", 0.50))
-                            strat_title = f"DOM Bull Trap (48-bar High ${hi_48:.2f} swept, delta flip {p_delta:.0f} -> {c_delta:.0f})"
+                            strat_title = f"DOM Bull Trap (48-bar High ${hi_48:.2f} swept, delta flip {p_delta:.0f} -> {c_delta:.0f} | MTF {trend_info['votes']}/3 Bearish)"
                             tp_price = round(mid - cfg["target_rr"] * sl_dist, decimals)
                             sl_price = round(mid + sl_dist, decimals)
+
+                    # Mark closed bar evaluated
+                    self.last_evaluated_candle_ts[symbol] = closed_ts
 
         # ---------------------------------------------------------------------------------
         # PAIR 3: BITCOIN (BTCUSD) - 1H Macro Volume Climax Sweep + London Asian Judas (1:3.5 RR)
         # ---------------------------------------------------------------------------------
         elif symbol == "BTCUSD":
             candles_1h = self._get_symbol_candles(symbol, resolution="1h", limit=80)
-            candles_15m = self._get_symbol_candles(symbol, resolution="15m", limit=120)
-            candles_4h = self._get_symbol_candles(symbol, resolution="4h", limit=50)
+            candles_15m = self._get_symbol_candles(symbol, resolution="15m", limit=150)
+            closed_1h, prev_1h, idx_1h = self._get_closed_bars(candles_1h, 3600)
+            closed_15m, prev_15m, idx_15m = self._get_closed_bars(candles_15m, 900)
 
-            if len(candles_1h) >= 25 and len(candles_15m) >= 28:
-                # 4H Macro Trend Confirmation (50 EMA)
-                close_4h = [x["close"] for x in candles_4h]
-                ema4h = self._calc_ema(close_4h, 50) if len(close_4h) >= 2 else []
-                t_4h = "BULLISH" if (candles_4h and close_4h[-1] >= ema4h[-1]) else "BEARISH"
+            if closed_1h and closed_15m and idx_1h >= 25 and idx_15m >= 28:
+                master_trend, trend_info = self._get_mtf_consensus(symbol)
+                atr_val = self._calc_atr(candles_1h[:idx_1h + 1], 14)
 
-                atr_val = self._calc_atr(candles_1h, 14)
-
-                # Engine 1: 1H Macro Volume Climax Sweep (12:00 to 23:30 IST)
-                if 12 <= now_ist.hour <= 23:
-                    b = candles_1h[-1]
-                    win_20 = candles_1h[-22:-2]
+                # Engine 1: 1H Macro Volume Climax Sweep (12:00 to 23:30 IST) - Evaluated on Completed 1H Bars
+                closed_1h_ts = closed_1h["timestamp"]
+                last_1h_eval = self.last_evaluated_candle_ts.get(f"{symbol}_1h", 0)
+                if (12 <= now_ist.hour <= 23) and (closed_1h_ts > last_1h_eval):
+                    win_20 = candles_1h[idx_1h - 20 : idx_1h - 1]
                     sw_hi = max(x["high"] for x in win_20)
                     sw_lo = min(x["low"] for x in win_20)
-                    c_range_1h = max(1.0, b["high"] - b["low"])
-                    lw_1h = (min(b["open"], b["close"]) - b["low"]) / c_range_1h
-                    uw_1h = (b["high"] - max(b["open"], b["close"])) / c_range_1h
-                    avg_v1h = sum(x["volume"] for x in candles_1h[-11:-1]) / 10.0
-                    vol_climax = b["volume"] >= 1.20 * avg_v1h
+                    c_range_1h = max(1.0, closed_1h["high"] - closed_1h["low"])
+                    lw_1h = (min(closed_1h["open"], closed_1h["close"]) - closed_1h["low"]) / c_range_1h
+                    uw_1h = (closed_1h["high"] - max(closed_1h["open"], closed_1h["close"])) / c_range_1h
+                    avg_v1h = sum(x["volume"] for x in candles_1h[idx_1h - 10 : idx_1h]) / 10.0
+                    vol_climax = closed_1h["volume"] >= 1.20 * avg_v1h
 
-                    if b["low"] < sw_lo and b["close"] > sw_lo and lw_1h >= 0.25 and t_4h == "BULLISH" and vol_climax:
+                    if closed_1h["low"] < sw_lo and closed_1h["close"] > sw_lo and lw_1h >= 0.25 and master_trend == "BULLISH" and vol_climax:
                         long_trigger = True
-                        sl_dist = max(cfg.get("min_risk", 80.0), (b["close"] - b["low"]) + cfg.get("atr_cushion_mult", 0.35) * atr_val)
-                        strat_title = f"1H Macro Sweep Trap Long (20h Low ${sw_lo:,.0f} swept, Vol Climax {b['volume']/avg_v1h:.2f}x)"
+                        sl_dist = max(cfg.get("min_risk", 80.0), (closed_1h["close"] - closed_1h["low"]) + cfg.get("atr_cushion_mult", 0.35) * atr_val)
+                        strat_title = f"1H Macro Sweep Trap Long (20h Low ${sw_lo:,.0f} swept, Vol Climax {closed_1h['volume']/avg_v1h:.2f}x | MTF {trend_info['votes']}/3 Bullish)"
                         tp_price = round(mid + cfg["target_rr"] * sl_dist, decimals)
                         sl_price = round(mid - sl_dist, decimals)
-                    elif b["high"] > sw_hi and b["close"] < sw_hi and uw_1h >= 0.25 and t_4h == "BEARISH" and vol_climax:
+                    elif closed_1h["high"] > sw_hi and closed_1h["close"] < sw_hi and uw_1h >= 0.25 and master_trend == "BEARISH" and vol_climax:
                         short_trigger = True
-                        sl_dist = max(cfg.get("min_risk", 80.0), (b["high"] - b["close"]) + cfg.get("atr_cushion_mult", 0.35) * atr_val)
-                        strat_title = f"1H Macro Sweep Trap Short (20h High ${sw_hi:,.0f} swept, Vol Climax {b['volume']/avg_v1h:.2f}x)"
+                        sl_dist = max(cfg.get("min_risk", 80.0), (closed_1h["high"] - closed_1h["close"]) + cfg.get("atr_cushion_mult", 0.35) * atr_val)
+                        strat_title = f"1H Macro Sweep Trap Short (20h High ${sw_hi:,.0f} swept, Vol Climax {closed_1h['volume']/avg_v1h:.2f}x | MTF {trend_info['votes']}/3 Bearish)"
                         tp_price = round(mid - cfg["target_rr"] * sl_dist, decimals)
                         sl_price = round(mid + sl_dist, decimals)
 
-                # Engine 2: Asian Judas Sweep (12:30 to 17:00 IST)
-                if not (long_trigger or short_trigger) and (12 <= now_ist.hour <= 17):
-                    asia_bars = [x for x in candles_15m if 0 <= datetime.fromtimestamp(x["timestamp"], tz=timezone.utc).hour < 7]
+                    self.last_evaluated_candle_ts[f"{symbol}_1h"] = closed_1h_ts
+
+                # Engine 2: Asian Judas Sweep (12:30 to 17:00 IST) - Evaluated on Completed 15m Bars
+                closed_15m_ts = closed_15m["timestamp"]
+                last_15m_eval = self.last_evaluated_candle_ts.get(f"{symbol}_15m", 0)
+                if not (long_trigger or short_trigger) and (12 <= now_ist.hour <= 17) and (closed_15m_ts > last_15m_eval):
+                    asia_bars = [x for x in candles_15m if 0 <= datetime.fromtimestamp(x["timestamp"], tz=timezone.utc).hour < 7 and x["timestamp"] < closed_15m_ts]
                     if len(asia_bars) >= 8:
                         asia_hi = max(x["high"] for x in asia_bars)
                         asia_lo = min(x["low"] for x in asia_bars)
-                        c15 = candles_15m[-1]
-                        prev15 = candles_15m[-2]
-                        vol_ma20 = sum(x["volume"] for x in candles_15m[-21:-1]) / 20.0
-                        vol_ok = c15["volume"] >= 1.25 * vol_ma20
-                        c_range_15 = max(1.0, c15["high"] - c15["low"])
-                        lw_15 = (min(c15["open"], c15["close"]) - c15["low"]) / c_range_15
-                        uw_15 = (c15["high"] - max(c15["open"], c15["close"])) / c_range_15
+                        vol_ma20 = sum(x["volume"] for x in candles_15m[idx_15m - 20 : idx_15m]) / 20.0
+                        vol_ok = closed_15m["volume"] >= 1.25 * vol_ma20
+                        c_range_15 = max(1.0, closed_15m["high"] - closed_15m["low"])
+                        lw_15 = (min(closed_15m["open"], closed_15m["close"]) - closed_15m["low"]) / c_range_15
+                        uw_15 = (closed_15m["high"] - max(closed_15m["open"], closed_15m["close"])) / c_range_15
 
                         if vol_ok:
-                            if prev15["low"] < asia_lo and c15["close"] > asia_lo and lw_15 >= 0.25 and t_4h == "BULLISH":
+                            if prev_15m["low"] < asia_lo and closed_15m["close"] > asia_lo and lw_15 >= 0.25 and master_trend == "BULLISH":
                                 long_trigger = True
-                                sl_dist = max(cfg.get("min_risk", 80.0), (c15["close"] - c15["low"]) + cfg.get("atr_cushion_mult", 0.35) * atr_val)
-                                strat_title = f"Asian Judas Sweep Long (Asian Low ${asia_lo:,.0f} swept, Vol Climax {c15['volume']/vol_ma20:.2f}x)"
+                                sl_dist = max(cfg.get("min_risk", 80.0), (closed_15m["close"] - closed_15m["low"]) + cfg.get("atr_cushion_mult", 0.35) * atr_val)
+                                strat_title = f"Asian Judas Sweep Long (Asian Low ${asia_lo:,.0f} swept, Vol Climax {closed_15m['volume']/vol_ma20:.2f}x | MTF {trend_info['votes']}/3 Bullish)"
                                 tp_price = round(mid + cfg["target_rr"] * sl_dist, decimals)
                                 sl_price = round(mid - sl_dist, decimals)
-                            elif prev15["high"] > asia_hi and c15["close"] < asia_hi and uw_15 >= 0.25 and t_4h == "BEARISH":
+                            elif prev_15m["high"] > asia_hi and closed_15m["close"] < asia_hi and uw_15 >= 0.25 and master_trend == "BEARISH":
                                 short_trigger = True
-                                sl_dist = max(cfg.get("min_risk", 80.0), (c15["high"] - c15["close"]) + cfg.get("atr_cushion_mult", 0.35) * atr_val)
-                                strat_title = f"Asian Judas Sweep Short (Asian High ${asia_hi:,.0f} swept, Vol Climax {c15['volume']/vol_ma20:.2f}x)"
+                                sl_dist = max(cfg.get("min_risk", 80.0), (closed_15m["high"] - closed_15m["close"]) + cfg.get("atr_cushion_mult", 0.35) * atr_val)
+                                strat_title = f"Asian Judas Sweep Short (Asian High ${asia_hi:,.0f} swept, Vol Climax {closed_15m['volume']/vol_ma20:.2f}x | MTF {trend_info['votes']}/3 Bearish)"
                                 tp_price = round(mid - cfg["target_rr"] * sl_dist, decimals)
                                 sl_price = round(mid + sl_dist, decimals)
+
+                    self.last_evaluated_candle_ts[f"{symbol}_15m"] = closed_15m_ts
 
         # Periodic status thought log in Live Journal for UI transparency
         last_t = self.last_thought_log.get(symbol, 0)
