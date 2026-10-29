@@ -44,30 +44,26 @@ class MultiPairLiveTrader:
     
     Verified 3-Pair Champion Portfolio Architecture (Gold + BTC + ETH):
     1. Gold (XAUTUSD):
-       - Hybrid A: 15m Session Breakout (London/NY ORB) + CVD Order Flow Absorption.
-       - Level 2 DOM wall confirmation, 15m cooldown, 2-Loss = 2h halt circuit breaker.
-       - Ratcheted trailing stop with 1.10x breathing buffer and 4-bar swing protection.
+       - Level 2 DOM Trap & Order Flow Absorption (Fixed 1:3.00 RR, $5 risk).
+       - London & NY Killzone (13:00 to 23:30 IST), 24-bar H/L breach & rejection,
+         >= 25% wick, delta absorption flip, 4H EMA50 trend alignment.
        - Pauses Saturday/Sunday (commodity market closed).
     2. Bitcoin (BTCUSD):
-       - DOM Imbalance & Ask/Bid Wall Sweep (Institutional Depth >= 3.0x).
-       - Peak profit lock at +0.8R, 2-Loss = 4h halt circuit breaker (liquidation cascade shield).
+       - 1H Macro Volume Climax Sweep + London Asian Judas Swing (Fixed 1:3.50 RR, $5 risk).
+       - Technical Cushion: 0.35xATR preservation.
+       - Engine 1: 20-hour sweep with >= 1.20x volume climax (12:00-23:30 IST).
+       - Engine 2: Asian session sweep during London Open (12:30-17:00 IST) with >= 1.25x volume climax.
        - Continuous 24/7 trading (weekends included).
     3. Ethereum (ETHUSD):
-       - Weekday: Confluence DOM Sweep & CVD Trend Pullback (London/NY session).
-       - Weekend: Bollinger & RSI Range Exhaustion Reversal (24/7 weekend trading, fixed +2.0R TP).
-       - 2-Loss = 2h halt circuit breaker.
+       - Dual Engine: Momentum Breakout + DOM Liquidity Sweep (Fixed 1:3.50 RR, $5 risk).
+       - London & NY Killzone (13:00 to 23:30 IST).
+       - Engine 1: 33-bar Breakout with < 18% counter wick and 5m staircase alignment.
+       - Engine 2: 48-bar Trap with >= 25% rejection wick and delta flip.
+       - Continuous 24/7 trading (weekends included).
     4. All 3 Champion Pairs:
-       - Strictly $5.00 fixed raw risk per trade.
-       - Unified Ratcheted Trailing Ladder:
-         +1.0R -> +0.20R (Guaranteed Green, fees covered)
-         +1.5R -> +0.60R
-         +2.0R -> +1.00R
-         +2.5R -> +1.50R
-         +3.0R -> +2.00R
-         +4.0R -> +2.50R
-         +5.0R -> +3.50R (1.5R buffer)
-         +6.0R+ -> Continuous 1.5R trailing buffer behind peak price.
-       - Early Reversal Cut: Cut early at -0.45R on opposing hostile orderbook wall (saves ~55% of loss).
+       - Strictly $5.00 fixed risk per trade.
+       - Position Management: Fixed Technical Cushion Stop Loss (Preserves 0.35xATR/structural buffer).
+       - No premature trailing choke, no early hostile cuts.
        - Strict Invariant: Exactly 1 open position per symbol at any time.
     """
 
