@@ -204,11 +204,11 @@ def generate_live_journal_html(
       </div>
       <div>
         <div class="font-bold text-white flex items-center gap-2">
-          <span>Active Strategy: ⚡ Champion 3-Pair Master Portfolio (Gold + BTC + ETH 24/7)</span>
+          <span>Active Strategy: ⚡ Champion 3-Pair Master Institutional Portfolio (Gold + BTC + ETH)</span>
           <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px]">Champion Live</span>
         </div>
         <p class="text-slate-400 text-[11px] mt-0.5">
-          Gold (Hybrid A: 15m Breakout + CVD Absorption) • BTC (DOM Imbalance ≥3.0x Wall Sweep • 24/7) • ETH (Confluence Weekday + BB Range Scalp Weekend • 24/7) • Unified Trailing Ladder (+5R→+3.5R) • Reversal Cut (-0.45R) • Strict $5.00 Risk
+          Gold (L2 DOM Trap &amp; Delta Absorption • 1:3.0 RR) • BTC (1H Macro Climax Sweep + Asian Judas • 1:3.5 RR) • ETH (Dual Engine Breakout &amp; Trap • 1:3.5 RR) • Fixed Structural Stop Loss (0.35xATR Cushion) • Strict $5.00 Risk
         </p>
       </div>
     </div>
