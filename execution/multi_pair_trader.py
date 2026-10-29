@@ -169,9 +169,9 @@ class MultiPairLiveTrader:
                 entry_p = float(t.get("entry_price", 0))
                 sl_p = float(t.get("stop_loss", 0))
                 tp_p = float(t.get("take_profit", 0))
-                dist = abs(entry_p - sl_p)
-                sl_pct = self.params[sym]["sl_pct"]
-                tp_pct = self.params[sym]["tp_pct"]
+                dist = abs(entry_p - sl_p) if (entry_p and sl_p) else self.params[sym].get("min_risk", 3.0)
+                sl_pct = round(dist / entry_p, 5) if entry_p > 0 else 0.005
+                tp_pct = round(abs(tp_p - entry_p) / entry_p, 5) if (entry_p and tp_p) else round(self.params[sym].get("target_rr", 3.0) * sl_pct, 5)
 
                 opened_at_str = t.get("opened_at")
                 opened_ts = time.time()
@@ -291,13 +291,14 @@ class MultiPairLiveTrader:
         lots = abs(int(size))
         entry_price = float(p.get("entry_price") or p.get("mark_price") or 0.0)
         param = self.params[symbol]
-        sl_pct = param["sl_pct"]
-        tp_pct = param["tp_pct"]
         decimals = param["decimals"]
-
-        sl = round(entry_price * (1.0 - sl_pct) if side == "BUY" else entry_price * (1.0 + sl_pct), decimals)
-        tp = round(entry_price * (1.0 + tp_pct) if side == "BUY" else entry_price * (1.0 - tp_pct), decimals)
-        dist = abs(entry_price - sl)
+        min_risk = param.get("min_risk", 3.0 if "ETH" in symbol else (80.0 if "BTC" in symbol else 2.5))
+        target_rr = param.get("target_rr", 3.0)
+        dist = min_risk
+        sl = round(entry_price - dist if side == "BUY" else entry_price + dist, decimals)
+        tp = round(entry_price + (target_rr * dist) if side == "BUY" else entry_price - (target_rr * dist), decimals)
+        sl_pct = round(dist / entry_price, 5) if entry_price > 0 else 0.005
+        tp_pct = round((target_rr * dist) / entry_price, 5) if entry_price > 0 else 0.015
 
         # Ensure bracket orders on Delta if live
         close_side = "sell" if side == "BUY" else "buy"
