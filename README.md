@@ -44,6 +44,35 @@ Agent Brain/
 
 ---
 
+## 🔬 Evidence-Driven AI Trading Brain Research Suite
+
+A quantitative research engine with zero-lookahead backtesting, multi-timeframe structural analysis, and an interactive 8-dashboard verification report:
+
+### Core Research Components
+* **`data/data_pipeline.py`**: Clean multi-timeframe aggregation (15m, 1h, 4h, 1D), ATR, swing pivots, and order flow metrics.
+* **`strategies/research_strategies.py`**: 7 standardized strategy families (HTF Trend Continuation, S/R Reversal, Consolidation Breakout, Liquidity Sweep & Reclaim, Pullback Continuation, Order Flow CVD, and Multi-Factor Confluence).
+* **`backtest/research_backtest_engine.py`**: Strict chronological bar-by-bar engine with Delta Exchange fees (0.01% + 18% GST), slippage, and 8 counterfactual exit models (including the Special 1R Management Hypothesis).
+* **`analysis/trade_analyzer.py`**: Granular MFE/MAE analysis, failure mode categorization, and session analysis.
+* **`tests/test_research_engine.py`**: 5 unit tests covering contract specifications, fee math, intra-bar conservative execution, and no-lookahead constraints.
+
+### How to Run Research & View Dashboard
+1. Run Unit Tests:
+   ```powershell
+   .\.venv\Scripts\python.exe -m unittest tests/test_research_engine.py
+   ```
+2. Run Backtest Experiments & Trade Analysis:
+   ```powershell
+   .\.venv\Scripts\python.exe scripts/run_research_experiments.py
+   .\.venv\Scripts\python.exe scripts/run_trade_analysis.py
+   ```
+3. Generate & Open the Interactive HTML Report:
+   ```powershell
+   .\.venv\Scripts\python.exe scripts/build_research_dashboard_html.py
+   Start-Process "reports/ai_trading_brain_research_dashboard.html"
+   ```
+
+---
+
 ## 🛡️ Risk Management Parameters
 
 * **Starting Capital Base:** ₹5,000 (~$50 - $60 USD)

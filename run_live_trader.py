@@ -25,11 +25,11 @@ def main():
     print("=" * 80)
     for sym, p in trader.params.items():
         wknd = "24/7 Continuous" if p.get("weekend_trading") else "Mon-Fri (Weekend Paused)"
-        print(f"  • {sym:<8} | Strategy: {p['strategy_label']} | Mode: {p['mode']} | Risk: $5.00 | Trading: {wknd}")
+        print(f"  • {sym:<8} | Strategy: {p['strategy_label']} | Target RR: 1:{p['target_rr']:.1f} | Risk: $5.00 | Trading: {wknd}")
     print("=" * 80)
-    print(f"Risk Rules: Strictly $5.00 fixed risk per trade | Base Capital: $50.00")
-    print(f"Trailing: Unified Ladder (+1R->+0.2R, +1.5R->+0.6R, +2R->+1R, +2.5R->+1.5R, +3R->+2R, +4R->+2.5R, +5R->+3.5R, +6R+ continuous 1.5R trail)")
-    print(f"Reversal Guard: Active (-0.45R early cut / +0.8R peak profit lock)")
+    print("Risk Rules: Strictly $5.00 fixed risk per trade | Capital: $50.00")
+    print("Position Management: Fixed Technical Cushion Stop Loss (Preserves 0.35xATR/structural buffer)")
+    print("Target R: Gold 1:3.00 RR | ETH 1:3.50 RR | BTC 1:3.50 RR | Zero Defect Execution")
     print("=" * 80 + "\n")
 
     # Ensure sibling services (Dashboard & DOM Recorder) are synchronized

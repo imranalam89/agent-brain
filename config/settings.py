@@ -162,127 +162,68 @@ REPORTS_DIR = BASE_DIR / "reports"
 CSV_IMPORTS_DIR = BASE_DIR / "data" / "csv_imports"
 
 # ==========================================
+# 7. CHAMPION PRODUCTION ENGINE: GOLD (XAUTUSD)
 # ==========================================
-# 7. UNIFIED RATCHETED TRAILING SL LADDER (ALL PAIRS)
-# ==========================================
-# Incorporates User Ratchet Table + 1.5R Buffer at 5.0R+:
-# +1.0R -> +0.20R (Guaranteed Green, covers fees + GST)
-# +1.5R -> +0.60R (+60% risk banked)
-# +2.0R -> +1.00R ($5.00 net banked)
-# +2.5R -> +1.50R ($7.50 net banked)
-# +3.0R -> +2.00R ($10.00 net banked)
-# +4.0R -> +2.50R (1.5R breathing buffer)
-# +5.0R -> +3.50R ($17.50 net banked, 1.5R buffer)
-# +6.0R+ -> Continuous 1.5R trailing buffer behind peak price
-UNIFIED_TRAILING_LADDER = {
-    "step_1_0r": {"trigger_r": 1.0, "lock_r": 0.20},  # Guaranteed Green (covers fees + GST)
-    "step_1_5r": {"trigger_r": 1.5, "lock_r": 0.60},  # +60% profit banked
-    "step_2_0r": {"trigger_r": 2.0, "lock_r": 1.00},  # 1 Full R ($5.00) locked
-    "step_2_5r": {"trigger_r": 2.5, "lock_r": 1.50},  # 1.5R ($7.50) locked
-    "step_3_0r": {"trigger_r": 3.0, "lock_r": 2.00},  # 2.0R ($10.00) locked
-    "step_4_0r": {"trigger_r": 4.0, "lock_r": 2.50},  # 1.5R buffer starts
-    "step_5_0r": {"trigger_r": 5.0, "lock_r": 3.50},  # 1.5R buffer (User Rule: SL @ 3.5R)
-    "macro_runner": {"trigger_r": 6.0, "buffer_r": 1.50} # Continuous 1.5R trail behind peak
-}
-
-# ==========================================
-# 8. CHAMPION PRODUCTION ENGINE: GOLD (XAUTUSD)
-# ==========================================
-# 72.7% Win Rate | +$69.87 USD (+₹6,288 INR) | 6.76 Profit Factor | $5.94 Max DD
+# 72.4% Win Rate | 5.03 Profit Factor | +$222.31 USD (+₹20,008 INR)
 CHAMPION_CONFIG = {
-    "strategy_name": "⚡ Hybrid A (Session Breakout + CVD Order Flow Absorption)",
+    "strategy_name": "Gold Level 2 DOM Trap with Order Flow Absorption",
     "symbol": "XAUTUSD",
-    "sizing_mode": "RAW_GROSS_RISK",     # $5.00 Gross Risk per trade
+    "target_rr": 3.0,                   # Fixed 1:3.00 Take Profit Target
     "risk_per_trade_usd": 5.0,          # Strict $5.00 fixed initial risk
-    "reversal_cut": {
-        "enabled": True,                # Emergency full cut on opposing DOM absorption wall
-        "cut_r": -0.45,                 # Exit at -0.45R rather than full -1.0R SL
-        "min_wall_imbalance": 2.2       # Opposing wall imbalance threshold
-    },
-    "trailing_ladder": UNIFIED_TRAILING_LADDER, # Unified user trailing rule (1.5R buffer at 5R+)
-    "breathing_mult": 1.10,             # 1.10x breathing trail distance behind peak
-    "swing_lookback_bars": 4,           # Recent 4-bar swing low/high structural protection
+    "min_risk": 2.50,                   # Minimum $2.50 structural cushion
+    "sl_buffer": 0.50,                  # $0.50 buffer beyond sweep bar extreme
+    "lookback_bars": 24,                # 24-bar (6-hour) swing high/low window
+    "wick_rejection_min": 0.25,         # Rejection wick >= 25% of bar range
     "session_window": {
         "enabled": True,
-        "start_ist": "13:00",           # London & NY High-Liquidity Session
-        "end_ist": "23:00",             # Avoids 00:00 - 12:30 IST Asian morning chop
-        "blackout_hours": [16, 19, 20, 22] # High-impact news spike filters
+        "start_ist": "13:00",           # London open (13:00 IST)
+        "end_ist": "23:30",             # NY close (23:30 IST)
     },
-    "cooldown": {
-        "post_exit_mins": 15,           # 15-minute rest after every trade exit
-        "cascade_breaker_losses": 2,    # Circuit breaker if 2 losses in a row
-        "cascade_breaker_hours": 2.0    # 2-hour trading halt after 2-loss streak
-    },
-    "dom_confirmation": {
-        "enabled": True,
-        "min_delta_ratio": 0.015,       # Institutional buyer/seller aggression into DOM
-        "wick_rejection_min": 0.28      # Strong wick rejection confirming active DOM support/resistance
-    }
+    "weekend_trading": False,           # Paused on weekends (traditional markets closed)
+    "cooldown_sec": 900,                # 15-minute rest after trade exit
 }
 
 # ==========================================
-# 9. CHAMPION PRODUCTION ENGINE: BITCOIN (BTCUSD)
+# 8. CHAMPION PRODUCTION ENGINE: BITCOIN (BTCUSD)
 # ==========================================
-# 24/7 Continuous Trading (Weekend Included, Oct 08 - Till Now):
-# 71.4% Win Rate | +$86.64 USD (+₹7,798 INR) | 8.36 Profit Factor | $7.93 Max DD
+# 50.0% Win Rate | 2.59 Profit Factor | +$68.42 USD (+₹6,158 INR)
 CHAMPION_CONFIG_BTC = {
-    "strategy_name": "⚡ DOM Imbalance & Ask Wall Sweep (L2 Depth ≥ 3.0x)",
+    "strategy_name": "Bitcoin 1H Macro Volume Climax + London Asian Judas Sweep",
     "symbol": "BTCUSD",
-    "sizing_mode": "RAW_GROSS_RISK",     # $5.00 Gross Risk per trade
+    "target_rr": 3.5,                   # Fixed 1:3.50 Take Profit Target
     "risk_per_trade_usd": 5.0,          # Strict $5.00 fixed initial risk
-    "imbalance_threshold": 3.0,         # Minimum 3.0x Level 2 DOM wall imbalance
-    "reversal_cut": {
-        "enabled": True,                # Emergency full cut on opposing DOM reversal signal
-        "cut_r": -0.45,                 # Exit at -0.45R (saves ~48% of loss)
-        "profit_lock_r": 0.80           # Bank +0.8R at peak before retracing to breakeven
-    },
-    "trailing_ladder": UNIFIED_TRAILING_LADDER, # Unified user trailing rule (1.5R buffer at 5R+)
-    "cooldown": {
-        "post_exit_mins": 15,           # 15-minute rest after every trade exit
-        "cascade_breaker_losses": 2,    # Circuit breaker if 2 losses in a row
-        "cascade_breaker_hours": 4.0    # 4-hour halt after 2-loss streak (saved 3 losses on Oct 08)
-    },
-    "trail_mode": "DYNAMIC_RUNNER",     # Trailing runner engine
-    "weekend_trading": True             # 24/7 continuous crypto trading
+    "min_risk": 80.0,                   # Minimum $80 structural cushion
+    "atr_cushion_mult": 0.35,           # Fixed 0.35xATR technical structural cushion
+    "macro_lookback_hours": 20,         # 20-hour macro high/low window
+    "vol_climax_mult": 1.20,            # 1.20x 10-bar average volume
+    "asian_judas_vol_mult": 1.25,       # 1.25x volume climax on London Asian sweep
+    "wick_rejection_min": 0.25,         # Rejection wick >= 25% of bar range
+    "weekend_trading": True,            # 24/7 continuous crypto trading
+    "cooldown_sec": 900,                # 15-minute rest after trade exit
 }
 
 # ==========================================
-# 10. CHAMPION PRODUCTION ENGINE: ETHEREUM (ETHUSD)
+# 9. CHAMPION PRODUCTION ENGINE: ETHEREUM (ETHUSD)
 # ==========================================
-# Full Continuous Unified Engine (Oct 08 - Oct 15 22:50 IST Till Now):
-# 56.5% Win Rate | +$154.10 USD (+₹13,869 INR) | 4.49 Profit Factor | $20.22 Max DD
-# Weekdays: Confluence DOM Sweep & CVD Trend Pullback (London/NY Session)
-# Weekends: Bollinger & RSI Range Exhaustion Reversal (24/7 Weekend Trading)
+# 64.3% Win Rate | 4.57 Profit Factor | +$111.16 USD (+₹10,004 INR)
 CHAMPION_CONFIG_ETH = {
-    "strategy_name": "⚡ Confluence DOM Sweep (Weekday) + BB Exhaustion (Weekend)",
+    "strategy_name": "Ethereum Dual Engine (Momentum Breakout + DOM Liquidity Sweep)",
     "symbol": "ETHUSD",
-    "sizing_mode": "RAW_GROSS_RISK",     # $5.00 Gross Risk per trade
+    "target_rr": 3.5,                   # Fixed 1:3.50 Take Profit Target
     "risk_per_trade_usd": 5.0,          # Strict $5.00 fixed initial risk
-    "reversal_cut": {
-        "enabled": True,                # Emergency full cut on opposing DOM absorption wall
-        "cut_r": -0.45,                 # Exit at -0.45R rather than full -1.0R SL (saved $22.00)
-        "min_wall_imbalance": 2.0       # Minimum 2.0x opposing wall depth
-    },
-    "trailing_ladder": UNIFIED_TRAILING_LADDER, # Unified user trailing rule (1.5R buffer at 5R+)
-    "cooldown": {
-        "post_exit_mins": 15,           # 15-minute rest after every trade exit
-        "cascade_breaker_losses": 2,    # Circuit breaker if 2 losses in a row
-        "cascade_breaker_hours": 2.0    # 2-hour trading halt after 2-loss streak (Sweet spot for ETH)
-    },
+    "min_risk": 3.00,                   # Minimum $3.00 structural cushion
+    "sl_buffer": 0.50,                  # $0.50 buffer beyond swing extreme
     "session_window": {
-        "enabled": True,                # Restricts weekday entries to institutional sessions
-        "start_ist": "13:00",           # London open ramp up
-        "end_ist": "23:00",             # NY session close
-        "blackout_hours": [16, 19, 20, 22] # High-impact news spike avoidance
+        "enabled": True,
+        "start_ist": "13:00",           # London open (13:00 IST)
+        "end_ist": "23:30",             # NY close (23:30 IST)
     },
-    "weekend_module": {
-        "enabled": True,                # 24/7 weekend trading enabled on ETH
-        "strategy": "Bollinger & RSI Range Exhaustion Reversal",
-        "tp_target_r": 2.0,             # Fixed +2.0R take profit on weekend mean reversion
-        "reversal_cut_r": -0.45,        # Emergency cut at -0.45R on break of range
-        "performance": "71.4% Win Rate, +$33.57 USD Net (+₹3,021 INR) across Oct 10-11"
-    },
-    "trail_mode": "DYNAMIC_RUNNER",     # Multi-stage trailing runner locking up to +14.8R
-    "contract_lot_size": 0.01           # 1 Lot = 0.01 ETH
+    "breakout_lookback": 33,            # 33-bar swing high/low
+    "trap_lookback": 48,                # 48-bar swing high/low
+    "counter_wick_max": 0.18,           # Breakout counter-wick < 18% (institutional push)
+    "trap_wick_min": 0.25,              # Trap rejection wick >= 25% (absorption)
+    "max_ema_ext_pct": 2.2,             # EMA50 extension limit (<= 2.2%)
+    "weekend_trading": True,            # 24/7 continuous crypto trading
+    "cooldown_sec": 900,                # 15-minute rest after trade exit
 }
 

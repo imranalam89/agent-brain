@@ -1,37 +1,19 @@
-import os
 import sys
 from pathlib import Path
-from datetime import datetime, timezone
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-if sys.platform == "win32":
-    try:
-        sys.stdout.reconfigure(encoding="utf-8")
-        sys.stderr.reconfigure(encoding="utf-8")
-    except Exception:
-        pass
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(BASE_DIR))
+from datetime import datetime, timezone, timedelta
+ist = timezone(timedelta(hours=5, minutes=30))
 from exchange.delta_client import DeltaExchangeClient
+client = DeltaExchangeClient()
 
-client = DeltaExchangeClient(environment="india")
+six_months_ago = int((datetime.now(ist) - timedelta(days=180)).timestamp())
 
-# September 2026 UTC timestamp range
-start_ts = int(datetime(2026, 9, 1, 0, 0, 0, tzinfo=timezone.utc).timestamp())
-end_ts = int(datetime(2026, 9, 27, 0, 0, 0, tzinfo=timezone.utc).timestamp())
+print("Fetching 5m and 1m test candles from Delta Exchange (April 2026)...")
+c5 = client.get_candles('ETHUSD', '5m', start=six_months_ago, end=six_months_ago + 86400 * 3)
+t5 = datetime.fromtimestamp(c5[0]['timestamp'], tz=ist) if c5 else None
+print(f"ETHUSD 5m: {len(c5)} candles, first={t5}")
 
-print(f"Testing Candle Fetch for September 2026 ({start_ts} to {end_ts})...")
-
-for symbol in ["XAUTUSD", "SLVONUSD"]:
-    print(f"\n--- Inspecting {symbol} 15m candles ---")
-    res = client.get_candles(symbol, resolution="15m", start=start_ts, end=end_ts)
-    print(f"  Received {len(res)} candles")
-    active = [c for c in res if c['high'] != c['low'] or c['volume'] > 0]
-    print(f"  Active trading candles with price range/volume: {len(active)} / {len(res)}")
-    for c in active[:5]:
-        t = datetime.fromtimestamp(c["timestamp"], tz=timezone.utc).strftime("%Y-%m-%d %H:%M")
-        print(f"    {t} | O={c['open']} H={c['high']} L={c['low']} C={c['close']} V={c['volume']}")
-    for c in active[-5:]:
-        t = datetime.fromtimestamp(c["timestamp"], tz=timezone.utc).strftime("%Y-%m-%d %H:%M")
-        print(f"    {t} | O={c['open']} H={c['high']} L={c['low']} C={c['close']} V={c['volume']}")
-
+c1 = client.get_candles('ETHUSD', '1m', start=six_months_ago, end=six_months_ago + 86400)
+t1 = datetime.fromtimestamp(c1[0]['timestamp'], tz=ist) if c1 else None
+print(f"ETHUSD 1m: {len(c1)} candles, first={t1}")

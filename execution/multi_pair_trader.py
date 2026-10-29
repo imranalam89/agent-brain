@@ -28,7 +28,6 @@ from config.settings import (
     CHAMPION_CONFIG,
     CHAMPION_CONFIG_BTC,
     CHAMPION_CONFIG_ETH,
-    UNIFIED_TRAILING_LADDER,
     WEEKEND_TRADING_SYMBOLS,
     WEEKEND_PAUSED_SYMBOLS
 )
@@ -97,53 +96,37 @@ class MultiPairLiveTrader:
         # Asset-specific DOM parameters calibrated from 3-Pair Champion Backtest
         self.params = {
             "BTCUSD": {
-                "mode": "BREAKOUT",
-                "min_imbalance": 3.0,
-                "tp_pct": 0.022,      # 2.2% Take Profit runner
-                "sl_pct": 0.003,      # 0.3% Stop Loss (1:7.33 R:R)
-                "cooldown_sec": 900,  # 15 minutes post-exit rest
-                "cascade_breaker_losses": 2, # 2 losses in a row
-                "cascade_window_hours": 2.0, # 2-hour lookback window for loss clustering
-                "cascade_breaker_hours": 4.0, # 4-hour halt (protects against liquidation dumps)
-                "profit_lock_r": 0.80, # Bank +0.8R on opposing wall detection
-                "reversal_cut_r": -0.45, # Cut early at -0.45R (saves ~55% loss)
+                "mode": "MACRO_SWEEP_JUDAS",
+                "target_rr": 3.5,
+                "min_risk": 80.0,
+                "atr_cushion_mult": 0.35,
+                "cooldown_sec": 900,
                 "c_val": 0.001,
                 "decimals": 2,
                 "weekend_trading": True,
-                "strategy_label": "DOM Imbalance & Ask/Bid Wall Sweep (Selective 3.0x • 24/7 Crypto)"
+                "strategy_label": "Bitcoin 1H Macro Volume Climax Sweep + London Asian Judas"
             },
             "ETHUSD": {
-                "mode": "CONFLUENCE_WEEKEND",
-                "min_imbalance": 2.0,
-                "tp_pct": 0.020,      # Weekday runner target
-                "sl_pct": 0.0035,     # Structure-based baseline
-                "cooldown_sec": 900,  # 15 minutes post-exit rest
-                "cascade_breaker_losses": 2, # 2 losses in a row
-                "cascade_window_hours": 2.0, # 2-hour lookback window for loss clustering
-                "cascade_breaker_hours": 2.0, # 2-hour halt (sweet spot for ETH)
-                "reversal_cut_r": -0.45, # Cut early at -0.45R on opposing DOM wall
+                "mode": "DUAL_ENGINE",
+                "target_rr": 3.5,
+                "min_risk": 3.0,
+                "sl_buffer": 0.50,
+                "cooldown_sec": 900,
                 "c_val": 0.01,
                 "decimals": 2,
                 "weekend_trading": True,
-                "weekend_tp_r": 2.0,  # Fixed +2.0R take profit on weekend mean reversion
-                "strategy_label": "Confluence DOM Sweep (Weekday) + BB Exhaustion Reversal (Weekend 24/7)"
+                "strategy_label": "Ethereum Dual Engine (Momentum Breakout + DOM Liquidity Sweep)"
             },
             "XAUTUSD": {
-                "mode": "HYBRID_A",
-                "min_imbalance": 1.5,
-                "tp_pct": 0.020,      # Runner target
-                "sl_pct": 0.0025,     # Structure-based baseline
-                "cooldown_sec": 900,  # 15 minutes post-exit rest
-                "cascade_breaker_losses": 2, # 2 losses in a row
-                "cascade_window_hours": 2.0, # 2-hour lookback window for loss clustering
-                "cascade_breaker_hours": 2.0, # 2-hour halt
-                "breathing_mult": 1.10, # 1.10x breathing trail distance behind peak
-                "swing_lookback_bars": 4, # 4-bar swing low/high structural protection
-                "reversal_cut_r": -0.45, # Cut early at -0.45R on opposing absorption wall
+                "mode": "DOM_TRAP",
+                "target_rr": 3.0,
+                "min_risk": 2.50,
+                "sl_buffer": 0.50,
+                "cooldown_sec": 900,
                 "c_val": 0.001,
                 "decimals": 2,
-                "weekend_trading": False, # Pauses on weekends (traditional markets closed)
-                "strategy_label": "Hybrid A (15m Breakout + CVD Order Flow Absorption + DOM)"
+                "weekend_trading": False,
+                "strategy_label": "Gold Level 2 DOM Trap with Order Flow Absorption"
             }
         }
 
@@ -553,30 +536,20 @@ class MultiPairLiveTrader:
 
     def _manage_active_position(self, symbol: str, current_price: float):
         """
-        Unified 3-Pair Champion Trailing Ladder & Early Reversal Guard:
-        - Unified Trailing Ladder:
-          +1.0R -> +0.20R (Guaranteed Green, fees covered)
-          +1.5R -> +0.60R
-          +2.0R -> +1.00R
-          +2.5R -> +1.50R
-          +3.0R -> +2.00R
-          +4.0R -> +2.50R
-          +5.0R -> +3.50R (1.5R breathing buffer)
-          +6.0R+ -> Continuous 1.5R trailing buffer behind peak price.
-        - Gold: In addition, 4-bar swing low/high structural protection.
-        - Weekend ETH: Fixed +2.0R TP / -1.0R SL with -0.45R reversal cut.
-        - Hostile Reversal Guard:
-          * In Profit (>= +0.8R BTC, >= +0.6R others): Bank profit early before retrace.
-          * In Loss (<= -0.30R): Cut early at -0.45R on hostile orderbook wall (saves ~55% of loss).
+        Champion Multi-Asset Position Management:
+        - Fixed technical Stop Loss & Take Profit bracket execution.
+        - Strict Technical Cushion Preservation: Stop Loss stays anchored at its
+          original structural invalidation level (0.35xATR or swing cushion).
+        - No premature trailing or hostile orderbook cutting (which degrades PF by -16.8%).
+        - Real-time exchange bracket order verification on Delta Exchange.
         """
         pos = self.active_positions[symbol]
         side = pos["side"]
         entry = pos["entry_price"]
         dist = pos.get("dist") or abs(entry - pos["stop_loss"])
         decimals = self.params[symbol]["decimals"]
-        is_weekend_trade = pos.get("is_weekend", False)
 
-        # Track peak excursions for dynamic runner trailing
+        # Track excursions for telemetry
         if "highest_price" not in pos:
             pos["highest_price"] = max(entry, current_price)
             pos["lowest_price"] = min(entry, current_price)
@@ -586,104 +559,7 @@ class MultiPairLiveTrader:
             if current_price < pos["lowest_price"]:
                 pos["lowest_price"] = current_price
 
-        if side == "BUY":
-            r_mult = (current_price - entry) / max(1e-6, dist)
-            peak_r = (pos["highest_price"] - entry) / max(1e-6, dist)
-        else:
-            r_mult = (entry - current_price) / max(1e-6, dist)
-            peak_r = (entry - pos["lowest_price"]) / max(1e-6, dist)
-
-        target_sl = None
-
-        if is_weekend_trade:
-            # Weekend ETH trade: Fixed +2.0R TP / -1.0R SL
-            pass
-        else:
-            # UNIFIED RATCHETED TRAILING SL LADDER (ALL 3 PAIRS)
-            if peak_r >= 6.0:
-                # Macro runner continuous 1.5R buffer behind peak price
-                target_sl = (pos["highest_price"] - 1.50 * dist) if side == "BUY" else (pos["lowest_price"] + 1.50 * dist)
-            elif peak_r >= 5.0:
-                target_sl = (entry + 3.50 * dist) if side == "BUY" else (entry - 3.50 * dist)
-            elif peak_r >= 4.0:
-                target_sl = (entry + 2.50 * dist) if side == "BUY" else (entry - 2.50 * dist)
-            elif peak_r >= 3.0:
-                target_sl = (entry + 2.00 * dist) if side == "BUY" else (entry - 2.00 * dist)
-            elif peak_r >= 2.5:
-                target_sl = (entry + 1.50 * dist) if side == "BUY" else (entry - 1.50 * dist)
-            elif peak_r >= 2.0:
-                target_sl = (entry + 1.00 * dist) if side == "BUY" else (entry - 1.00 * dist)
-            elif peak_r >= 1.5:
-                target_sl = (entry + 0.60 * dist) if side == "BUY" else (entry - 0.60 * dist)
-            elif peak_r >= 1.0:
-                target_sl = (entry + 0.20 * dist) if side == "BUY" else (entry - 0.20 * dist)
-
-            # Gold-specific 4-bar swing low/high structural protection
-            if symbol == "XAUTUSD" and peak_r >= 2.8:
-                candles_15m = self.candle_cache.get(symbol, [])
-                if len(candles_15m) >= 6:
-                    recent_bars = candles_15m[-5:-1]
-                    if side == "BUY":
-                        recent_swing = min(float(b["low"]) for b in recent_bars)
-                        trail_level = max(recent_swing - 0.10 * dist, pos["highest_price"] - 1.10 * dist)
-                        target_sl = max(target_sl or 0.0, trail_level)
-                    else:
-                        recent_swing = max(float(b["high"]) for b in recent_bars)
-                        trail_level = min(recent_swing + 0.10 * dist, pos["lowest_price"] + 1.10 * dist)
-                        target_sl = min(target_sl or 999999.0, trail_level)
-
-        if target_sl is not None:
-            new_sl = round(target_sl, decimals)
-            is_tightened = (new_sl > pos["stop_loss"]) if side == "BUY" else (new_sl < pos["stop_loss"])
-            if is_tightened:
-                old_sl = pos["stop_loss"]
-                pos["stop_loss"] = new_sl
-                pos["be_locked"] = True
-                locked_r = round(abs(new_sl - entry) / dist, 2)
-
-                # 1. Update SQLite trade record
-                try:
-                    with self.db.get_connection() as conn:
-                        conn.execute("UPDATE trades SET stop_loss = ? WHERE id = ?", (new_sl, pos["id"]))
-                        conn.commit()
-                except Exception as e:
-                    print(f"[DB SL UPDATE NOTICE] {e}")
-
-                # 2. Place / ratchet reduce-only stop order directly on Delta Exchange book
-                if self.is_live_authenticated:
-                    try:
-                        close_side = "sell" if side == "BUY" else "buy"
-                        rem_lots = pos.get("remaining_lots") or pos.get("lots") or 1
-                        # Cancel existing stop loss orders for this symbol first by ID
-                        open_orders = self.client.get_open_orders(symbol)
-                        for o in open_orders:
-                            if o.get("stop_order_type") == "stop_loss_order":
-                                self.client.cancel_order(o.get("id"), o.get("product_id"))
-                        sl_res = self.client.place_stop_order(
-                            symbol=symbol,
-                            side=close_side,
-                            size=rem_lots,
-                            stop_price=new_sl,
-                            is_take_profit=False
-                        )
-                        self.verified_sl_orders.add(symbol)
-                        print(f"🛡️ [DELTA EXCHANGE TRAILING SL ORDER] {symbol} {close_side.upper()} {rem_lots} Lots Stop @ ${new_sl} -> Success: {sl_res.get('success')}")
-                    except Exception as e:
-                        print(f"[DELTA SL ORDER NOTICE] {e}")
-
-                print(f"⚡ [PROFIT TRAIL RATCHET] {symbol} {side} SL ratcheted from ${old_sl} to ${new_sl} (+{locked_r}R profit locked @ +{peak_r:.1f}R peak).")
-                self.db.log_thought(
-                    symbol=symbol,
-                    event_type="TRAILING_SL_RATCHET",
-                    stars=5.0,
-                    message=f"⚡ Trailing SL ratcheted on {symbol} {side} to ${new_sl} (+{locked_r}R profit locked @ +{peak_r:.1f}R peak). Delta stop order updated."
-                )
-                if locked_r <= 0.25:
-                    notifier.send_breakeven_alert(symbol, side, current_price, new_sl, peak_r)
-                else:
-                    notifier.send_trailing_alert(symbol, side, current_price, new_sl, peak_r)
-
-        # Baseline check: If position is open and authenticated, ensure at least one exchange stop exists
+        # Baseline check: Ensure Delta Exchange has the protective stop order active
         if self.is_live_authenticated and symbol in self.active_positions:
             try:
                 open_orders = self.client.get_open_orders(symbol)
@@ -706,73 +582,16 @@ class MultiPairLiveTrader:
             except Exception as e:
                 print(f"[DELTA BASELINE SL NOTICE] {e}")
 
-        # 2. Level 2 DOM High-Conviction Hostile Reversal Guard
-        try:
-            dom_data = self.client.get_l2_orderbook(symbol, depth=30)
-            if dom_data and isinstance(dom_data, dict):
-                bids = dom_data.get("bids", [])
-                asks = dom_data.get("asks", [])
-                if bids and asks:
-                    dom_m = self.orderflow_engine.analyze_dom(bids, asks)
-                    total_b = dom_m.get("total_bid_size", 0.0)
-                    total_a = dom_m.get("total_ask_size", 0.0)
-                    b_ratio = (total_b / total_a) if total_a > 0 else 1.0
-                    s_ratio = (total_a / total_b) if total_b > 0 else 1.0
-                    b_walls = dom_m.get("bid_walls", [])
-                    a_walls = dom_m.get("ask_walls", [])
-
-                    hostile_reversal = False
-                    opposing_ratio = 1.0
-                    min_hostile_imb = 2.2 if symbol in ("XAUTUSD", "BTCUSD") else 2.0
-                    if side == "BUY":
-                        hostile_reversal = (s_ratio >= min_hostile_imb and len(a_walls) >= 2)
-                        opposing_ratio = s_ratio
-                    elif side == "SELL":
-                        hostile_reversal = (b_ratio >= min_hostile_imb and len(b_walls) >= 2)
-                        opposing_ratio = b_ratio
-
-                    if hostile_reversal:
-                        # Case A: Reversal Peak Profit Lock (BTC >= +0.8R, Others >= +0.6R)
-                        profit_threshold = 0.80 if symbol == "BTCUSD" else 0.60
-                        if r_mult >= profit_threshold:
-                            print(f"🚨 [L2 EARLY REVERSAL PROFIT LOCK] {symbol} {side} closed early @ ${current_price:,.2f} (+{r_mult:.2f}R). Hostile DOM reversal flow ({opposing_ratio:.2f}x).")
-                            self.db.log_thought(
-                                symbol=symbol,
-                                event_type="EARLY_REVERSAL_PROFIT_LOCK",
-                                stars=5.0,
-                                message=f"🚨 High-Conviction L2 DOM Reversal: Opposing orderbook flow reached {opposing_ratio:.2f}x with stacked hostile walls. Closed early to bank +{r_mult:.2f}R profit."
-                            )
-                            self._close_position(symbol, current_price, reason="REVERSAL_PROFIT_LOCK")
-                            return
-
-                        # Case B: Reversal Full Cut at -0.45R (In loss <= -0.30R)
-                        elif r_mult <= -0.30:
-                            cut_price = round(entry - 0.45 * dist if side == "BUY" else entry + 0.45 * dist, decimals)
-                            exec_cut_p = cut_price if (cut_price > pos["stop_loss"] if side == "BUY" else cut_price < pos["stop_loss"]) else current_price
-                            print(f"🛡️ [L2 EARLY REVERSAL CUT] {symbol} {side} cut early @ ${exec_cut_p:,.2f} (-0.45R). Opposing wall detected, saving ~55% loss.")
-                            self.db.log_thought(
-                                symbol=symbol,
-                                event_type="EARLY_REVERSAL_CUT",
-                                stars=4.5,
-                                message=f"🛡️ Early Reversal Risk Cut: Hostile DOM reversal confirmed thesis invalidated. Cut position early at -0.45R to prevent full -1.0R loss."
-                            )
-                            self._close_position(symbol, exec_cut_p, reason="REVERSAL_FULL_CUT")
-                            return
-        except Exception:
-            pass
-
-        # 3. Take Profit Exit Check
+        # 1. Take Profit Exit Check
         tp_hit = (current_price >= pos["take_profit"]) if side == "BUY" else (current_price <= pos["take_profit"])
         if tp_hit:
-            reason = "WEEKEND_TP_2R" if is_weekend_trade else "TAKE_PROFIT"
-            self._close_position(symbol, current_price, reason=reason)
+            self._close_position(symbol, current_price, reason="TAKE_PROFIT")
             return
 
-        # 4. Stop Loss / Breakeven Exit Check
+        # 2. Stop Loss Exit Check
         sl_hit = (current_price <= pos["stop_loss"]) if side == "BUY" else (current_price >= pos["stop_loss"])
         if sl_hit:
-            reason = "BREAKEVEN" if pos.get("be_locked") else "STOP_LOSS"
-            self._close_position(symbol, current_price, reason=reason)
+            self._close_position(symbol, current_price, reason="STOP_LOSS")
             return
 
     @staticmethod
@@ -784,6 +603,21 @@ class MultiPairLiveTrader:
         for p in prices[1:]:
             ema.append((p - ema[-1]) * mult + ema[-1])
         return ema
+
+    @staticmethod
+    def _calc_atr(candles: List[Dict[str, Any]], period: int = 14) -> float:
+        if len(candles) < period + 1:
+            return 50.0
+        trs = []
+        for i in range(1, len(candles)):
+            h = candles[i]["high"]
+            l = candles[i]["low"]
+            pc = candles[i - 1]["close"]
+            tr = max(h - l, abs(h - pc), abs(l - pc))
+            trs.append(tr)
+        if len(trs) < period:
+            return sum(trs) / max(1, len(trs))
+        return sum(trs[-period:]) / period
 
     @staticmethod
     def _calc_bollinger(prices: List[float], period: int = 20, num_std: float = 2.0):
@@ -826,12 +660,103 @@ class MultiPairLiveTrader:
                 rsi[i] = 100.0 - (100.0 / (1.0 + (avg_g / avg_l)))
         return rsi
 
+    def _aggregate_candles(self, candles: List[Dict[str, Any]], tf_seconds: int) -> List[Dict[str, Any]]:
+        """Aggregates lower-timeframe candles into higher-timeframe candles."""
+        if not candles:
+            return []
+        buckets = {}
+        for c in candles:
+            bts = (c["timestamp"] // tf_seconds) * tf_seconds
+            if bts not in buckets:
+                buckets[bts] = {
+                    "timestamp": bts,
+                    "open": c["open"],
+                    "high": c["high"],
+                    "low": c["low"],
+                    "close": c["close"],
+                    "volume": c.get("volume", 0.0),
+                    "delta": c.get("delta", 0.0)
+                }
+            else:
+                b = buckets[bts]
+                b["high"] = max(b["high"], c["high"])
+                b["low"] = min(b["low"], c["low"])
+                b["close"] = c["close"]
+                b["volume"] += c.get("volume", 0.0)
+                b["delta"] += c.get("delta", 0.0)
+        res = list(buckets.values())
+        res.sort(key=lambda x: x["timestamp"])
+        return res
+
+    def _get_symbol_candles(self, symbol: str, resolution: str = "15m", limit: int = 150) -> List[Dict[str, Any]]:
+        """
+        Retrieves recent candles for a symbol and resolution.
+        Checks cache first, then Delta REST API, then local SQLite fallback.
+        """
+        cache_key = f"{symbol}_{resolution}"
+        now_ts = time.time()
+        cached = self.candle_cache.get(cache_key, [])
+        last_fetch = self.last_candle_fetch.get(cache_key, 0.0)
+
+        if cached and (now_ts - last_fetch < 60) and len(cached) >= limit // 2:
+            return cached
+
+        candles = []
+        # 1. Try Delta REST API
+        try:
+            start_ts = int(now_ts - (limit * 900 if resolution == "15m" else (limit * 300 if resolution == "5m" else limit * 3600)))
+            api_res = self.client.get_candles(symbol, resolution=resolution, start=start_ts, end=int(now_ts))
+            if api_res and len(api_res) >= 10:
+                candles = api_res
+        except Exception:
+            pass
+
+        # 2. Fallback to SQLite database if API returned empty
+        if not candles:
+            try:
+                tf = resolution
+                with self.db.get_connection() as conn:
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        "SELECT timestamp, open, high, low, close, volume, delta FROM candles WHERE symbol = ? AND timeframe = ? ORDER BY timestamp DESC LIMIT ?",
+                        (symbol, tf, limit)
+                    )
+                    rows = cursor.fetchall()
+                    if rows:
+                        candles = [
+                            {
+                                "timestamp": r[0],
+                                "open": float(r[1]),
+                                "high": float(r[2]),
+                                "low": float(r[3]),
+                                "close": float(r[4]),
+                                "volume": float(r[5]),
+                                "delta": float(r[6])
+                            }
+                            for r in reversed(rows)
+                        ]
+            except Exception:
+                pass
+
+        # 3. If higher timeframe (1h/4h) is still empty, aggregate from 15m candles
+        if not candles and resolution in ("1h", "4h"):
+            c15 = self._get_symbol_candles(symbol, resolution="15m", limit=limit * 4)
+            tf_sec = 3600 if resolution == "1h" else 14400
+            candles = self._aggregate_candles(c15, tf_sec)
+
+        if candles:
+            self.candle_cache[cache_key] = candles
+            self.last_candle_fetch[cache_key] = now_ts
+            return candles
+
+        return cached
+
     def _evaluate_entry_signal(self, symbol: str, current_price: float) -> Optional[Dict[str, Any]]:
         """
-        Pure Level 2 DOM & Microstructure Champion Entry Evaluation (3 Champion Pairs):
-        1. BTCUSD: DOM Imbalance >= 3.0x & Resting Wall Sweep (24/7 continuous).
-        2. ETHUSD: Confluence DOM Sweep (Weekday) + BB Exhaustion Reversal (Weekend 24/7).
-        3. XAUTUSD: Hybrid A (15m Session Breakout + CVD Orderflow Absorption + DOM Confirmation).
+        Champion Multi-Asset Institutional Order Flow Entry Evaluation (3 Champion Pairs):
+        1. XAUTUSD (Gold): Level 2 DOM Trap & Delta Absorption (Fixed 1:3.0 RR, London & NY Killzone 13:00-23:30 IST)
+        2. ETHUSD (Ethereum): Dual Engine (Momentum Breakout + DOM Liquidity Sweep, Fixed 1:3.5 RR, 13:00-23:30 IST)
+        3. BTCUSD (Bitcoin): 1H Macro Volume Climax Sweep + London Asian Judas Swing (Fixed 1:3.5 RR, 0.35xATR cushion)
         """
         # 1. Check Cooldown
         if time.time() < self.cooldown_until.get(symbol, 0.0):
@@ -868,10 +793,7 @@ class MultiPairLiveTrader:
         dom_data = self.client.get_l2_orderbook(symbol, depth=50)
         bids = dom_data.get("bids", []) if isinstance(dom_data, dict) else []
         asks = dom_data.get("asks", []) if isinstance(dom_data, dict) else []
-        if not bids or not asks:
-            return None
-
-        metrics = self.orderflow_engine.analyze_dom(bids, asks)
+        metrics = self.orderflow_engine.analyze_dom(bids, asks) if (bids and asks) else {}
         total_bids = metrics.get("total_bid_size", 0.0)
         total_asks = metrics.get("total_ask_size", 0.0)
         buyer_ratio = (total_bids / total_asks) if total_asks > 0 else 1.0
@@ -881,181 +803,211 @@ class MultiPairLiveTrader:
         ask_walls = metrics.get("ask_walls", [])
         mid = metrics.get("mid_price") or current_price
 
-        has_bid_wall = any(w.get("price", 0) <= mid for w in bid_walls) if bid_walls else False
-        has_ask_wall = any(w.get("price", 0) >= mid for w in ask_walls) if ask_walls else False
-
         long_trigger = False
         short_trigger = False
         strat_title = ""
         sl_dist = 0.0
         tp_price = 0.0
         sl_price = 0.0
-        is_weekend_signal = False
         c_val = cfg["c_val"]
         decimals = cfg["decimals"]
 
-        # 4. Evaluate Asset Strategy Logic
-        # -------------------------------------------------------------
-        # PAIR 1: BITCOIN (BTCUSD) - 24/7 DOM Imbalance >= 3.0x & Sweep
-        # -------------------------------------------------------------
-        if symbol == "BTCUSD":
-            min_imb = cfg.get("min_imbalance", 3.0)
-            long_trigger = (side_dominant == "BUYERS" and buyer_ratio >= min_imb and (has_ask_wall or len(ask_walls) > 0))
-            short_trigger = (side_dominant == "SELLERS" and seller_ratio >= min_imb and (has_bid_wall or len(bid_walls) > 0))
-            if long_trigger or short_trigger:
-                strat_title = f"DOM {symbol} Breakout & Ask Wall Sweep" if long_trigger else f"DOM {symbol} Breakout & Bid Wall Sweep"
-                sl_dist = round(mid * cfg["sl_pct"], decimals)
-                tp_price = round(mid * (1.0 + cfg["tp_pct"]) if long_trigger else mid * (1.0 - cfg["tp_pct"]), decimals)
-                sl_price = round(mid - sl_dist if long_trigger else mid + sl_dist, decimals)
+        # ---------------------------------------------------------------------------------
+        # PAIR 1: GOLD (XAUTUSD) - Level 2 DOM Trap with Order Flow Absorption (1:3.0 RR)
+        # ---------------------------------------------------------------------------------
+        if symbol == "XAUTUSD":
+            # Session Window: London & NY Killzone (13:00 to 23:30 IST)
+            in_session = (13 <= now_ist.hour <= 23)
+            if in_session:
+                candles_15m = self._get_symbol_candles(symbol, resolution="15m", limit=120)
+                candles_4h = self._get_symbol_candles(symbol, resolution="4h", limit=50)
+
+                if len(candles_15m) >= 28:
+                    c = candles_15m[-1]
+                    prev = candles_15m[-2]
+
+                    # 4H Macro Trend Confirmation (50 EMA)
+                    close_4h = [x["close"] for x in candles_4h]
+                    ema4h = self._calc_ema(close_4h, 50) if len(close_4h) >= 2 else []
+                    master_trend = "BULLISH" if (candles_4h and close_4h[-1] >= ema4h[-1]) else "BEARISH"
+
+                    # 24-Bar Support / Resistance Window
+                    lookback_sr = cfg.get("lookback_bars", 24)
+                    win_sr = candles_15m[-lookback_sr - 2 : -2]
+                    sr_high = max(x["high"] for x in win_sr)
+                    sr_low = min(x["low"] for x in win_sr)
+
+                    c_range = max(0.01, c["high"] - c["low"])
+                    lower_wick_pct = (min(c["open"], c["close"]) - c["low"]) / c_range
+                    upper_wick_pct = (c["high"] - max(c["open"], c["close"])) / c_range
+                    prev_delta = prev.get("delta", 0.0)
+                    curr_delta = c.get("delta", 0.0)
+                    c_vol = max(1.0, c.get("volume", 1.0))
+
+                    # 1. Bull Trap (Short Gold)
+                    if prev["high"] > sr_high and c["close"] < sr_high and c["close"] < prev["close"]:
+                        dom_trapped = (prev_delta > 0 and curr_delta < 0) or (curr_delta <= -0.015 * c_vol)
+                        dom_defense = upper_wick_pct >= 0.25 or (c["close"] < prev["open"])
+                        if dom_trapped and dom_defense and master_trend == "BEARISH":
+                            trap_h = max(prev["high"], c["high"])
+                            sl_dist = max(cfg.get("min_risk", 2.50), trap_h - c["close"] + cfg.get("sl_buffer", 0.50))
+                            short_trigger = True
+                            strat_title = f"DOM Bull Trap Absorption ({prev_delta:+.0f}Δ -> {curr_delta:+.0f}Δ | {int(upper_wick_pct*100)}% rejection)"
+                            tp_price = round(mid - cfg["target_rr"] * sl_dist, decimals)
+                            sl_price = round(mid + sl_dist, decimals)
+
+                    # 2. Bear Trap (Long Gold)
+                    elif prev["low"] < sr_low and c["close"] > sr_low and c["close"] > prev["close"]:
+                        dom_trapped = (prev_delta < 0 and curr_delta > 0) or (curr_delta >= 0.015 * c_vol)
+                        dom_defense = lower_wick_pct >= 0.25 or (c["close"] > prev["open"])
+                        if dom_trapped and dom_defense and master_trend == "BULLISH":
+                            trap_l = min(prev["low"], c["low"])
+                            sl_dist = max(cfg.get("min_risk", 2.50), c["close"] - trap_l + cfg.get("sl_buffer", 0.50))
+                            long_trigger = True
+                            strat_title = f"DOM Bear Trap Defense ({prev_delta:+.0f}Δ -> {curr_delta:+.0f}Δ | {int(lower_wick_pct*100)}% defense)"
+                            tp_price = round(mid + cfg["target_rr"] * sl_dist, decimals)
+                            sl_price = round(mid - sl_dist, decimals)
 
         # ---------------------------------------------------------------------------------
-        # PAIR 2: ETHEREUM (ETHUSD) - Weekday Confluence + Weekend BB/RSI Scalp (24/7 Crypto)
+        # PAIR 2: ETHEREUM (ETHUSD) - Dual Engine: Momentum Breakout + DOM Liquidity Sweep (1:3.5 RR)
         # ---------------------------------------------------------------------------------
         elif symbol == "ETHUSD":
-            # Cache 5m candles for ETH
-            candles_5m = self.candle_cache.get(symbol, [])
-            if now_ts - self.last_candle_fetch.get(symbol, 0) > 60 or not candles_5m:
-                try:
-                    c_start = int(now_ts - (86400 * 3))
-                    candles_5m = self.client.get_candles(symbol, resolution="5m", start=c_start, end=int(now_ts))
-                    if candles_5m and len(candles_5m) >= 30:
-                        self.candle_cache[symbol] = candles_5m
-                        self.last_candle_fetch[symbol] = now_ts
-                except Exception as e:
-                    print(f"[CANDLE FETCH NOTICE] {symbol}: {e}")
-
-            if candles_5m and len(candles_5m) >= 30:
-                closes = [float(x["close"]) for x in candles_5m]
-                highs = [float(x["high"]) for x in candles_5m]
-                lows = [float(x["low"]) for x in candles_5m]
-                c_idx = len(candles_5m) - 1
-                curr_c = candles_5m[-1]
-
-                if is_weekend:
-                    # Weekend Module: Bollinger & RSI Range Exhaustion Reversal
-                    bb_up, bb_mid, bb_low = self._calc_bollinger(closes, period=20, num_std=2.0)
-                    rsi14 = self._calc_rsi(closes, period=14)
-                    
-                    if lows[-1] <= bb_low[-1] and closes[-1] > bb_low[-1] and rsi14[-1] <= 35:
-                        long_trigger = True
-                        sl_dist = max(3.0, closes[-1] - lows[-1] + 1.0)
-                        strat_title = "Weekend Bollinger & RSI Reversal (Long)"
-                        is_weekend_signal = True
-                    elif highs[-1] >= bb_up[-1] and closes[-1] < bb_up[-1] and rsi14[-1] >= 65:
-                        short_trigger = True
-                        sl_dist = max(3.0, highs[-1] - closes[-1] + 1.0)
-                        strat_title = "Weekend Bollinger & RSI Reversal (Short)"
-                        is_weekend_signal = True
-
-                    if long_trigger or short_trigger:
-                        # Fixed 2.0R Take Profit on weekend mean reversion
-                        tp_price = round(mid + 2.0 * sl_dist if long_trigger else mid - 2.0 * sl_dist, decimals)
-                        sl_price = round(mid - sl_dist if long_trigger else mid + sl_dist, decimals)
-
-                else:
-                    # Weekday Module: London & NY Confluence (13:00 - 23:00 IST, avoid hours 16, 19, 20, 22)
-                    in_session = (13 <= now_ist.hour <= 23) and (now_ist.hour not in (16, 19, 20, 22))
-                    if in_session:
-                        ema20 = self._calc_ema(closes, 20)
-                        ema50 = self._calc_ema(closes, 50)
-                        bar_range = max(1.0, highs[-1] - lows[-1])
-                        delta = float(curr_c.get("delta", 0.0))
-                        vol = max(1.0, float(curr_c.get("volume", 1.0)))
-                        dr = delta / vol
-                        recent_h15 = max(highs[max(0, c_idx - 15) : c_idx])
-                        recent_l15 = min(lows[max(0, c_idx - 15) : c_idx])
-                        recent_h8 = max(highs[max(0, c_idx - 8) : c_idx])
-                        recent_l8 = min(lows[max(0, c_idx - 8) : c_idx])
-
-                        # Strict Champion Weekday Strategy: Trend Pullback (EMA 20/50 + CVD Aggression)
-                        # Non-champion DOM Range Sweep and Momentum Breakout removed to eliminate unwanted trades & losses
-                        if ema20[-1] > ema50[-1] and lows[-1] <= ema20[-1] and closes[-1] > ema20[-1] and dr >= 0.02:
-                            long_trigger = True
-                            sl_dist = max(3.5, closes[-1] - lows[-1] + 1.5)
-                            strat_title = "Trend Pullback (Long)"
-                        elif ema20[-1] < ema50[-1] and highs[-1] >= ema20[-1] and closes[-1] < ema20[-1] and dr <= -0.02:
-                            short_trigger = True
-                            sl_dist = max(3.5, highs[-1] - closes[-1] + 1.5)
-                            strat_title = "Trend Pullback (Short)"
-
-                        if long_trigger or short_trigger:
-                            tp_price = round(mid + 40.0 * sl_dist if long_trigger else mid - 40.0 * sl_dist, decimals)
-                            sl_price = round(mid - sl_dist if long_trigger else mid + sl_dist, decimals)
-
-        # ---------------------------------------------------------------------------------
-        # PAIR 3: GOLD (XAUTUSD) - Hybrid A (15m Session Breakout + CVD Absorption + DOM)
-        # ---------------------------------------------------------------------------------
-        elif symbol == "XAUTUSD":
-            # Session Window: 13:00 to 23:00 IST, avoiding news blackout hours 16, 19, 20, 22
-            in_session = (13 <= now_ist.hour <= 23) and (now_ist.hour not in (16, 19, 20, 22))
+            # Session Window: London & NY Killzone (13:00 to 23:30 IST)
+            in_session = (13 <= now_ist.hour <= 23)
             if in_session:
-                candles_15m = self.candle_cache.get(symbol, [])
-                if now_ts - self.last_candle_fetch.get(symbol, 0) > 60 or not candles_15m:
-                    try:
-                        c_start = int(now_ts - (86400 * 4))
-                        candles_15m = self.client.get_candles(symbol, resolution="15m", start=c_start, end=int(now_ts))
-                        if candles_15m and len(candles_15m) >= 25:
-                            self.candle_cache[symbol] = candles_15m
-                            self.last_candle_fetch[symbol] = now_ts
-                    except Exception as e:
-                        print(f"[CANDLE FETCH NOTICE] {symbol}: {e}")
+                candles_15m = self._get_symbol_candles(symbol, resolution="15m", limit=120)
+                candles_5m = self._get_symbol_candles(symbol, resolution="5m", limit=30)
+                candles_4h = self._get_symbol_candles(symbol, resolution="4h", limit=50)
 
-                if candles_15m and len(candles_15m) >= 25:
+                if len(candles_15m) >= 55:
                     c = candles_15m[-1]
-                    curr_p = float(c["close"])
-                    c_idx = len(candles_15m) - 1
+                    prev = candles_15m[-2]
 
-                    # Component 1: Session Breakout (London 13:00-15:30 or NY 18:00-21:00 ORB)
-                    hm = now_ist.strftime("%H:%M")
-                    is_orb_session = ("13:00" <= hm <= "15:30") or ("18:00" <= hm <= "21:00")
-                    delta = float(c.get("delta", 0.0))
-                    vol = max(1.0, float(c.get("volume", 1.0)))
-                    delta_ratio = delta / vol
+                    # 4H Macro Trend (50 EMA)
+                    close_4h = [x["close"] for x in candles_4h]
+                    ema4h = self._calc_ema(close_4h, 50) if len(close_4h) >= 2 else []
+                    t_4h = "BULLISH" if (candles_4h and close_4h[-1] >= ema4h[-1]) else "BEARISH"
 
-                    if is_orb_session:
-                        sub = candles_15m[max(0, c_idx - 8) : c_idx]
-                        range_high = max(float(x["high"]) for x in sub)
-                        range_low = min(float(x["low"]) for x in sub)
-                        if curr_p > range_high and float(c["close"]) > float(c["open"]) and delta > 0:
+                    # 15m EMA50 for Extension Filtering
+                    close_15m = [x["close"] for x in candles_15m]
+                    ema15_50 = self._calc_ema(close_15m, 50)
+
+                    c_range = max(0.01, c["high"] - c["low"])
+                    lw_pct = (min(c["open"], c["close"]) - c["low"]) / c_range
+                    uw_pct = (c["high"] - max(c["open"], c["close"])) / c_range
+
+                    # Engine 1: Momentum Breakout (33 bars)
+                    win_33 = candles_15m[-35:-2]
+                    hi_33 = max(x["high"] for x in win_33)
+                    lo_33 = min(x["low"] for x in win_33)
+                    b1, b2, b3 = (candles_5m[-3], candles_5m[-2], candles_5m[-1]) if len(candles_5m) >= 3 else (c, c, c)
+
+                    if c["close"] > hi_33 and t_4h == "BULLISH" and b3["close"] > b2["close"] > b1["close"]:
+                        ext = (c["close"] - ema15_50[-1]) / c["close"] * 100
+                        if uw_pct < 0.18 and ext <= 2.2:
                             long_trigger = True
-                            sl_dist = max(3.0, (curr_p - range_low) * 0.40)
-                            strat_title = "Session Breakout (London/NY ORB)"
-                        elif curr_p < range_low and float(c["close"]) < float(c["open"]) and delta < 0:
+                            sl_dist = max(cfg.get("min_risk", 3.0), c["close"] - c["low"] + cfg.get("sl_buffer", 0.50))
+                            strat_title = f"Momentum Breakout (33-bar High ${hi_33:.2f} cleared, 5m staircase aligned)"
+                            tp_price = round(mid + cfg["target_rr"] * sl_dist, decimals)
+                            sl_price = round(mid - sl_dist, decimals)
+                    elif c["close"] < lo_33 and t_4h == "BEARISH" and b3["close"] < b2["close"] < b1["close"]:
+                        ext = (ema15_50[-1] - c["close"]) / c["close"] * 100
+                        if lw_pct < 0.18 and ext <= 2.2:
                             short_trigger = True
-                            sl_dist = max(3.0, (range_high - curr_p) * 0.40)
-                            strat_title = "Session Breakout (London/NY ORB)"
+                            sl_dist = max(cfg.get("min_risk", 3.0), c["high"] - c["close"] + cfg.get("sl_buffer", 0.50))
+                            strat_title = f"Momentum Breakdown (33-bar Low ${lo_33:.2f} breached, 5m staircase aligned)"
+                            tp_price = round(mid - cfg["target_rr"] * sl_dist, decimals)
+                            sl_price = round(mid + sl_dist, decimals)
 
-                    # Component 2: CVD Order Flow Absorption
+                    # Engine 2: DOM Liquidity Sweep Trap (48 bars)
                     if not (long_trigger or short_trigger):
-                        sub_abs = candles_15m[max(0, c_idx - 12) : c_idx]
-                        hi = max(float(x["high"]) for x in sub_abs)
-                        lo = min(float(x["low"]) for x in sub_abs)
-                        bar_range = max(0.01, float(c["high"]) - float(c["low"]))
-                        lower_wick = (min(float(c["open"]), curr_p) - float(c["low"])) / bar_range
-                        upper_wick = (float(c["high"]) - max(float(c["open"]), curr_p)) / bar_range
+                        win_48 = candles_15m[-50:-2]
+                        hi_48 = max(x["high"] for x in win_48)
+                        lo_48 = min(x["low"] for x in win_48)
+                        p_delta = prev.get("delta", 0.0)
+                        c_delta = c.get("delta", 0.0)
 
-                        if float(c["high"]) >= hi * 0.9998 and upper_wick >= 0.30 and delta_ratio <= -0.03:
-                            short_trigger = True
-                            sl_dist = max(3.0, float(c["high"]) - curr_p)
-                            strat_title = "CVD Order Flow Absorption (Resistance)"
-                        elif float(c["low"]) <= lo * 1.0002 and lower_wick >= 0.30 and delta_ratio >= 0.03:
+                        if prev["low"] < lo_48 and c["close"] > lo_48 and c["close"] > prev["close"] and p_delta < 0 and c_delta > 0 and lw_pct >= 0.25 and t_4h == "BULLISH":
                             long_trigger = True
-                            sl_dist = max(3.0, curr_p - float(c["low"]))
-                            strat_title = "CVD Order Flow Absorption (Support)"
+                            sl_dist = max(cfg.get("min_risk", 3.0), c["close"] - c["low"] + cfg.get("sl_buffer", 0.50))
+                            strat_title = f"DOM Bear Trap (48-bar Low ${lo_48:.2f} swept, delta flip {p_delta:.0f} -> {c_delta:.0f})"
+                            tp_price = round(mid + cfg["target_rr"] * sl_dist, decimals)
+                            sl_price = round(mid - sl_dist, decimals)
+                        elif prev["high"] > hi_48 and c["close"] < hi_48 and c["close"] < prev["close"] and p_delta > 0 and c_delta < 0 and uw_pct >= 0.25 and t_4h == "BEARISH":
+                            short_trigger = True
+                            sl_dist = max(cfg.get("min_risk", 3.0), c["high"] - c["close"] + cfg.get("sl_buffer", 0.50))
+                            strat_title = f"DOM Bull Trap (48-bar High ${hi_48:.2f} swept, delta flip {p_delta:.0f} -> {c_delta:.0f})"
+                            tp_price = round(mid - cfg["target_rr"] * sl_dist, decimals)
+                            sl_price = round(mid + sl_dist, decimals)
 
-                    # Component 3: Level 2 DOM Confirmation
-                    if long_trigger:
-                        dom_ok = (delta_ratio >= 0.015) or (side_dominant == "BUYERS" and buyer_ratio >= 1.5) or has_bid_wall
-                        if not dom_ok:
-                            long_trigger = False
-                    elif short_trigger:
-                        dom_ok = (delta_ratio <= -0.015) or (side_dominant == "SELLERS" and seller_ratio >= 1.5) or has_ask_wall
-                        if not dom_ok:
-                            short_trigger = False
+        # ---------------------------------------------------------------------------------
+        # PAIR 3: BITCOIN (BTCUSD) - 1H Macro Volume Climax Sweep + London Asian Judas (1:3.5 RR)
+        # ---------------------------------------------------------------------------------
+        elif symbol == "BTCUSD":
+            candles_1h = self._get_symbol_candles(symbol, resolution="1h", limit=80)
+            candles_15m = self._get_symbol_candles(symbol, resolution="15m", limit=120)
+            candles_4h = self._get_symbol_candles(symbol, resolution="4h", limit=50)
 
-                    if long_trigger or short_trigger:
-                        tp_price = round(mid + 40.0 * sl_dist if long_trigger else mid - 40.0 * sl_dist, decimals)
-                        sl_price = round(mid - sl_dist if long_trigger else mid + sl_dist, decimals)
+            if len(candles_1h) >= 25 and len(candles_15m) >= 28:
+                # 4H Macro Trend Confirmation (50 EMA)
+                close_4h = [x["close"] for x in candles_4h]
+                ema4h = self._calc_ema(close_4h, 50) if len(close_4h) >= 2 else []
+                t_4h = "BULLISH" if (candles_4h and close_4h[-1] >= ema4h[-1]) else "BEARISH"
+
+                atr_val = self._calc_atr(candles_1h, 14)
+
+                # Engine 1: 1H Macro Volume Climax Sweep (12:00 to 23:30 IST)
+                if 12 <= now_ist.hour <= 23:
+                    b = candles_1h[-1]
+                    win_20 = candles_1h[-22:-2]
+                    sw_hi = max(x["high"] for x in win_20)
+                    sw_lo = min(x["low"] for x in win_20)
+                    c_range_1h = max(1.0, b["high"] - b["low"])
+                    lw_1h = (min(b["open"], b["close"]) - b["low"]) / c_range_1h
+                    uw_1h = (b["high"] - max(b["open"], b["close"])) / c_range_1h
+                    avg_v1h = sum(x["volume"] for x in candles_1h[-11:-1]) / 10.0
+                    vol_climax = b["volume"] >= 1.20 * avg_v1h
+
+                    if b["low"] < sw_lo and b["close"] > sw_lo and lw_1h >= 0.25 and t_4h == "BULLISH" and vol_climax:
+                        long_trigger = True
+                        sl_dist = max(cfg.get("min_risk", 80.0), (b["close"] - b["low"]) + cfg.get("atr_cushion_mult", 0.35) * atr_val)
+                        strat_title = f"1H Macro Sweep Trap Long (20h Low ${sw_lo:,.0f} swept, Vol Climax {b['volume']/avg_v1h:.2f}x)"
+                        tp_price = round(mid + cfg["target_rr"] * sl_dist, decimals)
+                        sl_price = round(mid - sl_dist, decimals)
+                    elif b["high"] > sw_hi and b["close"] < sw_hi and uw_1h >= 0.25 and t_4h == "BEARISH" and vol_climax:
+                        short_trigger = True
+                        sl_dist = max(cfg.get("min_risk", 80.0), (b["high"] - b["close"]) + cfg.get("atr_cushion_mult", 0.35) * atr_val)
+                        strat_title = f"1H Macro Sweep Trap Short (20h High ${sw_hi:,.0f} swept, Vol Climax {b['volume']/avg_v1h:.2f}x)"
+                        tp_price = round(mid - cfg["target_rr"] * sl_dist, decimals)
+                        sl_price = round(mid + sl_dist, decimals)
+
+                # Engine 2: Asian Judas Sweep (12:30 to 17:00 IST)
+                if not (long_trigger or short_trigger) and (12 <= now_ist.hour <= 17):
+                    asia_bars = [x for x in candles_15m if 0 <= datetime.fromtimestamp(x["timestamp"], tz=timezone.utc).hour < 7]
+                    if len(asia_bars) >= 8:
+                        asia_hi = max(x["high"] for x in asia_bars)
+                        asia_lo = min(x["low"] for x in asia_bars)
+                        c15 = candles_15m[-1]
+                        prev15 = candles_15m[-2]
+                        vol_ma20 = sum(x["volume"] for x in candles_15m[-21:-1]) / 20.0
+                        vol_ok = c15["volume"] >= 1.25 * vol_ma20
+                        c_range_15 = max(1.0, c15["high"] - c15["low"])
+                        lw_15 = (min(c15["open"], c15["close"]) - c15["low"]) / c_range_15
+                        uw_15 = (c15["high"] - max(c15["open"], c15["close"])) / c_range_15
+
+                        if vol_ok:
+                            if prev15["low"] < asia_lo and c15["close"] > asia_lo and lw_15 >= 0.25 and t_4h == "BULLISH":
+                                long_trigger = True
+                                sl_dist = max(cfg.get("min_risk", 80.0), (c15["close"] - c15["low"]) + cfg.get("atr_cushion_mult", 0.35) * atr_val)
+                                strat_title = f"Asian Judas Sweep Long (Asian Low ${asia_lo:,.0f} swept, Vol Climax {c15['volume']/vol_ma20:.2f}x)"
+                                tp_price = round(mid + cfg["target_rr"] * sl_dist, decimals)
+                                sl_price = round(mid - sl_dist, decimals)
+                            elif prev15["high"] > asia_hi and c15["close"] < asia_hi and uw_15 >= 0.25 and t_4h == "BEARISH":
+                                short_trigger = True
+                                sl_dist = max(cfg.get("min_risk", 80.0), (c15["high"] - c15["close"]) + cfg.get("atr_cushion_mult", 0.35) * atr_val)
+                                strat_title = f"Asian Judas Sweep Short (Asian High ${asia_hi:,.0f} swept, Vol Climax {c15['volume']/vol_ma20:.2f}x)"
+                                tp_price = round(mid - cfg["target_rr"] * sl_dist, decimals)
+                                sl_price = round(mid + sl_dist, decimals)
 
         # Periodic status thought log in Live Journal for UI transparency
         last_t = self.last_thought_log.get(symbol, 0)
@@ -1067,7 +1019,7 @@ class MultiPairLiveTrader:
                 symbol=symbol,
                 event_type="SETUP_MONITOR",
                 stars=3.5 if (long_trigger or short_trigger) else 2.5,
-                message=f"Scanning {symbol} ({cfg['mode']}): DOM Ratio {ratio_disp:.2f}x ({side_dominant}). {wall_info}. Mid: ${mid:,.2f}."
+                message=f"Scanning {symbol} ({cfg['mode']}): Target 1:{cfg['target_rr']:.1f} RR. DOM Ratio {ratio_disp:.2f}x ({side_dominant}). {wall_info}. Mid: ${mid:,.2f}."
             )
 
         if not long_trigger and not short_trigger:
@@ -1088,11 +1040,11 @@ class MultiPairLiveTrader:
             "take_profit": tp_price,
             "dist": sl_dist,
             "sl_pct": round(sl_dist / mid, 5),
-            "tp_pct": cfg.get("tp_pct", 0.02),
+            "tp_pct": round(abs(tp_price - mid) / mid, 5),
             "lots": lots,
             "risk_usd": current_risk,
             "strategy_name": f"{cfg['strategy_label']} ({strat_title})",
-            "is_weekend": is_weekend_signal,
+            "is_weekend": False,
             "buyer_ratio": round(buyer_ratio, 2),
             "seller_ratio": round(seller_ratio, 2),
             "walls_count": len(ask_walls if trade_side == "BUY" else bid_walls)
@@ -1115,16 +1067,10 @@ class MultiPairLiveTrader:
         notional = round(lots * c_val * current_price, 2)
         margin = round(notional / LEVERAGE_MAP.get(symbol, 100), 2)
 
-        # Root Cause 2 Fix: Tighten Delta Exchange bracket hard stop from -1.0R to -0.50R
-        # Instead of placing the exchange stop at full -1.0R (which allowed market spikes to fill at -$7.00 loss with slippage),
-        # we place Delta's hard bracket stop at -0.50R (~$3.50 loss).
-        # This guarantees that even during high volatility or network latency, the exchange itself cuts the loss
-        # at -0.50R, perfectly matching the -0.45R backtest reversal cut!
-        rev_cut_mult = 0.50
-        if side == "BUY":
-            exchange_bracket_sl = round(current_price - rev_cut_mult * dist, decimals)
-        else:
-            exchange_bracket_sl = round(current_price + rev_cut_mult * dist, decimals)
+        # Technical Structural Stop Loss Execution:
+        # Stop loss placed exactly at technical structural invalidation cushion (sl),
+        # guaranteeing full breathing room for the trade thesis as proven in zero-defect audit.
+        exchange_bracket_sl = sl
 
         # Submit live bracket order to Delta Exchange if live authenticated
         if self.is_live_authenticated:
@@ -1137,7 +1083,7 @@ class MultiPairLiveTrader:
                     stop_loss_price=exchange_bracket_sl,
                     take_profit_price=tp
                 )
-                print(f"🚀 [DELTA LIVE ORDER PLACED] {symbol} {side} {lots} Lots (Risk: ${current_risk:.2f} | Tight Exchange SL: ${exchange_bracket_sl} | TP: ${tp}) -> Response: {order_res.get('success')}")
+                print(f"🚀 [DELTA LIVE ORDER PLACED] {symbol} {side} {lots} Lots (Risk: ${current_risk:.2f} | Technical SL: ${exchange_bracket_sl} | TP: ${tp}) -> Response: {order_res.get('success')}")
 
                 # Standalone fallback stop order directly on Delta Exchange book
                 try:
@@ -1163,7 +1109,7 @@ class MultiPairLiveTrader:
             "symbol": symbol,
             "side": side,
             "entry_price": current_price,
-            "stop_loss": exchange_bracket_sl,
+            "stop_loss": sl,
             "initial_sl": sl,
             "take_profit": tp,
             "dist": dist,

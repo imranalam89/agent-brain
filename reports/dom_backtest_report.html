@@ -30,22 +30,22 @@
   <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
     <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
       <div class="text-xs text-slate-500 uppercase tracking-wider font-bold">Total Trades</div>
-      <div class="text-2xl font-black text-white mt-1">0</div>
-      <div class="text-xs text-slate-400 mt-0.5">Wins: 0 | Losses: 0</div>
+      <div class="text-2xl font-black text-white mt-1">1</div>
+      <div class="text-xs text-slate-400 mt-0.5">Wins: 1 | Losses: 0</div>
     </div>
     <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
       <div class="text-xs text-slate-500 uppercase tracking-wider font-bold">Win Rate</div>
-      <div class="text-2xl font-black text-amber-400 mt-1">0.0%</div>
+      <div class="text-2xl font-black text-amber-400 mt-1">100.0%</div>
       <div class="text-xs text-slate-400 mt-0.5">1:2 R:R Ratio (0.3% TP / 0.15% SL)</div>
     </div>
     <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
       <div class="text-xs text-slate-500 uppercase tracking-wider font-bold">Net P&L (USD)</div>
-      <div class="text-2xl font-black text-emerald-400 mt-1">$+0.00</div>
-      <div class="text-xs text-slate-400 mt-0.5">₹+0.00 INR (Fees: $0.00)</div>
+      <div class="text-2xl font-black text-emerald-400 mt-1">$+30.83</div>
+      <div class="text-xs text-slate-400 mt-0.5">₹+2,774.70 INR (Fees: $0.79)</div>
     </div>
     <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
       <div class="text-xs text-slate-500 uppercase tracking-wider font-bold">Profit Factor</div>
-      <div class="text-2xl font-black text-white mt-1">0.0</div>
+      <div class="text-2xl font-black text-white mt-1">99.0</div>
       <div class="text-xs text-slate-400 mt-0.5">Max DD: $0.00 USD</div>
     </div>
   </section>
@@ -53,42 +53,38 @@
   <!-- PER SYMBOL CARDS -->
   <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     
-                  <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
-                    <h3 class="text-sm font-bold text-slate-300">BTCUSD</h3>
-                    <p class="text-xs text-rose-400 mt-2">Insufficient snapshots recorded for BTCUSD (9 found).</p>
+              <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4 space-y-2">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-base font-black text-white">XAUTUSD</h3>
+                  <span class="text-xs px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 font-bold">12 Snaps</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800 text-xs">
+                  <div>
+                    <span class="text-slate-500">Win Rate:</span>
+                    <span class="font-bold text-slate-200 ml-1">100.0% (1/1)</span>
                   </div>
-                
-                  <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
-                    <h3 class="text-sm font-bold text-slate-300">ETHUSD</h3>
-                    <p class="text-xs text-rose-400 mt-2">Insufficient snapshots recorded for ETHUSD (9 found).</p>
+                  <div>
+                    <span class="text-slate-500">Profit Factor:</span>
+                    <span class="font-bold text-amber-400 ml-1">99.0</span>
                   </div>
-                
-                  <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
-                    <h3 class="text-sm font-bold text-slate-300">XAUTUSD</h3>
-                    <p class="text-xs text-rose-400 mt-2">Insufficient snapshots recorded for XAUTUSD (9 found).</p>
+                  <div>
+                    <span class="text-slate-500">Net P&L:</span>
+                    <span class="font-bold text-emerald-400 ml-1">$+30.83</span>
                   </div>
-                
-                  <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
-                    <h3 class="text-sm font-bold text-slate-300">SLVONUSD</h3>
-                    <p class="text-xs text-rose-400 mt-2">Insufficient snapshots recorded for SLVONUSD (9 found).</p>
+                  <div>
+                    <span class="text-slate-500">Max DD:</span>
+                    <span class="font-bold text-slate-300 ml-1">$0.00</span>
                   </div>
-                
-                  <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
-                    <h3 class="text-sm font-bold text-slate-300">PAXGUSD</h3>
-                    <p class="text-xs text-rose-400 mt-2">Insufficient snapshots recorded for PAXGUSD (8 found).</p>
-                  </div>
-                
-                  <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
-                    <h3 class="text-sm font-bold text-slate-300">UNIUSD</h3>
-                    <p class="text-xs text-rose-400 mt-2">Insufficient snapshots recorded for UNIUSD (8 found).</p>
-                  </div>
-                
+                </div>
+                <p class="text-[10px] text-slate-500 font-mono pt-1">Window: 2026-10-08 11:21:50 -> 2026-10-15 23:20:27</p>
+              </div>
+            
   </section>
 
   <!-- RECENT TRADES TABLE -->
   <section class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
     <div class="flex items-center justify-between">
-      <h2 class="text-sm font-black text-white uppercase tracking-wider">Executed DOM Microstructure Trades (0 Total)</h2>
+      <h2 class="text-sm font-black text-white uppercase tracking-wider">Executed DOM Microstructure Trades (1 Total)</h2>
       <span class="text-xs text-slate-400 font-mono">Showing recent executions</span>
     </div>
     <div class="overflow-x-auto max-h-[500px]">
@@ -108,7 +104,20 @@
           </tr>
         </thead>
         <tbody>
-          <tr><td colspan="10" class="py-4 text-center text-slate-500">No trades triggered with current threshold.</td></tr>
+          
+              <tr class="border-b border-slate-800/60 hover:bg-slate-800/30 text-xs">
+                <td class="py-2.5 px-3 text-slate-400 font-mono">#1</td>
+                <td class="py-2.5 px-3 font-bold text-white">XAUTUSD</td>
+                <td class="py-2.5 px-3 text-rose-400 font-bold">SELL</td>
+                <td class="py-2.5 px-3 font-mono">$4,127.99</td>
+                <td class="py-2.5 px-3 font-mono">$4,088.81</td>
+                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">WIN</span></td>
+                <td class="py-2.5 px-3 text-emerald-400 font-bold font-mono">$+30.83</td>
+                <td class="py-2.5 px-3 text-slate-400 font-mono text-[11px]">$0.7862</td>
+                <td class="py-2.5 px-3 text-slate-400 text-[11px] font-mono">2026-10-08 11:21:50</td>
+                <td class="py-2.5 px-3 text-slate-300 text-[11px]">DOM Imbalance & Ask Wall Rejection (Ratio: 5.95x)</td>
+              </tr>
+            
         </tbody>
       </table>
     </div>
